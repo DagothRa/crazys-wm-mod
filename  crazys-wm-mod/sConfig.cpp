@@ -28,12 +28,31 @@
 #include "cColor.h"
 #include "Constants.h"
 #include "XmlUtil.h"
+#include "Revision.h"
+#include "Globals.h"
 
 
 extern CLog g_LogFile;
 static CLog &l = g_LogFile;
 static cColor ColorConvert;
 sConfigData *cConfig::data;
+
+cConfig::cConfig()
+{
+	if (!data)
+	{
+		l.ss() << "Whore Master v" << g_MajorVersion << "." << g_MinorVersionA << g_MinorVersionB << "." << g_StableVersion << " BETA" << " Svn: " << svn_revision
+			<< "\n------------------------------------------------------------------------------------------------------------------------\nLoading Default configuration variables"; 
+		l.ssend();
+		data = new sConfigData();
+	}
+}
+
+void cConfig::reload(const char *filename)
+{
+	sConfigData *newd = new sConfigData(filename);
+	*data = *newd;
+}
 
 /*
 * changed this to take a filename so we can pass config files on the command line
@@ -42,11 +61,14 @@ sConfigData *cConfig::data;
 sConfigData::sConfigData(const char *a_filename)
 	: fonts()
 {
-	DirPath dp = DirPath() << a_filename;	// `J` moved to root directory
+
+	DirPath dpnew = DirPath() << ".." << "config.xml";	// `J` Added to load user's config file first
+	DirPath dpdef = DirPath() << a_filename;	// `J` moved to root directory
 	DirPath dpold = DirPath() << "Resources" << "Data" << a_filename;
-	string filename = dp.c_str();
+	string filenamenew = dpnew.c_str();
+	string filenamedef = dpdef.c_str();
 	string filenameold = dpold.c_str();
-	l.ss() << "Loading configuration variables from '" << filename << "'"; l.ssend();
+	l.write("Attempting to load config.xml file.");
 	/*
 	*	make sure we have something playable,
 	*	even if the file doesn't load
@@ -55,23 +77,31 @@ sConfigData::sConfigData(const char *a_filename)
 	/*
 	*	open the file - moan most eloqently in its absence
 	*/
-	TiXmlDocument doc(filename);
+	TiXmlDocument docnew(filenamenew);
+	TiXmlDocument doc(filenamedef);
 	TiXmlDocument docold(filenameold);
-	if (!doc.LoadFile())
+
+	if (docnew.LoadFile())
 	{
-		l.ss() << "Can't load " << filename << " from root directory." << endl << "Error: line " << doc.ErrorRow() << ", col " << doc.ErrorCol() << ": " << doc.ErrorDesc() << endl << "Attempting to load old file " << filenameold << "." << endl; l.ssend();
+		l.ss() << "Loading Config file :  " << filenamenew << "  : " << endl; l.ssend();
+		doc = docnew;
+	}
+	else if (doc.LoadFile())
+	{
+		l.ss() << "Loading Config file :  " << filenamedef << "  : " << endl; l.ssend();
+	}
+	else if (docold.LoadFile())
+	{
+		l.ss() << "Loading Config file :  " << filenameold << "  : " << endl; l.ssend();
 		doc = docold;
 	}
-	if (!doc.LoadFile())
+	else
 	{
-		l.ss() << "can't load " << filename << endl << "Error: line " << doc.ErrorRow() << ", col " << doc.ErrorCol() << ": " << doc.ErrorDesc(); l.ssend();
-		/*
-		*		a bit of narrative for the players: makes it easier to tell
-		*		if the config isn't being found
-		*/
+		l.ss() << "Could not load any config.xml files, using defaults." << endl; l.ssend();
 		l.ss() << "*** Game will run with default pricing factors.\n*** This may seem a little easy. To fix this\n*** get a config.xml file from pinkpetal.org\n*** or make one with Whore Master Editor"; l.ssend();
 		return;
 	}
+
 	/*
 	*	get the docuement root
 	*/
@@ -98,7 +128,7 @@ sConfigData::sConfigData(const char *a_filename)
 		if (el->ValueStr() == "Fonts")			{ get_font_data(el);		continue; }
 		if (el->ValueStr() == "Debug")			{ get_debug_flags(el);		continue; }
 
-		l.ss() << "Warning: config.xml: tag: '" << tag << "' unexpected"; l.ssend();
+		l.ss() << "\nWarning: config.xml: tag: '" << tag << "' unexpected"; l.ssend();
 	}
 	// check interface for colors
 	DirPath dpi = DirPath() << "Resources" << "Interface" << resolution.resolution << "InterfaceColors.xml";
@@ -129,7 +159,7 @@ sConfigData::sConfigData(const char *a_filename)
 	}
 	fonts.detailfontsize = 9;	// default to 9 then check if it is set in girl_details_screen.xml
 	DirPath dpt = DirPath() << "Resources" << "Interface" << resolution.resolution << "girl_details_screen.xml";
-	TiXmlDocument doct(dp.c_str());
+	TiXmlDocument doct(dpt.c_str());
 	if (doct.LoadFile())
 	{
 		string m_filename = dpt.c_str();
@@ -183,7 +213,7 @@ void sConfigData::get_att(TiXmlElement *el, const char *name, bool &bval)
 void sConfigData::get_att(TiXmlElement *el, const char *name, double *dpt)
 {
 	if (el->Attribute(name, dpt)) { return; }
-	l.ss() << "Warning: config.xml: No '" << name << "' attribute: defaulting to " << *dpt; l.ssend();
+	l.ss() << "\nWarning: config.xml: No '" << name << "' attribute: defaulting to " << *dpt; l.ssend();
 }
 
 void sConfigData::get_att(TiXmlElement *el, const char *name, string &s)
@@ -191,85 +221,139 @@ void sConfigData::get_att(TiXmlElement *el, const char *name, string &s)
 	const char *pt;
 	pt = el->Attribute(name);
 	if (pt) { s = pt;	return; }
-	l.ss() << "Warning: config.xml: No '" << name << "' attribute: defaulting to " << s; l.ssend();
+	l.ss() << "\nWarning: config.xml: No '" << name << "' attribute: defaulting to " << s; l.ssend();
 }
 
 void sConfigData::get_att(TiXmlElement *el, const char *name, int *ipt)
 {
 	int def_val = *ipt;
 	if (el->Attribute(name, ipt)) { return; }
-	l.ss() << "Warning: config.xml: No '" << name << "' attribute: defaulting to " << def_val; l.ssend();
+	l.ss() << "\nWarning: config.xml: No '" << name << "' attribute: defaulting to " << def_val; l.ssend();
 	*ipt = def_val;
 }
 
 void sConfigData::get_folders_data(TiXmlElement *el)
 {
 	const char *pt;
-	folders.configXMLch = false; folders.configXMLsa = false; folders.backupsaves = false; folders.configXMLdi = false;
-	folders.preferdefault = false;
+	folders.configXMLch = false;
+	folders.configXMLsa = false; 
+	folders.configXMLdi = false;
+	folders.configXMLil = false;
 
-	string testch = "", testsa = "", testdi = "";
+	folders.backupsaves = false;
+	folders.preferdefault = false;
+	folders.characters		= (DirPath() << "Resources" << "Characters").c_str();
+	folders.saves			= (DirPath() << "Saves").c_str();
+	folders.items			= (DirPath() << "Resources" << "Items").c_str();
+	folders.defaultimageloc	= (DirPath() << "Resources" << "DefaultImages").c_str();
+
+	string testch = "", testsa = "", testdi = "", testil = "";
 	if (pt = el->Attribute("Characters"))		get_att(el, "Characters", testch);
 	if (pt = el->Attribute("Saves"))			get_att(el, "Saves", testsa);
+	if (pt = el->Attribute("Items"))			get_att(el, "Items", testil);
 	if (pt = el->Attribute("BackupSaves"))		get_att(el, "BackupSaves", folders.backupsaves);
 	if (pt = el->Attribute("DefaultImages"))	get_att(el, "DefaultImages", testdi);
 	if (pt = el->Attribute("PreferDefault"))	get_att(el, "PreferDefault", folders.preferdefault);
+
 	if (testch != "")
 	{
-		DirPath locationch = DirPath() << testch;
-		XMLFileList test(locationch, "*.*girlsx");
-		if (test.size() > 0)
+		DirPath abs_ch = DirPath(testch.c_str());
+		DirPath rel_ch = DirPath() << testch;
+		FileList abstest(abs_ch, "*.*girlsx");
+		FileList reltest(rel_ch, "*.*girlsx");
+		if (abstest.size() > 0)
 		{
-			folders.characters = testch;
-			l.ss() << "Success: config.xml: Loading Characters from: " << locationch << "\n"; l.ssend();
+			folders.characters = abs_ch.c_str();
 			folders.configXMLch = true;
+			l.ss() << "Success: config.xml: Loading Characters from absolute location: " << folders.characters; l.ssend();
+		}
+		else if (reltest.size() > 0)
+		{
+			folders.characters = rel_ch.c_str();
+			folders.configXMLch = true;
+			l.ss() << "Success: config.xml: Loading Characters from relative location: " << folders.characters; l.ssend();
 		}
 		else
 		{
-			l.ss() << "\n\nWarning: config.xml: Characters folder '" << locationch << "' does not exist or has no girls in it.\nDefaulting to ./Resources/Characters\n\n"; l.ssend();
+			l.ss() << "\nWarning: config.xml: Characters folder '" << testch << "' does not exist or has no girls in it.\n\tDefaulting to ./Resources/Characters"; l.ssend();
 		}
 	}
 	if (testsa != "")
 	{
-		DirPath locationsa = DirPath() << testsa;
+		DirPath abs_sa = DirPath(testsa.c_str());
+		DirPath rel_sa = DirPath() << testsa;
 		FILE *fp;
-		DirPath testloc = DirPath() << testsa << ".Whore Master Save Games folder";
-		if ((fp = fopen(testloc, "w")) != 0)
+		DirPath testloc = DirPath(abs_sa) << ".Whore Master Save Games folder";
+		if ((fp = fopen(testloc, "w")) != 0) fclose(fp);
+		DirPath testlocrel = DirPath(rel_sa) << ".Whore Master Save Games folder";
+		if ((fp = fopen(testlocrel, "w")) != 0) fclose(fp);
+		FileList abstest(abs_sa, "*.*");
+		FileList reltest(rel_sa, "*.*");
+
+		if (abstest.size() > 0)
 		{
-			fclose(fp);
-		}
-		XMLFileList test(locationsa, "*.*");
-		if (test.size() > 0)
-		{
-			folders.saves = testsa;
-			l.ss() << "Success: config.xml: Loading Saves from: " << locationsa << "\n"; l.ssend();
+			folders.saves = abs_sa.c_str();
 			folders.configXMLsa = true;
+			l.ss() << "Success: config.xml: Loading Saves from absolute location: " << folders.saves; l.ssend();
+		}
+		else if (reltest.size() > 0)
+		{
+			folders.saves = rel_sa.c_str();
+			folders.configXMLsa = true;
+			l.ss() << "Success: config.xml: Loading Saves from relative location: " << folders.saves; l.ssend();
 		}
 		else
 		{
-			l.ss() << "\n\nWarning: config.xml: Save game folder '" << locationsa << "' does not exist.\nDefaulting to ./Saves\n\n"; l.ssend();
+			l.ss() << "\nWarning: config.xml: Save game folder '" << testsa << "' does not exist.\n\tDefaulting to ./Saves"; l.ssend();
+		}
+	}
+	if (testil != "")
+	{
+		DirPath abs_il = DirPath(testil.c_str());
+		DirPath rel_il = DirPath() << testil;
+		FileList abstest(abs_il, "*.itemsx");
+		FileList reltest(rel_il, "*.itemsx");
+		if (abstest.size() > 0)
+		{
+			folders.items = abs_il.c_str();
+			folders.configXMLil = true;
+			l.ss() << "Success: config.xml: Loading Items from absolute location: " << folders.items; l.ssend();
+		}
+		else if (reltest.size() > 0)
+		{
+			folders.items = rel_il.c_str();
+			folders.configXMLil = true;
+			l.ss() << "Success: config.xml: Loading Items from relative location: " << folders.items; l.ssend();
+		}
+		else
+		{
+			l.ss() << "\nWarning: config.xml: Items folder '" << testil << "' does not exist or has no Items in it.\n\tDefaulting to ./Resources/Items"; l.ssend();
 		}
 	}
 	if (testdi != "")
 	{
-		DirPath locationdi = DirPath() << testdi;
-		XMLFileList testdig(locationdi, "*.*g");
-		XMLFileList testdia(locationdi, "*.ani");
-		if (testdig.size() > 0 || testdia.size() > 0)
+		DirPath abs_di = DirPath(testdi.c_str());
+		DirPath rel_di = DirPath() << testdi;
+		FileList abstest(abs_di, "*.*g"); abstest.add("*.ani"); abstest.add("*.gif");
+		FileList reltest(rel_di, "*.*g"); reltest.add("*.ani"); reltest.add("*.gif");
+
+		if (abstest.size() > 0)
 		{
-			folders.defaultimageloc = testdi;
-			l.ss() << "Success: config.xml: Loading Default Images from: " << locationdi; l.ssend();
+			folders.defaultimageloc = abs_di.c_str();
 			folders.configXMLdi = true;
+			l.ss() << "Success: config.xml: Loading Default Images from absolute location: " << folders.defaultimageloc; l.ssend();
+		}
+		else if (reltest.size() > 0)
+		{
+			folders.defaultimageloc = rel_di.c_str();
+			folders.configXMLdi = true;
+			l.ss() << "Success: config.xml: Loading Default Images from relative location: " << folders.defaultimageloc; l.ssend();
 		}
 		else
 		{
-			l.ss() << "\n\nWarning: config.xml: Default Images folder '" << locationdi << "' does not exist or has no images in it.\n\n"; l.ssend();
+			l.ss() << "\nWarning: config.xml: Default Images folder '" << testdi << "' does not exist or has no images in it."; l.ssend();
 		}
 	}
-
-
-
-
 }
 
 void sConfigData::get_resolution_data(TiXmlElement *el)
@@ -289,20 +373,23 @@ void sConfigData::get_resolution_data(TiXmlElement *el)
 		}
 		else
 		{
-			l.ss() << "\n\nWarning: config.xml:\n'Resolution' attribute points to an invalid interface folder:\ndefaulting to 'J_1024x768'\n\n"; l.ssend();
+			l.ss() << "\nWarning: config.xml:\n'Resolution' attribute points to an invalid interface folder:\n\tDefaulting to 'J_1024x768'\n \n"; l.ssend();
 		}
 	}
 	else
 	{
-		l.ss() << "\n\nWarning: config.xml: No Resolution specified, using defaults.\n\n"; l.ssend();
+		l.ss() << "\nWarning: config.xml: No Resolution specified, using defaults."; l.ssend();
 	}
 	if (pt = el->Attribute("Width"))			{ get_att(el, "Width", &resolution.width);		resolution.configXML = true; }
 	if (pt = el->Attribute("Height"))			{ get_att(el, "Height", &resolution.height);	resolution.configXML = true; }
 	if (pt = el->Attribute("ScaleWidth"))		{ get_att(el, "ScaleWidth", &resolution.scalewidth); }
 	if (pt = el->Attribute("ScaleHeight"))		{ get_att(el, "ScaleHeight", &resolution.scaleheight); }
 	if (pt = el->Attribute("FullScreen"))		{ get_att(el, "FullScreen", resolution.fullscreen); }
+	if (pt = el->Attribute("FixedScale"))		{ get_att(el, "FixedScale", resolution.fixedscale); }
 	if (pt = el->Attribute("ListScrollAmount"))	{ get_att(el, "ListScrollAmount", &resolution.list_scroll); }
 	if (pt = el->Attribute("TextScrollAmount"))	{ get_att(el, "TextScrollAmount", &resolution.text_scroll); }
+	if (pt = el->Attribute("NextTurnEnter"))	{ get_att(el, "NextTurnEnter", resolution.next_turn_enter); }
+
 }
 
 void sConfigData::get_initial_values(TiXmlElement *el)
@@ -321,6 +408,8 @@ void sConfigData::get_initial_values(TiXmlElement *el)
 	if (pt = el->Attribute("AutoCombatEquip"))		get_att(el, "AutoCombatEquip", initial.auto_combat_equip);	// `J` moved from items
 	if (pt = el->Attribute("TortureTraitWeekMod"))	get_att(el, "TortureTraitWeekMod", &initial.torture_mod);
 	if (pt = el->Attribute("HoroscopeType"))		get_att(el, "HoroscopeType", &initial.horoscopetype);
+	if (pt = el->Attribute("AutoCreateMovies"))		get_att(el, "AutoCreateMovies", initial.autocreatemovies);
+
 }
 
 void sConfigData::get_income_factors(TiXmlElement *el)
@@ -442,17 +531,17 @@ void sConfigData::get_catacombs_data(TiXmlElement *el)
 	if (checkggirl == 0) catacombs.girl_gets_girls = catacombs.girl_gets_items = catacombs.girl_gets_beast = (100 / 3);
 	else if (checkggirl != 100)
 	{
-		catacombs.girl_gets_girls = (100.0 / checkggirl) * catacombs.girl_gets_girls;
-		catacombs.girl_gets_items = (100.0 / checkggirl) * catacombs.girl_gets_items;
-		catacombs.girl_gets_beast = 100.0 - catacombs.girl_gets_girls - catacombs.girl_gets_items;
+		catacombs.girl_gets_girls = int((100.0 / checkggirl) * (double)catacombs.girl_gets_girls);
+		catacombs.girl_gets_items = int((100.0 / checkggirl) * (double)catacombs.girl_gets_items);
+		catacombs.girl_gets_beast = int(100.0 - (double)catacombs.girl_gets_girls - (double)catacombs.girl_gets_items);
 	}
 	double checkggang = catacombs.gang_gets_girls + catacombs.gang_gets_items + catacombs.gang_gets_beast;
 	if (checkggang == 0) catacombs.gang_gets_girls = catacombs.gang_gets_items = catacombs.gang_gets_beast = (100 / 3);
 	else if (checkggang != 100)
 	{
-		catacombs.gang_gets_girls = (100.0 / checkggang) * catacombs.gang_gets_girls;
-		catacombs.gang_gets_items = (100.0 / checkggang) * catacombs.gang_gets_items;
-		catacombs.gang_gets_beast = 100.0 - catacombs.gang_gets_girls - catacombs.gang_gets_items;
+		catacombs.gang_gets_girls = int((100.0 / checkggang) * (double)catacombs.gang_gets_girls);
+		catacombs.gang_gets_items = int((100.0 / checkggang) * (double)catacombs.gang_gets_items);
+		catacombs.gang_gets_beast = int(100.0 - (double)catacombs.gang_gets_girls - (double)catacombs.gang_gets_items);
 	}									 
 }
 
@@ -511,7 +600,7 @@ void sConfigData::get_font_data(TiXmlElement *el)
 void sConfigData::get_debug_flags(TiXmlElement *el)
 {
 	const char *pt;
-	if (pt = el->Attribute("LogAll"))				get_att(el, "LogItems", debug.log_all);
+	if (pt = el->Attribute("LogAll"))				get_att(el, "LogAll", debug.log_all);
 
 	if (debug.log_all) debug.log_girls = debug.log_rgirls = debug.log_girl_fights = debug.log_items = debug.log_fonts = debug.log_torture = debug.log_debug = debug.log_extra_details = debug.log_show_numbers = debug.log_all;
 	else
@@ -539,6 +628,8 @@ void sConfigData::set_defaults()
 	folders.configXMLch = false;			// `J` if character's location is set in config.xml
 	folders.saves = "";						// `J` where the saves folder is located 
 	folders.configXMLsa = false;			// `J` if saves's location is set in config.xml
+	folders.items = "";						// `J` where the items folder is located 
+	folders.configXMLil = false;			// `J` if items's location is set in config.xml
 	folders.backupsaves = false;			// `J` backup saves in the version folder incase moving to the next version breaks the save
 	folders.defaultimageloc = "";			// `J` where the default images folder is located 
 	folders.configXMLdi = false;			// `J` if default images location is set in config.xml
@@ -550,9 +641,11 @@ void sConfigData::set_defaults()
 	resolution.scalewidth = 800;			// `J` added - Will be moved to interfaces
 	resolution.scaleheight = 600;			// `J` added - Will be moved to interfaces
 	resolution.fullscreen = false;			// `J` added - Will be moved to interfaces
+	resolution.fixedscale = false;			// `J` added for .06.02.39
 	resolution.configXML = false;			// `J` added - Will be changed to interfaces
 	resolution.list_scroll = 3;				// `Dagoth` added
 	resolution.text_scroll = 3;				// `Dagoth` added
+	resolution.next_turn_enter = false;		// `J` added - for `mjsmagalhaes`
 
 	initial.gold = 4000;
 	initial.girl_meet = 30;
@@ -567,6 +660,7 @@ void sConfigData::set_defaults()
 	initial.auto_combat_equip = true;
 	initial.torture_mod = 1;				// `J` added
 	initial.horoscopetype = 1;				// `J` added
+	initial.autocreatemovies = true;		// `J` added
 
 	in_fact.extortion = 1.0;				// `J` ?not used?
 	in_fact.brothel_work = 1.0;				// `J` ?not used?
@@ -575,7 +669,7 @@ void sConfigData::set_defaults()
 	in_fact.stripper_work = 1.0;			// `J` ?not used?
 	in_fact.barmaid_work = 1.0;				// `J` ?not used?
 	in_fact.slave_sales = 1.0;
-	in_fact.item_sales = 1.0;				// `J` ?not used?
+	in_fact.item_sales = 0.5;
 	in_fact.clinic_income = 1.0;			// `J` ?not used?
 	in_fact.arena_income = 1.0;				// `J` ?not used?
 	in_fact.farm_income = 1.0;				// `J` ?not used?
@@ -637,12 +731,12 @@ void sConfigData::set_defaults()
 	catacombs.unique_catacombs = 50;
 	catacombs.control_girls = false;
 	catacombs.control_gangs = false;
-	catacombs.girl_gets_girls = 33.33;
-	catacombs.girl_gets_items = 33.33;
-	catacombs.girl_gets_beast = 33.33;
-	catacombs.gang_gets_girls = 33.33;
-	catacombs.gang_gets_items = 33.33;
-	catacombs.gang_gets_beast = 33.33;
+	catacombs.girl_gets_girls = 34;
+	catacombs.girl_gets_items = 33;
+	catacombs.girl_gets_beast = 33;
+	catacombs.gang_gets_girls = 34;
+	catacombs.gang_gets_items = 33;
+	catacombs.gang_gets_beast = 33;
 
 	slavemarket.unique_market = 35;
 	slavemarket.slavesnewweeklymin = 5;
@@ -682,4 +776,3 @@ void sConfigData::set_defaults()
 	debug.log_extra_details = false;
 	debug.log_show_numbers = false;
 }
-

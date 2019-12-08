@@ -53,12 +53,20 @@ bool cJobManager::WorkFilmGroup(sGirl* girl, sBrothel* brothel, bool Day0Night1,
 		return false;
 	}
 
-	
 	stringstream ss;
 	string girlName = girl->m_Realname;
-	int wages = 50;
+	int wages = 50, tips = 0;
 	int enjoy = 0;
 	int jobperformance = 0;
+	int bonus = 0;
+
+	int roll = g_Dice.d100();
+	if (roll <= 10 && girl->disobey_check(ACTION_WORKMOVIE, brothel))
+	{
+		ss << girlName << " refused to do an orgy on film today.";
+		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
+		return true;
+	}
 
 	g_Girls.UnequipCombat(girl);	// not for actress (yet)
 
@@ -69,7 +77,7 @@ bool cJobManager::WorkFilmGroup(sGirl* girl, sBrothel* brothel, bool Day0Night1,
 	{
 		guys = 2;
 		jobperformance += 5;
-		ss << " worked as an actress filming a three-way.\n\n";
+		ss << " worked as an actress filming a three-way.\n \n";
 	}
 	else if (guys < 95)
 	{
@@ -83,56 +91,114 @@ bool cJobManager::WorkFilmGroup(sGirl* girl, sBrothel* brothel, bool Day0Night1,
 		else if (guys < 94)		guys = 8;
 		else if (guys < 98)		guys = 9;
 		else /*          */		guys = 10;
-		ss << " worked in a gang-bang scene with " << guys << " other people.\n\n";
+		ss << " worked in a gang-bang scene with " << guys << " other people.\n \n";
+	}
+	else if (!girl->has_trait("Lesbian") && girl->has_trait("Nymphomaniac") && girl->has_trait("Porn Star"))
+	{
+		jobperformance += 50;
+		guys = g_Dice % 240 + 120;
+		ss << " worked in a scene where she tried to set a new record by taking part in a " << guys << " men gangbang.\n \n";
 	}
 	else
 	{
 		jobperformance += 20;
 		guys = g_Dice % 40 + 11;
-		ss << " worked in a orgy scene with " << guys << " other people.\n\n";
+		ss << " worked in a orgy scene with " << guys << " other people.\n \n";
 	}
 
 	girl->tiredness(guys - 2);	// Extra tiredness per guy
 
-	int roll = g_Dice.d100();
-	if (roll <= 10 && g_Girls.DisobeyCheck(girl, ACTION_WORKMOVIE, brothel))
-	{
-		ss << "She refused to do an orgy on film today.\n";
-		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
-		return true;
-	}
-	else if (roll <= 10)
+	if (roll <= 10)
 	{
 		enjoy -= ((guys > 10 ? (guys / 10) : (guys / 2)) + 1);
-		ss << "She found it unpleasant fucking that many people.\n\n";
+		ss << "She found it unpleasant fucking that many people.\n \n";
 	}
-	else if (roll >= 90)
+	else if (roll >= 90 || (girl->has_trait("Nymphomaniac") && roll >= 50))
 	{
 		enjoy += (guys > 10 ? (guys / 10) : (guys / 2)) + 1;
-		ss << "She loved getting so much action, and wants more!\n\n";
+		ss << "She loved getting so much action, and wants more!\n \n";
 	}
 	else
 	{
 		enjoy += g_Dice % 2;
-		ss << "She wasn't really into having so much sex today, but managed to get through.\n\n";
+		ss << "She wasn't really into having so much sex today, but managed to get through.\n \n";
 	}
 	jobperformance = enjoy * 2;
 
-	if (g_Girls.CheckVirginity(girl))
+	if (girl->has_trait("Lolita") && g_Dice.percent(50))
 	{
-		g_Girls.LoseVirginity(girl);	// `J` updated for trait/status
+		ss << "With such a young looking girl on the cover, this movie is simply sure to sell out.\n \n";
+		jobperformance += 15;
+	}
+	if (girl->has_trait("Bimbo") && g_Dice.percent(50))
+	{
+		ss << "Her performance couldn't be considered acting. She just enjoyed a good dicking with a blissfully stupid smile on her face.\n \n";
+		jobperformance += 5;
+	}
+	if (girl->has_trait("Cute") && g_Dice.percent(50))
+	{
+		ss << "Such a cute girl doing her best to handle the rough ponding her co-stars gave her will surely make a few hearts skip a beat.\n \n";
+		jobperformance += 5;
+	}
+	if (girl->has_trait("Natural Pheromones") && g_Dice.percent(50))
+	{
+		ss << "Her scent drove the actors mad with lust. They went at it harder and wilder than the director had ordered.\n \n";
+		jobperformance += 5;
+	}
+	if (girl->has_trait("Fast Orgasms") && g_Dice.percent(50))
+	{
+		ss << "She came the second she got two dicks inside her. That was the first of many orgasms. She barely remembered her own name by the end of the scene.\n \n";
+		jobperformance += 5;
+	}
+	if (girl->has_trait("Great Arse") && g_Dice.percent(50))
+	{
+		ss << "Her ass jiggling with each thrust was a sight to behold. The camera mage made sure to capture its wiggly glory in slow motion.\n \n";
+		jobperformance += 5;
+	}
+	if (girl->has_trait("Plump") && g_Dice.percent(50))
+	{
+		ss << "She sure offered a lot of meat to work with. The wet and fleshy sound she made with each thrust is sure to drive the audience wild.\n \n";
+		jobperformance += 5;
+	}
+	if ((girl->has_trait("Fragile") || girl->has_trait("Delicate")) && g_Dice.percent(50))
+	{
+		ss << "This was somewhat rough for her, she was barely able to move by the end of the scene. Some people find that hot though.\n \n";
+		jobperformance += 5;
+		enjoy -= g_Dice % 5 - 2;
+	}
+	if (girl->breast_size() > 5 && g_Dice.percent(50))
+	{
+		ss << "Her gigantic breasts stole the spotlight towards the end of the scene when she pushed them together to collect her co-star's seed.\n \n";
+		jobperformance += 5;
+	}
+	if (girl->has_trait("Cum Addict") && g_Dice.percent(50))
+	{
+		ss << "She insisted that her co-stars collect their semen in a cup for her to drink at the end of the scene.\n \n";
+		jobperformance += 5;
+	}
+	if (girl->has_trait("Succubus") && g_Dice.percent(50))
+	{
+		ss << "After the camera stopped running, she grabed two actors and had another round with them.\n \n";
+		jobperformance += 5;
+	}
+
+	if (girl->check_virginity())
+	{
+		girl->lose_virginity();	// `J` updated for trait/status
 		jobperformance += 50;
 		ss << "She is no longer a virgin.\n";
 	}
 
-	sCustomer Cust; g_Customers.GetCustomer(Cust, brothel);	Cust.m_Amount = guys;
-	if (!girl->calc_group_pregnancy(&Cust, false, 1.0))
+	sCustomer Cust = g_Customers.GetCustomer(*brothel);
+	Cust.m_Amount = guys;
+	if (!girl->calc_group_pregnancy(Cust, false, 1.0))
 	{
 		g_MessageQue.AddToQue(girl->m_Realname + " has gotten pregnant", 0);
 	}
-
+	
+	bonus = (int)(jobperformance / 10);
 	// remaining modifiers are in the AddScene function --PP
-	int finalqual = g_Studios.AddScene(girl, SKILL_GROUP, jobperformance);
+	int finalqual = g_Studios.AddScene(girl, JOB_FILMGROUP, bonus);
 	ss << "Her scene is valued at: " << finalqual << " gold.\n";
 
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_GROUP, Day0Night1);
@@ -147,25 +213,26 @@ bool cJobManager::WorkFilmGroup(sGirl* girl, sBrothel* brothel, bool Day0Night1,
 		wages += (guys * 10);	// Extra pay per guy
 		wages += finalqual * 2;
 	}
-	girl->m_Pay = wages;
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 
 
 	// Improve stats
 	int xp = (((guys > 10 ? (guys / 10) : (guys / 2)) + 1) * 5);
 	int skill = ((guys > 10 ? (guys / 10) : (guys / 2)) + 1);
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 3; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 3; }
+	if (girl->has_trait("Quick Learner"))		{ skill += 1; xp += 3; }
+	else if (girl->has_trait("Slow Learner"))	{ skill -= 1; xp -= 3; }
 
-	g_Girls.UpdateStat(girl, STAT_EXP, xp);
-	g_Girls.UpdateSkill(girl, SKILL_PERFORMANCE, g_Dice%skill);
-	g_Girls.UpdateSkill(girl, SKILL_GROUP, g_Dice%skill + 1);
+	girl->exp(xp);
+	girl->performance(g_Dice%skill);
+	girl->group(g_Dice%skill + 1);
 
-	g_Girls.UpdateEnjoyment(girl, ACTION_SEX, enjoy);
-	g_Girls.UpdateEnjoyment(girl, ACTION_WORKMOVIE, enjoy);
+	girl->upd_Enjoyment(ACTION_SEX, enjoy);
+	girl->upd_Enjoyment(ACTION_WORKMOVIE, enjoy);
 	//gain
 	g_Girls.PossiblyGainNewTrait(girl, "Fake Orgasm Expert", 50, ACTION_SEX, "She has become quite the faker.", Day0Night1);
-	g_Girls.PossiblyGainNewTrait(girl, "Slut", 80, ACTION_SEX, girlName + " has turned into quite a slut.", Day0Night1);
+	g_Girls.PossiblyGainNewTrait(girl, "Slut", 80, ACTION_SEX, girlName + " has turned into quite a slut.", Day0Night1, EVENT_WARNING);
 	g_Girls.PossiblyGainNewTrait(girl, "Porn Star", 80, ACTION_WORKMOVIE, "She has performed in enough sex scenes that she has become a well known Porn Star.", Day0Night1);
 	//lose
 

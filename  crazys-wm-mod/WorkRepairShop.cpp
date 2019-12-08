@@ -49,7 +49,7 @@ bool cJobManager::WorkRepairShop(sGirl* girl, sBrothel* brothel, bool Day0Night1
 	stringstream ss; string girlName = girl->m_Realname; ss << girlName;
 	g_Girls.UnequipCombat(girl);	// not for patients
 
-	if (!g_Girls.HasTrait(girl, "Construct") && !g_Girls.HasTrait(girl, "Half-Construct"))
+	if (!girl->has_trait( "Construct") && !girl->has_trait( "Half-Construct"))
 	{
 		ss << girlName << " has no artificial parts so she was sent to the Healing center.";
 		if (Day0Night1 == SHIFT_DAY) girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_WARNING);
@@ -66,7 +66,7 @@ bool cJobManager::WorkRepairShop(sGirl* girl, sBrothel* brothel, bool Day0Night1
 	int tiredness = 10 + g_Dice % 21;	// build up as positive then apply as negative
 	int happy = 10 + g_Dice % 11;
 	int mana = 5 + (girl->magic() / 5);
-	int libido = (g_Girls.HasTrait(girl, "Nymphomaniac") ? 15 : 5);
+	int libido = (girl->has_trait( "Nymphomaniac") ? 15 : 5);
 
 	if (nummecs + numnurse < 1)
 	{
@@ -79,7 +79,7 @@ bool cJobManager::WorkRepairShop(sGirl* girl, sBrothel* brothel, bool Day0Night1
 	if (nummecs > 0)
 	{
 		ss << "the Mechanic" << (nummecs > 1 ? "s" : "");
-		if (g_Girls.HasTrait(girl, "Half-Construct") && girl->m_DayJob == JOB_GETREPAIRS && girl->m_NightJob == JOB_GETREPAIRS)
+		if (girl->has_trait( "Half-Construct") && girl->m_DayJob == JOB_GETREPAIRS && girl->m_NightJob == JOB_GETREPAIRS)
 		{	// if fixed by Mechanic for both shifts.
 			health += 20;	// Total 40 healing per day, heals less because Mechanic does not fix living tissue.
 		}
@@ -99,48 +99,46 @@ bool cJobManager::WorkRepairShop(sGirl* girl, sBrothel* brothel, bool Day0Night1
 	}
 	if (nummecs + numnurse >= 4 && g_Dice.percent(50))	// lots of people making sure she is in good working order
 	{
-		g_Girls.UpdateStat(girl, STAT_CONSTITUTION, 1);
+		girl->constitution(1);
 	}
 	ss << (((nummecs > 1 && numnurse < 1) || numnurse > 1) ? " take" : " takes") << " care of her.";
 
 	// Improve girl
-	if (g_Girls.HasTrait(girl, "Lesbian"))		libido += numnurse;
-	if (g_Girls.HasTrait(girl, "Masochist"))	libido += 1;
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))	libido += 2;
+	if (girl->has_trait( "Lesbian"))		libido += numnurse;
+	if (girl->has_trait( "Masochist"))	libido += 1;
+	if (girl->has_trait( "Nymphomaniac"))	libido += 2;
 
-	g_Girls.UpdateStat(girl, STAT_HEALTH, health, false);
-	g_Girls.UpdateStat(girl, STAT_TIREDNESS, -tiredness, false);
-	g_Girls.UpdateStat(girl, STAT_HAPPINESS, happy);
-	g_Girls.UpdateStat(girl, STAT_MANA, mana);
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
-	if (g_Dice % 10 == 0) g_Girls.UpdateSkill(girl, SKILL_MEDICINE, 1);	// `J` she watched what the doctors and nurses were doing
+	girl->upd_stat(STAT_HEALTH, health, false);
+	girl->upd_stat(STAT_TIREDNESS, -tiredness, false);
+	girl->happiness(happy);
+	girl->mana(mana);
+	girl->upd_temp_stat(STAT_LIBIDO, libido);
+	if (g_Dice % 10 == 0) girl->medicine(1);	// `J` she watched what the doctors and nurses were doing
 
-	g_Girls.UpdateStat(girl, STAT_EXP, 1);   // Just because!
+	girl->exp(1);   // Just because!
 
 	// send her to the waiting room when she is healthy
 	if (girl->health() > 90 && girl->tiredness() < 10)
 	{
-		if (nummecs + numnurse < 1)	ss << "\n\nShe wanders out of the Clinic when she is feeling better.";
-		else						ss << "\n\nShe has been released from the Clinic.";
+		if (nummecs + numnurse < 1)	ss << "\n \nShe wanders out of the Clinic when she is feeling better.";
+		else						ss << "\n \nShe has been released from the Clinic.";
+		if (girl->m_DayJob == JOB_GETHEALING)	girl->m_DayJob = JOB_CLINICREST;
+		if (girl->m_NightJob == JOB_GETHEALING)	girl->m_NightJob = JOB_CLINICREST;
 		if (girl->m_DayJob == JOB_GETREPAIRS)	girl->m_DayJob = JOB_CLINICREST;
 		if (girl->m_NightJob == JOB_GETREPAIRS)	girl->m_NightJob = JOB_CLINICREST;
 	}
 
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, Day0Night1);
 
-
 	return false;
 }
 
 double cJobManager::JP_RepairShop(sGirl* girl, bool estimate)
 {
+	if (!girl->has_trait( "Construct") && !girl->has_trait( "Half-Construct")) return -1000;
 	double jobperformance = 0.0;
-	if (estimate)	// for third detail string - how much do they need this?
-	{
-		if (!g_Girls.HasTrait(girl, "Construct") && !g_Girls.HasTrait(girl, "Half-Construct")) return -1000;
-		jobperformance += (100 - girl->health());
-		jobperformance += (100 - girl->happiness());
-		jobperformance += girl->tiredness();
-	}
+	jobperformance += (100 - girl->health());
+	jobperformance += (100 - girl->happiness());
+	jobperformance += girl->tiredness();
 	return jobperformance;
 }

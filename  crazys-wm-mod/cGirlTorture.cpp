@@ -31,8 +31,8 @@ extern	cMessageQue		g_MessageQue;
 extern	cBrothelManager	g_Brothels;
 extern	bool			g_Cheats;
 extern	int				g_CurrBrothel;
-
-extern cPlayer* The_Player;
+extern	CLog			g_LogFile;
+extern	cPlayer*		The_Player;
 
 /*
 * ideally, we'd keep a queue of message strings and
@@ -41,10 +41,7 @@ extern cPlayer* The_Player;
 cGirlTorture::~cGirlTorture()		// deconstructor
 {
 	int color = COLOR_BLUE;
-	if (m_Girl->m_RunAway != 0)
-	{
-		color = COLOR_RED;
-	}
+	if (m_Girl->m_RunAway != 0) color = COLOR_RED;
 
 	// Display any outstanding messages
 	if (!m_Message.empty())
@@ -64,6 +61,7 @@ cGirlTorture::~cGirlTorture()		// deconstructor
 
 cGirlTorture::cGirlTorture(sGirl* a_girl)		// Torture girl by player
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture(sGirl* a_girl)"; g_LogFile.ssend(); }
 	// Init for DoTorture()
 	m_TorturedByPlayer = true;
 	m_Dungeon = g_Brothels.GetDungeon();
@@ -76,13 +74,14 @@ cGirlTorture::cGirlTorture(sGirl* a_girl)		// Torture girl by player
 		return;
 	}
 
-	// Sanity check for Girl is not in dungeon 
+	// Sanity check for Girl is not in dungeon
 	m_Message += m_Girl->m_Realname;
-	m_Message += gettext(" cannot be tortured unless in the dungeon!");
+	m_Message += " cannot be tortured unless in the dungeon!";
 }
 
 cGirlTorture::cGirlTorture(sDungeonGirl* a_girl)	// Torture Dungeon girl by player
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture(sDungeonGirl* a_girl)"; g_LogFile.ssend(); }
 	// Init for DoTorture()
 	m_TorturedByPlayer = true;
 	m_DungeonGirl = a_girl;
@@ -94,6 +93,7 @@ cGirlTorture::cGirlTorture(sDungeonGirl* a_girl)	// Torture Dungeon girl by play
 
 cGirlTorture::cGirlTorture(sDungeonGirl* a_girl, sGirl* Tourturer)
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture::cGirlTorture(sDungeonGirl* a_girl, sGirl* Tourturer)"; g_LogFile.ssend(); }
 	// Init for DoTorture()
 	m_TorturedByPlayer = false;
 	m_DungeonGirl = a_girl;
@@ -106,6 +106,7 @@ cGirlTorture::cGirlTorture(sDungeonGirl* a_girl, sGirl* Tourturer)
 
 void cGirlTorture::DoTorture()
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture::DoTorture()"; g_LogFile.ssend(); }
 	/*
 	*	These variables to be initilisied befor calling DoTorture()
 	*		bool			m_TorturedByPlayer
@@ -116,49 +117,43 @@ void cGirlTorture::DoTorture()
 	*/
 
 	// Sanity check. Abort on dead girl
-	if (m_Girl->health() <= 0) return;
+	if (m_Girl->is_dead()) return;
 
 	m_Fight = false;
 
 	string sGirlName = m_Girl->m_Realname;
 	string sMsg = "";
-	CLog	l;
-	bool bDebug = cfg.debug.log_torture();
 
-	if (bDebug)
+	if (cfg.debug.log_torture())
 	{
-		if (m_TorturedByPlayer) l.ss() << "\ncGirlTorture: Player is torturing " << sGirlName << ".";
-		else l.ss() << "\ncGirlTorture: " << m_Torturer->m_Realname << " is torturing " << sGirlName << ".";
-		l.ssend();
+		if (m_TorturedByPlayer) g_LogFile.ss() << "\ncGirlTorture: Player is torturing " << sGirlName << ".";
+		else g_LogFile.ss() << "\ncGirlTorture: " << m_Torturer->m_Realname << " is torturing " << sGirlName << ".";
+		g_LogFile.ssend();
 	}
-	/*
-	*	clear down the message and start with her name
-	*/
+
+	// clear down the message and start with her name
 	m_Message = "";
 	if (m_TorturedByPlayer) m_Message = sGirlName + ": ";
-	/*
-	*	only allow this once a week
-	*/
+
 	// WD	Don't allow girls to be tortured by both the Player and the Torturer
-	if (m_Girl->m_Tort && !g_Cheats)
+	if (m_Girl->m_Tort && !g_Cheats)		// only allow this once a week unless cheating
 	{
-		if (m_TorturedByPlayer) m_Message += gettext("You may only torture someone once per week.\n");
-		else m_Message += sGirlName + gettext(" has already been tortured this week.\n");
+		if (m_TorturedByPlayer) m_Message += "You may only torture someone once per week.\n";
+		else m_Message += sGirlName + " has already been tortured this week.\n";
 		return;
 	}
-
 
 	// Don't torture new mums
 	if (m_Girl->m_JustGaveBirth)
 	{
 		if (m_TorturedByPlayer)
 		{
-			m_Message += gettext("She has given birth and has the week off. So she and will not be tortured.\n");
+			m_Message += "She has given birth and has the week off. So she and will not be tortured.\n";
 		}
 		else
 		{
-			sMsg = sGirlName + gettext(" gave birth and had the week off so was not tortured this week.");
-			m_Message += gettext("Since ") + sGirlName + gettext(" gave birth she was not tortured this week.\n");
+			sMsg = sGirlName + " gave birth and had the week off so was not tortured this week.\n";
+			m_Message += "Since " + sGirlName + " gave birth she was not tortured this week.\n";
 			//m_Girl->m_Events.AddMessage(sMsg, IMGTYPE_PROFILE, EVENT_DUNGEON);
 			m_Torturer->m_Events.AddMessage(sMsg, IMGTYPE_PROFILE, EVENT_DUNGEON);
 		}
@@ -166,28 +161,14 @@ void cGirlTorture::DoTorture()
 	}
 
 	m_Girl->m_Tort = true;
-	if (!m_TorturedByPlayer)
-		m_Dungeon->NumGirlsTort(+1);
-
-#if 0
-	/*
-	*	WD	Way too much evilness for torturing moved
-	*		this to runaway code in girl_escapes()
-	*
-	*	add 5 evil points for attempted torture.
-	*	original code had this as non-slave only...
-	*/
-	The_Player->evil(5);
-#endif
+	if (!m_TorturedByPlayer) m_Dungeon->NumGirlsTort(+1);
 
 	/*
 	*	OK: she may fight, and if she wins she'll escape
 	*
-	*	BUG: Intermitent crash if cGirlGangFight() is
-	*		is called when tortured by Girl not Player
+	*	BUG: Intermitent crash if cGirlGangFight() is called when tortured by Girl not Player
 	*
-	*	WD:	To balance this halve chance of gaining trait
-	*		in cGirlTorture::add_trait()
+	*	WD:	To balance this halve chance of gaining trait in cGirlTorture::add_trait()
 	*/
 	if (m_TorturedByPlayer)
 	{
@@ -195,39 +176,27 @@ void cGirlTorture::DoTorture()
 	}
 
 	/*
-	*	on the grounds that while intending to torture someone is bad
-	*	actually doing it is worse still...
+	*	on the grounds that while intending to torture someone is bad actually doing it is worse still...
 	*
 	*	also if she's not a slave that's a bit worse still
-	*	(allowing players who need to discipline their slaves
-	*	a bit of a break...)
+	*	(allowing players who need to discipline their slaves a bit of a break...)
 	*
-	*	WD	With changes to cPlayer stats how quickly you gain Evil depends
-	*		on how evil you currently are. Limited to min of 1 point.
+	*	WD	With changes to cPlayer stats how quickly you gain Evil depends on how evil you currently are. Limited to min of 1 point.
 	*
 	*/
 	if (m_TorturedByPlayer)
 	{
-		if (m_Girl->is_slave())
-			The_Player->evil(5);
-		else
-			The_Player->evil(10);
+		The_Player->evil(m_Girl->is_slave() ? 5 : 10);
 	}
 	else	// Tortured by Girl
 	{
-		if (m_Girl->is_slave())
-			The_Player->evil(2);
-		else
-			The_Player->evil(4);
-
+		The_Player->evil(m_Girl->is_slave() ? 2 : 4);
 	}
 	/*
 	*	now add one of a number of torture messages...
 	*/
-	if (m_TorturedByPlayer)
-		AddTextPlayer();
-	else
-		AddTextTorturerGirl();
+	if (m_TorturedByPlayer) AddTextPlayer();
+	else/*               */	AddTextTorturerGirl();
 	/*
 	*	check for injury
 	*/
@@ -235,11 +204,11 @@ void cGirlTorture::DoTorture()
 	{
 		if (m_TorturedByPlayer)
 		{
-			m_Message += gettext(" You were a little too heavy handed and badly injure her.\n");
+			m_Message += " You were a little too heavy handed and badly injure her.\n";
 		}
 		else
 		{
-			sMsg = sGirlName + gettext(" was seriously injured in the dungeon this week.");
+			sMsg = sGirlName + " was seriously injured in the dungeon this week.\n";
 			m_Girl->m_Events.AddMessage(sMsg, IMGTYPE_TORTURE, EVENT_WARNING);
 			m_Torturer->m_Events.AddMessage(sMsg, IMGTYPE_PROFILE, EVENT_DUNGEON);
 		}
@@ -258,22 +227,20 @@ void cGirlTorture::DoTorture()
 	*	DANGER DEATH and low health warnings
 	*
 	*/
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || DANGER DEATH"; g_LogFile.ssend(); }
 	if (m_TorturedByPlayer)
 	{
-		if (m_Girl->health() <= 0)		// Dead Girl
-			m_Message += gettext("She unfortunatly died from her wounds.\n");
-
+		if (m_Girl->is_dead())		// Dead Girl
+			m_Message += "She unfortunatly died from her wounds.\n";
 		else if (m_Girl->health() < 20)
-			m_Message += gettext("Also, she is close to death.\n");
+			m_Message += "Also, she is close to death.\n";
 
 	}
-
 	else	// Tortured by Torturer Girl
 	{
-		if (m_Girl->health() <= 0)
+		if (m_Girl->is_dead())
 		{
-			sMsg = gettext("While torturing ") + sGirlName +
-				gettext(" in the dungeon she died from her wounds.");
+			sMsg = "While torturing " + sGirlName + " in the dungeon she died from her wounds.";
 			m_Torturer->m_Events.AddMessage(sMsg, IMGTYPE_PROFILE, EVENT_DANGER);
 		}
 		else if (m_Girl->health() < 20)
@@ -282,16 +249,16 @@ void cGirlTorture::DoTorture()
 			if (!m_DungeonGirl->m_Feeding)
 			{
 				m_DungeonGirl->m_Feeding = true;
-				sMsg = m_Torturer->m_Realname + gettext(" has allowed ") + sGirlName +
-					gettext("  to eat because her health was low.\n");
+				sMsg = m_Torturer->m_Realname + " has allowed " + sGirlName +
+					"  to eat because her health was low.\n";
 				m_Message += m_Torturer->m_Realname +
-					gettext(" was allowed her food because her health was low.\n");
+					" was allowed her food because her health was low.\n";
 				m_Girl->m_Events.AddMessage(sMsg, IMGTYPE_TORTURE, EVENT_DANGER);
 				m_Torturer->m_Events.AddMessage(sMsg, IMGTYPE_PROFILE, EVENT_DANGER);
 			}
 			else
 			{
-				sMsg = sGirlName + gettext("  health is low from ongoing torture.");
+				sMsg = sGirlName + "  health is low from ongoing torture.";
 				// WD	Low health warnings done as part of cDungeon::Update()
 				//m_Girl->m_Events.AddMessage(sMsg, IMGTYPE_TORTURE, EVENT_DANGER);
 				m_Torturer->m_Events.AddMessage(sMsg, IMGTYPE_PROFILE, EVENT_DANGER);
@@ -299,36 +266,31 @@ void cGirlTorture::DoTorture()
 
 		}
 	}
-
-	if (bDebug)
-	{
-		l.ss() << "cGirlTorture: " << sGirlName << " torture completed!\n";
-		l.ssend();
-	}
-
+	if (cfg.debug.log_torture()) { g_LogFile.ss() << "cGirlTorture: " << sGirlName << " torture completed!\n"; g_LogFile.ssend(); }
 }
 
 void cGirlTorture::AddTextPlayer()
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture::AddTextPlayer()"; g_LogFile.ssend(); }
 	bool was, is;
 
 	int mes = g_Dice.in_range(0, 4);
 	switch (mes) {
 	case 0:
-		m_Message += gettext("you torture her for hours leaving her sobbing.\n");
+		m_Message += "you torture her for hours leaving her sobbing.\n";
 		break;
 	case 1:
-		m_Message += gettext("you enjoy giving out all manners of pain imaginable.");
+		m_Message += "you enjoy giving out all manners of pain imaginable.\n";
 		break;
 	case 2:
-		m_Message += gettext("you place a small wormlike creature called a vorm in her pussy and watch as it painfully sucks fluid from her.");
+		m_Message += "you place a small wormlike creature called a vorm in her pussy and watch as it painfully sucks fluid from her.\n";
 		break;
 	case 3:
-		m_Message += gettext("after beating her around and using a few torture devices, you sit and watch her crying and cowering in the corner for a time.");
+		m_Message += "after beating her around and using a few torture devices, you sit and watch her crying and cowering in the corner for a time.\n";
 		break;
 	case 4:
 	default:
-		m_Message += gettext("you rape her many times making sure she is as uncomfotable as possible.");
+		m_Message += "you rape her many times making sure she is as uncomfotable as possible.\n";
 		/*
 		*		see if she was preggers before the rape
 		*		check to see if the rape made her pregnant
@@ -351,28 +313,30 @@ void cGirlTorture::AddTextPlayer()
 		*/
 		if (is && !was)
 		{
-			m_Message += gettext(" She is now pregnant.");
+			m_Message += " She is now pregnant.";
 		}
-		g_Girls.LoseVirginity(m_Girl);
+		m_Girl->lose_virginity();
 		break;
 	}
 }
 
 void cGirlTorture::AddTextTorturerGirl()
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture::AddTextTorturerGirl()"; g_LogFile.ssend(); }
 	/*
 	*		Sumary messages for Torture by girl
 	*/
 	if (m_DungeonGirl->m_Feeding)
-		m_Message += m_Girl->m_Realname + gettext(" has been tortured.\n");
+		m_Message += m_Girl->m_Realname + " has been tortured.\n";
 
 	else
-		m_Message += m_Girl->m_Realname + gettext(" has been tortured and starved.");
+		m_Message += m_Girl->m_Realname + " has been tortured and starved.\n";
 
 }
 
 void cGirlTorture::UpdateStats()
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture::UpdateStats()"; g_LogFile.ssend(); }
 	/*
 	*	WD Stats based on ortiginal torture job code
 	*
@@ -382,15 +346,15 @@ void cGirlTorture::UpdateStats()
 	{
 		m_Girl->health(-7);
 		m_Girl->happiness(-7);
-		m_Girl->constitution(g_Dice % 1);
+		m_Girl->constitution(1 + g_Dice % 5); // 1 ~ 5
 		m_Girl->confidence(-7);
-		m_Girl->obedience(9 + g_Dice % 3);
-		m_Girl->spirit(-4 - g_Dice % 3);
-		m_Girl->tiredness(2 - g_Dice % 8);
+		m_Girl->obedience(9 + g_Dice % 3);    // 9 ~ 11
+		m_Girl->spirit(-4 - g_Dice % 3);      // -4 ~ -6
+		m_Girl->tiredness(-5 - g_Dice % 3);   // -5 ~ -7
 		m_Girl->pchate(6);
 		m_Girl->pclove(-10);
 		m_Girl->pcfear(10);
-		m_Girl->bdsm(g_Dice % 3 - 1);
+		m_Girl->bdsm(1 + g_Dice % 5);         // 1 ~ 5
 	}
 	else if (m_Girl->health() > 10)
 	{
@@ -403,12 +367,12 @@ void cGirlTorture::UpdateStats()
 		m_Girl->tiredness(-5);
 		m_Girl->pchate(3);
 		m_Girl->pclove(-5);
-		m_Girl->pcfear(7);
+		m_Girl->pcfear(5);
 		m_Girl->bdsm(1);
 	}
 
 	// do safer torture
-	else	//	(m_Girl->health() <= 10)						
+	else	//	(m_Girl->health() <= 10)
 	{
 		m_Girl->happiness(-2);
 		m_Girl->confidence(-2);
@@ -423,6 +387,7 @@ void cGirlTorture::UpdateStats()
 
 bool cGirlTorture::IsGirlInjured(unsigned int unModifier)
 {  // modifier: 5 = 5% chance, 10 = 10% chance
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture::IsGirlInjured(unsigned int unModifier)"; g_LogFile.ssend(); }
 
 	// Sanity check, Can't get injured
 	if (m_Girl->has_trait("Incorporeal")) return false;
@@ -472,26 +437,26 @@ bool cGirlTorture::IsGirlInjured(unsigned int unModifier)
 		{
 			m_Girl->add_trait("Horrific Scars", false);
 			if (m_TorturedByPlayer)
-				m_Message += gettext("She was badly injured, and now has to deal with Horrific Scars.\n");
+				m_Message += "She was badly injured, and now has to deal with Horrific Scars.\n";
 			else
-				MakeEvent(sGirlName + gettext(" was badly injured, and now has Horrific Scars.\n"));
+				MakeEvent(sGirlName + " was badly injured, and now has Horrific Scars.\n");
 		}
 		else if (chance <= 2)
 		{
 			m_Girl->add_trait("Small Scars", false);
 			if (m_TorturedByPlayer)
-				m_Message += gettext("She was injured and now has a couple of Small Scars.\n");
+				m_Message += "She was injured and now has a couple of Small Scars.\n";
 			else
-				MakeEvent(sGirlName + gettext(" was injured, and now has Small Scars.\n"));
+				MakeEvent(sGirlName + " was injured, and now has Small Scars.\n");
 		}
 		else
 		{
 			m_Girl->add_trait("Cool Scars", false);
 			if (m_TorturedByPlayer)
-				m_Message += gettext("She was injured and scarred. As scars go however, at least they are pretty Cool Scars.\n");
+				m_Message += "She was injured and scarred. As scars go however, at least they are pretty Cool Scars.\n";
 			else
-				MakeEvent(sGirlName + gettext(" was injured and scarred. She now has Cool Scars.\n"));
-		}
+				MakeEvent(sGirlName + " was injured and scarred. She now has Cool Scars.\n");
+        }
 	}
 
 	// in rare cases, she might even lose an eye
@@ -504,17 +469,17 @@ bool cGirlTorture::IsGirlInjured(unsigned int unModifier)
 		{
 			m_Girl->add_trait("One Eye", false);
 			if (m_TorturedByPlayer)
-				m_Message += gettext("Oh, no! She was badly injured, and now only has One Eye!\n");
+				m_Message += "Oh, no! She was badly injured, and now only has One Eye!\n";
 			else
-				MakeEvent(sGirlName + gettext(" was badly injured and lost an eye.\n"));
+				MakeEvent(sGirlName + " was badly injured and lost an eye.\n");
 		}
 		else
 		{
 			m_Girl->add_trait("Eye Patch", false);
 			if (m_TorturedByPlayer)
-				m_Message += gettext("She was injured and lost an eye, but at least she has a cool Eye Patch to wear.\n");
+				m_Message += "She was injured and lost an eye, but at least she has a cool Eye Patch to wear.\n";
 			else
-				MakeEvent(sGirlName + gettext(" was injured and lost an eye, but at least she has a cool Eye Patch to wear.\n"));
+				MakeEvent(sGirlName + " was injured and lost an eye, but at least she has a cool Eye Patch to wear.\n");
 		}
 	}
 
@@ -523,11 +488,11 @@ bool cGirlTorture::IsGirlInjured(unsigned int unModifier)
 	{
 		if (g_Dice.percent(nMod))
 		{
-			g_Girls.RemoveTrait(m_Girl, "Tough", false);
+			m_Girl->remove_trait("Tough", false);
 			if (m_TorturedByPlayer)
-				m_Message += gettext("Her body has become less Tough due to the extent of her injuries.\n");
+				m_Message += "Her body has become less Tough due to the extent of her injuries.\n";
 			else
-				MakeEvent("Due to " + sGirlName + gettext(" injuries her body has become less Tough.\n"));
+				MakeEvent("Due to " + sGirlName + " injuries her body has become less Tough.\n");
 		}
 	}
 	else if (!m_Girl->has_trait("Fragile"))
@@ -536,9 +501,9 @@ bool cGirlTorture::IsGirlInjured(unsigned int unModifier)
 		{
 			m_Girl->add_trait("Fragile", false);
 			if (m_TorturedByPlayer)
-				m_Message += gettext("Her body has become rather Fragile due to the extent of her injuries.\n");
+				m_Message += "Her body has become rather Fragile due to the extent of her injuries.\n";
 			else
-				MakeEvent("Due to " + sGirlName + gettext(" injuries her body has become fragile.\n"));
+				MakeEvent("Due to " + sGirlName + " injuries her body has become fragile.\n");
 		}
 	}
 
@@ -552,9 +517,9 @@ bool cGirlTorture::IsGirlInjured(unsigned int unModifier)
 		m_Girl->happiness(-20);
 		m_Girl->spirit(-5);
 		if (m_TorturedByPlayer)
-			m_Message += gettext("Her unborn child has been lost due to the injuries she sustained, leaving her quite distraught.\n");
+			m_Message += "Her unborn child has been lost due to the injuries she sustained, leaving her quite distraught.\n";
 		else
-			MakeEvent(gettext("Due to ") + sGirlName + gettext(" injuries she has had a miscarriage, leaving her quite distraught.\n"));
+			MakeEvent("Due to " + sGirlName + " injuries she has had a miscarriage, leaving her quite distraught.\n");
 	}
 
 
@@ -563,7 +528,7 @@ bool cGirlTorture::IsGirlInjured(unsigned int unModifier)
 	m_Girl->health(-damage);
 
 
-	// Post any new Player messages in Red Message Box Colour 1 
+	// Post any new Player messages in Red Message Box Colour 1
 	if (m_TorturedByPlayer && !m_Message.empty() && m_Message != sGirlName + ": ")
 	{
 		g_MessageQue.AddToQue(m_Message, COLOR_RED);
@@ -577,38 +542,39 @@ bool cGirlTorture::IsGirlInjured(unsigned int unModifier)
 
 bool cGirlTorture::girl_escapes()
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture::girl_escapes()"; g_LogFile.ssend(); }
 	cGirlGangFight ggf(m_Girl);
 
 	if (ggf.girl_submits())
 	{
-		m_Message += gettext("She doesn't put up a fight so ");
+		m_Message += "She doesn't put up a fight so ";
 		return false;	// she does NOT escape
 	}
 	/*
 	*	Calculate combat between goons and girl if she decides to fight back
 	*/
 	m_Fight = true;
-	m_Message += gettext("She puts up a fight ");
+	m_Message += "She puts up a fight ";
 	if (ggf.girl_lost())
 	{
 		if (ggf.player_won())
 		{
-			m_Message += gettext(" and would have escaped but for your personal intervention; ");
+			m_Message += " and would have escaped but for your personal intervention; ";
 		}
 		else
 		{
-			m_Message += gettext("but goons defeat her and ");
+			m_Message += "but goons defeat her and ";
 		}
 		return false;
 	}
 
 	if (ggf.wipeout())
 	{
-		m_Message += gettext(" the gang is wiped out and");
+		m_Message += " the gang is wiped out and";
 	}
 
 	// If girl wins she escapes and leaves the brothel
-	m_Message += gettext("And after defeating you as well she escapes to the outside world.\n");
+	m_Message += "And after defeating you as well she escapes to the outside world.\n";
 	m_Girl->m_RunAway = 6;	// player has 6 weeks to retreive
 	if (m_Girl->m_NightJob == JOB_INDUNGEON)
 		m_Dungeon->RemoveGirl(m_Girl);
@@ -623,6 +589,7 @@ bool cGirlTorture::girl_escapes()
 
 void cGirlTorture::UpdateTraits()
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture::UpdateTraits()"; g_LogFile.ssend(); }
 	int nWeekMod = 1;
 	bool harshtorture = false;
 	/* `J` added to allow permanent trait gain on torture
@@ -631,20 +598,24 @@ void cGirlTorture::UpdateTraits()
 	doubles chance of injuring girls when torturing them
 	evil gained from torture is also doubled  */
 	if (cfg.initial.torture_mod() < 0){ harshtorture = true; }
-	else	{ nWeekMod = cfg.initial.torture_mod() * m_DungeonGirl->m_Weeks; }
+	else { nWeekMod = cfg.initial.torture_mod() * m_DungeonGirl->m_Weeks; }
+	if (nWeekMod < 1) nWeekMod = 1;
 
 	if (g_Dice.percent(30) && m_Girl->spirit() < 20 && m_Girl->health() < 20)
 	{
+		if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || add_trait Broken Will"; g_LogFile.ssend(); }
 		if (harshtorture)	{ m_Girl->add_trait("Broken Will", false); }
-		else				{ m_Girl->add_trait("Broken Will", 5 + nWeekMod / 2); }
+		else				{ m_Girl->add_trait("Broken Will", int(5 + nWeekMod / 2)); }
 	}
 	if (g_Dice.percent(30) && m_Girl->bdsm() > 30)
 	{
+		if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || add_trait Masochist"; g_LogFile.ssend(); }
 		if (harshtorture)	{ m_Girl->add_trait("Masochist", false); }
 		else				{ m_Girl->add_trait("Masochist", 10 + nWeekMod); }
 	}
 	if (g_Dice.percent(30) && m_Girl->health() < 10)
 	{
+		if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || add_trait Mind Fucked"; g_LogFile.ssend(); }
 		if (harshtorture)	{ m_Girl->add_trait("Mind Fucked", false); }
 		else				{ m_Girl->add_trait("Mind Fucked", 10 + nWeekMod); }
 	}
@@ -652,6 +623,7 @@ void cGirlTorture::UpdateTraits()
 
 void cGirlTorture::add_trait(string trait, int pc)
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture::add_trait(string trait, int pc)"; g_LogFile.ssend(); }
 	if (m_Girl->has_trait(trait)) return;
 	/*
 	*	WD:	To balance a crash bug workaround for Job Torturer
@@ -661,7 +633,7 @@ void cGirlTorture::add_trait(string trait, int pc)
 	if (!m_TorturedByPlayer) pc /= 2;
 	if (!g_Dice.percent(pc)) return;
 
-	string sMsg = m_Girl->m_Realname + gettext(" has gained trait \"") + trait + gettext("\" from being tortured.");
+	string sMsg = m_Girl->m_Realname + " has gained trait \"" + trait + "\" from being tortured.";
 
 	if (m_TorturedByPlayer)
 	{
@@ -676,6 +648,7 @@ void cGirlTorture::add_trait(string trait, int pc)
 
 inline void cGirlTorture::MakeEvent(string sMsg)
 {
+	if (cfg.debug.log_debug()) { g_LogFile.ss() << "Debug cGirlTorture || cGirlTorture::MakeEvent(string sMsg)"; g_LogFile.ssend(); }
 	m_Girl->m_Events.AddMessage(sMsg, IMGTYPE_TORTURE, EVENT_WARNING);
 	m_Torturer->m_Events.AddMessage(sMsg, IMGTYPE_PROFILE, EVENT_DUNGEON);
 }

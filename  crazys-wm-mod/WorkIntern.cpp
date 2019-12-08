@@ -35,7 +35,7 @@ bool cJobManager::WorkIntern(sGirl* girl, sBrothel* brothel, bool Day0Night1, st
 {
 	int actiontype = ACTION_WORKTRAINING;
 	stringstream ss; string girlName = girl->m_Realname;
-	if (g_Girls.HasTrait(girl, "AIDS"))
+	if (girl->has_trait( "AIDS"))
 	{
 		ss << "Health laws prohibit anyone with AIDS from working in the Medical profession so " << girlName << " was sent to the waiting room.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_WARNING);
@@ -51,18 +51,19 @@ bool cJobManager::WorkIntern(sGirl* girl, sBrothel* brothel, bool Day0Night1, st
 		return false;	// not refusing
 	}
 	ss << girlName;
-	if (g_Girls.DisobeyCheck(girl, actiontype, brothel))			// they refuse to work 
+	if (girl->disobey_check(actiontype, brothel))			// they refuse to work
 	{
 		ss << " refused to work during the " << (Day0Night1 ? "night" : "day") << " shift.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
 		return true;
 	}
-	ss << " trains in the Medical field.\n\n";
+	ss << " trains in the Medical field.\n \n";
 
 	g_Girls.UnequipCombat(girl);	// put that shit away
-	
-	int enjoy = 0;												// 
-	int wages = 0;												// 
+
+	int enjoy = 0;												//
+	int wages = 0;												//
+	int tips = 0;												//
 	int train = 0;												// main skill trained
 	int tmed = girl->m_Skills[SKILL_MEDICINE];					// Starting level - train = 1
 	int tint = girl->m_Stats[STAT_INTELLIGENCE];				// Starting level - train = 2
@@ -85,8 +86,8 @@ bool cJobManager::WorkIntern(sGirl* girl, sBrothel* brothel, bool Day0Night1, st
 	else if (roll_a <= 30)	skill = 5;
 	else if (roll_a <= 60)	skill = 4;
 	else /*             */	skill = 3;
-	/* */if (g_Girls.HasTrait(girl, "Quick Learner"))	{ skill += 1; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; }
+	/* */if (girl->has_trait( "Quick Learner"))	{ skill += 1; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; }
 	skill -= dirtyloss;
 	ss << "The Clinic is ";
 	if (dirtyloss <= 0) ss << "clean and tidy";
@@ -94,9 +95,9 @@ bool cJobManager::WorkIntern(sGirl* girl, sBrothel* brothel, bool Day0Night1, st
 	if (dirtyloss == 2) ss << "messy. The equipment is damaged and strewn about the building";
 	if (dirtyloss == 3) ss << "filthy and some of the equipment is broken";
 	if (dirtyloss >= 4) ss << "in complete disarray and the equipment barely usable";
-	ss << ".\n\n";
-	if (skill < 1) skill = 1;	// always at least 1 
-	
+	ss << ".\n \n";
+	if (skill < 1) skill = 1;	// always at least 1
+
 	do{		// `J` New method of selecting what job to do
 		/* */if (roll_b < 40  && tmed < 100)	train = 1;	// medicine
 		else if (roll_b < 70  && tint < 100)	train = 2;	// intelligence
@@ -105,7 +106,7 @@ bool cJobManager::WorkIntern(sGirl* girl, sBrothel* brothel, bool Day0Night1, st
 	} while (train == 0 && roll_b > 0);
 	if (train == 0 || g_Dice.percent(5)) gaintrait = true;
 	if (train == 0 && girl->medicine() > 70 && girl->intelligence() > 70)	promote = true;
-	
+
 	if (train == 1) { sgMed = skill; ss << "She learns how to work with medicine better.\n"; }	else sgMed = g_Dice % 3;
 	if (train == 2) { sgInt = skill; ss << "She got smarter today.\n"; }						else sgInt = g_Dice % 2;
 	if (train == 3) { sgCha = skill; ss << "She got more charismatic today.\n"; }				else sgCha = g_Dice % 2;
@@ -113,45 +114,45 @@ bool cJobManager::WorkIntern(sGirl* girl, sBrothel* brothel, bool Day0Night1, st
 	if (sgMed + sgInt + sgCha > 0)
 	{
 		ss << "She managed to gain:\n";
-		if (sgMed > 0) { ss << sgMed << " Medicine.\n";		g_Girls.UpdateSkill(girl, SKILL_MEDICINE, sgMed); }
-		if (sgInt > 0) { ss << sgInt << " Intelligence.\n";	g_Girls.UpdateStat(girl, STAT_INTELLIGENCE, sgInt); }
-		if (sgCha > 0) { ss << sgCha << " Charisma.\n";		g_Girls.UpdateStat(girl, STAT_CHARISMA, sgCha); }
+		if (sgMed > 0) { ss << sgMed << " Medicine.\n";		girl->medicine(sgMed); }
+		if (sgInt > 0) { ss << sgInt << " Intelligence.\n";	girl->intelligence(sgInt); }
+		if (sgCha > 0) { ss << sgCha << " Charisma.\n";		girl->charisma(sgCha); }
 	}
 
 	int trycount = 10;
-	while (gaintrait && trycount > 0)	// `J` Try to add a trait 
+	while (gaintrait && trycount > 0)	// `J` Try to add a trait
 	{
 		trycount--;
 		switch (g_Dice % 10)
 		{
 		case 0:
-			if (g_Girls.HasTrait(girl, "Nervous"))
+			if (girl->has_trait( "Nervous"))
 			{
-				g_Girls.RemoveTrait(girl, "Nervous");
+				girl->remove_trait("Nervous");
 				ss << "She seems to be getting over her Nervousness with her training.";
 				gaintrait = false;
 			}
 			break;
 		case 1:
-			if (g_Girls.HasTrait(girl, "Meek"))
+			if (girl->has_trait( "Meek"))
 			{
-				g_Girls.RemoveTrait(girl, "Meek");
+				girl->remove_trait("Meek");
 				ss << "She seems to be getting over her Meakness with her training.";
 				gaintrait = false;
 			}
 			break;
 		case 2:
-			if (g_Girls.HasTrait(girl, "Dependant"))
+			if (girl->has_trait( "Dependant"))
 			{
-				g_Girls.RemoveTrait(girl, "Dependant");
+				girl->remove_trait("Dependant");
 				ss << "She seems to be getting over her Dependancy with her training.";
 				gaintrait = false;
 			}
 			break;
 		case 3:
-			if (!g_Girls.HasTrait(girl, "Charismatic"))
+			if (!girl->has_trait( "Charismatic"))
 			{
-				g_Girls.AddTrait(girl, "Charismatic");
+				girl->add_trait("Charismatic");
 				ss << "Dealing with patients and talking with them about their problems has made " << girlName << " more Charismatic.";
 				gaintrait = false;
 			}
@@ -175,23 +176,24 @@ bool cJobManager::WorkIntern(sGirl* girl, sBrothel* brothel, bool Day0Night1, st
 	/* */if (roll_c <= 10)	{ enjoy -= g_Dice % 3 + 1;	ss << "Some of the patrons abused her during the shift."; }
 	else if (roll_c >= 90)	{ enjoy += g_Dice % 3 + 1;	ss << "She had a pleasant time working."; }
 	else /*             */	{ enjoy += g_Dice % 2;		ss << "Otherwise, the shift passed uneventfully."; }
-	g_Girls.UpdateEnjoyment(girl, actiontype, enjoy);
+	girl->upd_Enjoyment(actiontype, enjoy);
 
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, Day0Night1);
 
 	if ((girl->is_slave() && !cfg.initial.slave_pay_outofpocket())) { wages = 0; }
 	else { wages = 25 + (skill * 5); } // `J` Pay her more if she learns more
-	girl->m_Pay = wages;
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 
 	// Improve stats
 	int xp = 5 + skill, libido = int(1 + skill / 2);
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ xp += 2; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ xp -= 2; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
+	if (girl->has_trait( "Quick Learner"))		{ xp += 2; }
+	else if (girl->has_trait( "Slow Learner"))	{ xp -= 2; }
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
 
-	g_Girls.UpdateStat(girl, STAT_EXP, (g_Dice % xp) + 1);
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
+	girl->exp((g_Dice % xp) + 1);
+	girl->upd_temp_stat(STAT_LIBIDO, libido);
 
 	if (girl->m_Skills[SKILL_MEDICINE] + girl->m_Stats[STAT_INTELLIGENCE] + girl->m_Stats[STAT_CHARISMA] >= 300) promote = true;
 	if (promote)
@@ -215,7 +217,7 @@ double cJobManager::JP_Intern(sGirl* girl, bool estimate)// not used
 			(100 - girl->m_Skills[SKILL_MEDICINE]) +
 			(100 - girl->m_Stats[STAT_INTELLIGENCE]) +
 			(100 - girl->m_Stats[STAT_CHARISMA]);
-		
+
 		// traits she could gain/lose
 		if (girl->has_trait("Nervous"))			jobperformance += 20;
 		if (!girl->has_trait("Charismatic"))	jobperformance += 20;

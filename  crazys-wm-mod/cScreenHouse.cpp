@@ -16,158 +16,112 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "cBrothel.h"
-#include "cScreenHouse.h"
 #include "cWindowManager.h"
-#include "cGold.h"
-#include "cGetStringScreenManager.h"
-#include "InterfaceGlobals.h"
-#include "cGangs.h"
-#include "libintl.h"
+#include "cScriptManager.h"
 
-extern bool g_InitWin;
-extern int g_CurrBrothel;
-extern cGold g_Gold;
-extern cBrothelManager g_Brothels;
-extern cWindowManager g_WinManager;
+#include "InterfaceProcesses.h"
+#include "cHouse.h"
+#include "cScreenHouse.h"
+#include "FileList.h"
+
 extern cInterfaceEventManager g_InterfaceEvents;
-extern long g_IntReturn;
-extern cGangManager g_Gangs;
+extern cWindowManager g_WinManager;
+extern cBrothelManager g_Brothels;
+extern cHouseManager g_House;
 
-extern	int		g_CurrentScreen;
 
-static string fmt_objective(stringstream &ss, string desc, int limit, int sofar = -1)
-{
-	ss << desc;
-	if (limit != -1) { ss << gettext(" in ") << limit << gettext(" weeks"); }
-	if (sofar > -1) { ss << gettext(", ") << sofar << gettext(" acquired so far"); }
-	ss << gettext(".");
-	return ss.str();
-}
+extern int g_Building;
+extern int g_CurrBrothel;
+extern int g_CurrentScreen;
+extern string ReadTextFile(DirPath path, string file);
+
+extern bool eventrunning;
+extern bool g_InitWin;
+extern bool g_Cheats;
+
+
+
+extern bool g_CTRLDown;
 
 bool cScreenHouse::ids_set = false;
 
 void cScreenHouse::set_ids()
 {
-	ids_set = true;
-	back_id = get_id("BackButton");
-	details_id = get_id("HouseDetails");
-	header_id = get_id("ScreenHeader");
-	slavedate_id = get_id("SlaveDate");
+	ids_set			/**/ = true;
+	g_LogFile.write("set_ids in cScreenHouse");
+
+	buildinglabel_id/**/ = get_id("BuildingLabel", "Header", "Your House");
+	background_id	/**/ = get_id("Background");
+	walk_id			/**/ = get_id("WalkButton");
+
+	weeks_id		/**/ = get_id("Next Week", "Weeks");
+	housedetails_id /**/ = get_id("BuildingDetails", "HouseDetails");
+	girls_id		/**/ = get_id("Girl Management", "Girls");
+	staff_id		/**/ = get_id("Staff Management", "Staff");
+	setup_id		/**/ = get_id("Setup", "SetUp");
+	dungeon_id		/**/ = get_id("Dungeon");
+	turns_id		/**/ = get_id("Turn Summary", "Turn");
+
+	girlimage_id	/**/ = get_id("GirlImage");
+	back_id			/**/ = get_id("BackButton", "Back");
+
+	nextbrothel_id	/**/ = get_id("PrevButton", "Prev", "*Unused*");
+	prevbrothel_id	/**/ = get_id("NextButton", "Next", "*Unused*");
+	house_id		/**/ = get_id("House");
+
 }
+cScreenHouse::cScreenHouse()
+{
+	DirPath dp = DirPath() << "Resources" << "Interface" << cfg.resolution.resolution() << "playerhouse_screen.xml";
+	m_filename = dp.c_str();
+	GetName = false;
+	m_first_walk = true;
+}
+cScreenHouse::~cScreenHouse() { g_LogFile.write("House Shutdown"); }
 
 void cScreenHouse::init()
 {
 	g_CurrentScreen = SCREEN_HOUSE;
-	if (!g_InitWin) { return; }
-	Focused();
-	g_InitWin = false;
-
-	locale syslocale("");
-	stringstream ss;
-	ss.imbue(syslocale);
-
-	ss << gettext("CURRENT OBJECTIVE: ");
-	sObjective* obj = g_Brothels.GetObjective();
-	if (obj)
+	g_Building = BUILDING_HOUSE;
+	if (g_InitWin)
 	{
-		switch (obj->m_Objective)
-		{
-		case OBJECTIVE_REACHGOLDTARGET:
-			ss << gettext("Gather ") << obj->m_Target << gettext(" gold");
-			if (obj->m_Limit != -1) {
-				ss << gettext(" in ") << obj->m_Limit << gettext(" weeks");
-			}
-			ss << gettext(", ") << g_Gold.ival() << gettext(" gathered so far.");
-			break;
-		case OBJECTIVE_GETNEXTBROTHEL:
-			fmt_objective(ss, gettext("Purchase the next brothel"), obj->m_Limit);
-			break;
-			/*----
-			case OBJECTIVE_PURCHASENEWGAMBLINGHALL:
-			fmt_objective(ss, "Purchase a gambling hall", obj->m_Limit);
-			break;
-			case OBJECTIVE_PURCHASENEWBAR:
-			fmt_objective(ss, "Purchase a bar", obj->m_Limit);
-			break;
-			----*/
-		case OBJECTIVE_LAUNCHSUCCESSFULATTACK:
-			fmt_objective(ss, gettext("Launch a successful attack"), obj->m_Limit);
-			break;
-		case OBJECTIVE_HAVEXGOONS:
-			ss << gettext("Have ") << obj->m_Target << gettext(" gangs");
-			fmt_objective(ss, "", obj->m_Limit);
-			break;
-		case OBJECTIVE_STEALXAMOUNTOFGOLD:
-			ss << gettext("Steal ") << obj->m_Target << gettext(" gold");
-			fmt_objective(ss, "", obj->m_Limit, obj->m_SoFar);
-			break;
-		case OBJECTIVE_CAPTUREXCATACOMBGIRLS:
-			ss << gettext("Capture ") << obj->m_Target << gettext(" girls from the catacombs");
-			fmt_objective(ss, "", obj->m_Limit, obj->m_SoFar);
-			break;
-		case OBJECTIVE_HAVEXMONSTERGIRLS:
-			ss << gettext("Have a total of ") << obj->m_Target << gettext(" monster (non-human) girls");
-			fmt_objective(ss, "", obj->m_Limit, g_Brothels.GetTotalNumGirls(true));
-			break;
-		case OBJECTIVE_KIDNAPXGIRLS:
-			ss << gettext("Kidnap ") << obj->m_Target << gettext(" girls from the streets");
-			fmt_objective(ss, "", obj->m_Limit, obj->m_SoFar);
-			break;
-		case OBJECTIVE_EXTORTXNEWBUSINESS:
-			ss << gettext("Control ") << obj->m_Target << gettext(" city business");
-			fmt_objective(ss, "", obj->m_Limit, obj->m_SoFar);
-			break;
-		case OBJECTIVE_HAVEXAMOUNTOFGIRLS:
-			ss << gettext("Have a total of ") << obj->m_Target << gettext(" girls");
-			fmt_objective(ss, "", obj->m_Limit, g_Brothels.GetTotalNumGirls(false));
-			break;
-		}
-	}
-	else ss << gettext("NONE\n");
+		Focused();
 
-	ss << gettext("\n")
-		<< gettext("Current gold: ") << g_Gold.ival() << gettext("\n")
-		<< gettext("Bank account: ") << g_Brothels.GetBankMoney() << gettext("\n")
-		<< gettext("Businesses controlled: ")
-		<< g_Gangs.GetNumBusinessExtorted()
-		<< gettext("\n")
-		;
-
-	ss << gettext("\nCurrent number of runaways: ") << g_Brothels.GetNumRunaways() << gettext("\n");
-	//	`J` added while loop to add runaway's names to the list 
-	if (g_Brothels.GetNumRunaways() > 0)
-	{
-		sGirl* rgirl = g_Brothels.m_Runaways;
-		while (rgirl)
-		{
-			ss << rgirl->m_Realname << gettext(" (") << rgirl->m_RunAway << gettext(")");
-			rgirl = rgirl->m_Next;
-			if (rgirl)	ss << gettext(" ,   ");
-		}
+		EditTextItem(g_House.GetBrothelString(0), housedetails_id);
+		g_InitWin = false;
 	}
 
-	EditTextItem(ss.str(), details_id);
-	obj = 0;
+
+	//	DisableButton(walk_id, g_TryOuts);
 }
 
 void cScreenHouse::process()
 {
 	if (!ids_set) set_ids();	// we need to make sure the ID variables are set
-	init();						// set up the window if needed
-	check_events();				// check to see if there's a button event needing handling
+	if (girlimage_id != -1 && !eventrunning)	HideImage(girlimage_id, true);
+	init();
+	if (g_InterfaceEvents.GetNumEvents() != 0)	check_events();
 }
-
 
 void cScreenHouse::check_events()
 {
-	if (g_InterfaceEvents.GetNumEvents() == 0) return;	// no events means we can go home
-
-	// if it's the back button, pop the window off the stack and we're done
-	if (g_InterfaceEvents.CheckButton(back_id))
+	g_InitWin = true;
+	if (g_InterfaceEvents.CheckButton(back_id))			{ g_WinManager.Pop(); }
+	else if (g_InterfaceEvents.CheckButton(girls_id))	{ g_WinManager.push("House Management");	}
+	else if (g_InterfaceEvents.CheckButton(staff_id))	{ g_WinManager.push("Gangs");	}
+	else if (g_InterfaceEvents.CheckButton(turns_id))	{ g_WinManager.push("Turn Summary");	}
+	else if (g_InterfaceEvents.CheckButton(setup_id))	{ g_WinManager.push("Building Setup");	}
+	else if (g_InterfaceEvents.CheckButton(dungeon_id))	{ g_WinManager.push("Dungeon");	}
+	else if (g_InterfaceEvents.CheckButton(house_id))	{ g_WinManager.push("House"); }
+	else if (g_InterfaceEvents.CheckButton(walk_id))
 	{
-		g_InitWin = true;
-		g_WinManager.Pop();
-		return;
+		//		do_walk();
+		//		if (!g_Cheats) g_TryOuts = true;
+	}
+	else if (g_InterfaceEvents.CheckButton(weeks_id))
+	{
+		if (!g_CTRLDown) { g_CTRLDown = false; AutoSaveGame(); }
+		NextWeek();
+		g_WinManager.push("Turn Summary");
 	}
 }

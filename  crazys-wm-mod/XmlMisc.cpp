@@ -31,8 +31,13 @@ const char* actionTypeNames[] =
 	"COMBAT", "SEX", "WORKESCORT", "WORKCLEANING", "WORKMATRON", "WORKBAR", "WORKHALL", "WORKSHOW", "WORKSECURITY",
 	"WORKADVERTISING", "WORKTORTURER", "WORKCARING", "WORKDOCTOR", "WORKMOVIE", "WORKCUSTSERV", "WORKCENTRE", "WORKCLUB",
 	"WORKHAREM", "WORKRECRUIT", "WORKNURSE", "WORKMECHANIC", "WORKCOUNSELOR", "WORKMUSIC", "WORKSTRIP", "WORKMILK",
-	"WORKMASSUSSE", "WORKFARM", "WORKTRAINING", "WORKREHAB", "MAKEPOTIONS", "MAKEITEMS", "COOKING", "GETTHERAPY",
-	"GENERAL"
+	"WORKMASSEUSE", "WORKFARM", "WORKTRAINING", "WORKREHAB", "MAKEPOTIONS", "MAKEITEMS", "COOKING", "GETTHERAPY",
+	"WORKHOUSEPET", "GENERAL"
+};
+const char* trainingTypeNames[] =
+{
+	// When modifying Training types, search for "Change-Traning-Types"  :  found in > XmlMisc.cpp
+	"PUPPY", "PONY", "GENERAL"
 };
 
 /*
@@ -156,7 +161,7 @@ bool LoadStatsXML(TiXmlHandle hStats, int stats[], int statMods[], int tempStats
 			case STAT_AGE:
 				if (tempInt > 99)		tempInt = 100;
 				else if (tempInt > 80)		tempInt = 80;
-				else if (tempInt < 18)		tempInt = 18;
+				else if (tempInt < 18)		tempInt = 18;	// `J` Legal Note: 18 is the Legal Age of Majority for the USA where I live 
 				break;
 			case STAT_EXP:		max = 32000;	break;
 			case STAT_LEVEL:	max = 255;		break;
@@ -253,7 +258,7 @@ TiXmlElement* SaveJobsXML(TiXmlElement* pRoot, int buildingQualities[])
 	return pJobs;
 }
 
-TiXmlElement* SaveTraitsXML(TiXmlElement* pRoot, std::string TagName, const int numTraits, sTrait* traits[], int tempTraits[])
+TiXmlElement* SaveTraitsXML(TiXmlElement* pRoot, std::string TagName, const int numTraits, TraitSpec* traits[], int tempTraits[])
 {
 	TiXmlElement* pTraits = new TiXmlElement(TagName);
 	pRoot->LinkEndChild(pTraits);
@@ -261,7 +266,7 @@ TiXmlElement* SaveTraitsXML(TiXmlElement* pRoot, std::string TagName, const int 
 	{
 		if (traits[i])
 		{
-			TiXmlElement* pTrait = new TiXmlElement(XMLifyString(traits[i]->m_Name));  // Trait name
+			TiXmlElement* pTrait = new TiXmlElement(XMLifyString(traits[i]->name()));  // Trait name
 			pTraits->LinkEndChild(pTrait);
 			if (tempTraits)	pTrait->SetAttribute("Temp", tempTraits[i]);  // Is temporary
 		}
@@ -269,7 +274,7 @@ TiXmlElement* SaveTraitsXML(TiXmlElement* pRoot, std::string TagName, const int 
 	return pTraits;
 }
 
-bool LoadTraitsXML(TiXmlHandle hTraits, unsigned char& numTraits, sTrait* traits[], int tempTraits[])
+bool LoadTraitsXML(TiXmlHandle hTraits, unsigned char& numTraits, TraitSpec* traits[], int tempTraits[])
 {
 	numTraits = 0;
 	TiXmlElement* pTraits = hTraits.ToElement();
@@ -277,43 +282,20 @@ bool LoadTraitsXML(TiXmlHandle hTraits, unsigned char& numTraits, sTrait* traits
 
 	//this loop does not need UnXMLifyString, which is a bit of a hack currently
 	//however, it's coupled more tightly to traits, and seems to do more processing
-	sTrait* pTrait = g_Traits.GetTraitNum(0);
-	while (pTrait)
+	for(const auto& pTrait : g_Traits.all_traits())
 	{
-		TiXmlElement* pTraitElement = pTraits->FirstChildElement(XMLifyString(pTrait->m_Name));
+		TiXmlElement* pTraitElement = pTraits->FirstChildElement(XMLifyString(pTrait->name()));
 		if (pTraitElement)
 		{
 			int tempInt = 0;
-			traits[numTraits] = pTrait;
+			traits[numTraits] = pTrait.get();
 			if (tempTraits)
 			{
 				pTraitElement->QueryIntAttribute("Temp", &tempInt); tempTraits[numTraits] = tempInt; tempInt = 0;
 			}
 			++numTraits;
 		}
-		pTrait = pTrait->m_Next;
 	}
-
-#if 0
-	//old loop, not sure which way is better
-	//also, this loop method has not been tested
-	for (TiXmlElement* pTrait = pTraits->FirstChildElement();
-		pTrait != 0;
-		pTrait = pTrait->NextSiblingElement())
-	{
-		std::string traitName = pTrait->ValueStr();
-		if (traitName.empty() == false)
-		{
-			int tempInt = 0;
-			traits[numTraits] = g_Traits.GetTrait(UnXMLifyString(traitName));
-			if (tempTraits)
-			{
-				pTrait->QueryIntAttribute("Temp", &tempInt); tempTraits[numTraits] = tempInt; tempInt = 0;
-			}
-			++numTraits;
-		}
-	}
-#endif
 	return true;
 }
 
@@ -358,6 +340,64 @@ bool LoadActionsXML(TiXmlHandle hActions, int enjoyments[], int enjoymentsMods[]
 			tempInt = 0;
 			if (pAction->Attribute("Temp"))	pAction->QueryIntAttribute("Temp", &tempInt);
 			enjoymentsTemps[x] = tempInt;
+		}
+	}
+	return true;
+}
+
+TiXmlElement* SaveTrainingXML(TiXmlElement* pRoot, int training[], int trainingMods[], int trainingTemps[])
+{
+	TiXmlElement* pTrainings = new TiXmlElement("Training");
+	pRoot->LinkEndChild(pTrainings);
+	for (int i = 0; i < NUM_TRAININGTYPES; i++)
+	{
+		TiXmlElement* pTraining = new TiXmlElement(XMLifyString(trainingTypeNames[i]));
+		pTrainings->LinkEndChild(pTraining);
+		pTraining->SetAttribute("Train", training[i]);
+		if (trainingMods && trainingMods[i])	pTraining->SetAttribute("Mod", trainingMods[i]);
+		if (trainingTemps && trainingTemps[i])	pTraining->SetAttribute("Temp", trainingTemps[i]);
+	}
+	return pTrainings;
+}
+
+bool LoadTrainingXML(TiXmlHandle hTrainings, int training[], int trainingMods[], int trainingTemps[])
+{
+	TiXmlElement* pTrainings = hTrainings.ToElement();
+	if (pTrainings == 0)
+	{
+		for (int x = 0; x < NUM_TRAININGTYPES; ++x)	// `J` added to set missing trainings to 0
+		{
+			training[x] = 0;
+			trainingMods[x] = 0;
+			trainingTemps[x] = 0;
+		}
+		return false;
+	}
+
+	for (int x = 0; x < NUM_TRAININGTYPES; ++x)
+	{
+		TiXmlElement* pTraining = pTrainings->FirstChildElement(XMLifyString(trainingTypeNames[x]));
+		
+		if (pTraining)
+		{
+			int tempInt = 0;
+			if (pTraining->Attribute("Train"))	pTraining->QueryIntAttribute("Train", &tempInt);
+			if (tempInt < 0)	tempInt = 0; if (tempInt > 100)	tempInt = 100;
+			training[x] = tempInt; 
+			
+			tempInt = 0;
+			if (pTraining->Attribute("Mod"))	pTraining->QueryIntAttribute("Mod", &tempInt);
+			trainingMods[x] = tempInt;
+
+			tempInt = 0;
+			if (pTraining->Attribute("Temp"))	pTraining->QueryIntAttribute("Temp", &tempInt);
+			trainingTemps[x] = tempInt;
+		}
+		else
+		{
+			training[x] = 0;
+			trainingMods[x] = 0;
+			trainingTemps[x] = 0;
 		}
 	}
 	return true;

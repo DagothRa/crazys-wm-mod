@@ -65,7 +65,7 @@ sFarm::~sFarm()			// destructor
 	m_Girls = 0;
 }
 
-void cFarmManager::AddGirl(int brothelID, sGirl* girl)
+void cFarmManager::AddGirl(int brothelID, sGirl* girl, bool keepjob)
 {
 	girl->where_is_she = 0;
 	girl->m_InStudio = false;
@@ -74,7 +74,7 @@ void cFarmManager::AddGirl(int brothelID, sGirl* girl)
 	girl->m_InClinic = false;
 	girl->m_InFarm = true;
 	girl->m_InHouse = false;
-	cBrothelManager::AddGirl(brothelID, girl);
+	cBrothelManager::AddGirl(brothelID, girl, keepjob);
 }
 
 void cFarmManager::RemoveGirl(int brothelID, sGirl* girl, bool deleteGirl)
@@ -105,16 +105,16 @@ void cFarmManager::Free()
 // ----- Update & end of turn
 void cFarmManager::UpdateFarm()	// Start_Building_Process_A
 {
+	// `J` When modifying Jobs, search for "J-Change-Jobs"  :  found in >> cFarm.cpp
+	u_int restjob = JOB_FARMREST;
+	u_int matronjob = JOB_FARMMANGER;
+	u_int firstjob = JOB_FARMREST;
+	u_int lastjob = JOB_MAKEPOTIONS;
 	cTariff tariff;
 	stringstream ss;
 	string girlName;
 
 	sBrothel* current = (sBrothel*)m_Parent;
-	u_int restjob = JOB_FARMREST;
-	u_int matronjob = JOB_FARMMANGER;
-	u_int firstjob = JOB_FARMREST;
-	u_int lastjob = JOB_MAKEPOTIONS;
-
 	current->m_Finance.zero();
 	current->m_AntiPregUsed = 0;
 
@@ -123,7 +123,7 @@ void cFarmManager::UpdateFarm()	// Start_Building_Process_A
 	while (cgirl)
 	{
 		current->m_Filthiness++;
-		if (cgirl->health() <= 0)			// Remove any dead bodies from last week
+		if (cgirl->is_dead())			// Remove any dead bodies from last week
 		{
 			current->m_Filthiness++; // `J` Death is messy
 			sGirl* DeadGirl = 0;
@@ -155,7 +155,7 @@ void cFarmManager::UpdateFarm()	// Start_Building_Process_A
 			cgirl->m_InHouse = false;
 
 			cgirl->m_Pay = cgirl->m_Tips = 0;
-			
+
 			// `J` Check for out of building jobs and set yesterday jobs for everyone first
 			if (cgirl->m_DayJob	  < firstjob || cgirl->m_DayJob   > lastjob)	cgirl->m_DayJob = restjob;
 			if (cgirl->m_NightJob < firstjob || cgirl->m_NightJob > lastjob)	cgirl->m_NightJob = restjob;
@@ -191,9 +191,6 @@ void cFarmManager::UpdateFarm()	// Start_Building_Process_A
 
 	UpdateGirls(current, 1);	// Run the Nighty Shift
 
-	if (current->m_Filthiness < 0)		current->m_Filthiness = 0;
-	if (current->m_SecurityLevel < 0)	current->m_SecurityLevel = 0;
-
 	g_Gold.brothel_accounts(current->m_Finance, current->m_id);
 
 	cgirl = current->m_Girls;
@@ -203,18 +200,20 @@ void cFarmManager::UpdateFarm()	// Start_Building_Process_A
 		g_Girls.EndDayGirls(current, cgirl);
 		cgirl = cgirl->m_Next;
 	}
+	if (current->m_Filthiness < 0)		current->m_Filthiness = 0;
+	if (current->m_SecurityLevel < 0)	current->m_SecurityLevel = 0;
 }
 
 // Run the shifts
 void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Building_Process_B
 {
-	stringstream ss;
-	string summary, girlName;
-
+	// `J` When modifying Jobs, search for "J-Change-Jobs"  :  found in >> cFarm.cpp
 	u_int restjob = JOB_FARMREST;
 	u_int matronjob = JOB_FARMMANGER;
 	u_int firstjob = JOB_FARMREST;
 	u_int lastjob = JOB_MAKEPOTIONS;
+	stringstream ss;
+	string summary, girlName;
 	u_int sw = 0, psw = 0;
 
 	int totalPay = 0, totalTips = 0, totalGold = 0;
@@ -234,7 +233,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 	sGirl* current = brothel->m_Girls;
 	while (current)
 	{
-		if (current->health() <= 0)		// skip dead girls
+		if (current->is_dead())		// skip dead girls
 		{
 			if (current->m_Next) { current = current->m_Next; continue; }
 			else { current = 0; break; }
@@ -244,11 +243,9 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 			g_Girls.UseItems(current);				// Girl uses items she has
 			g_Girls.CalculateGirlType(current);		// update the fetish traits
 			g_Girls.CalculateAskPrice(current, true);	// Calculate the girls asking price
-
 			current = current->m_Next; // Next Girl
 		}
 	}
-
 
 	////////////////////////////////////////////////////////
 	//  Process Matron first incase she refuses to work.  //
@@ -256,7 +253,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 	current = brothel->m_Girls;
 	while (current && !matrondone)
 	{
-		if (current->health() <= 0 ||
+		if (current->is_dead() ||
 			(GetNumGirlsOnJob(0, matronjob, Day0Night1) > 0 && (current->m_DayJob != matronjob || current->m_NightJob != matronjob)) ||
 			(GetNumGirlsOnJob(0, matronjob, Day0Night1) < 1 && (current->m_PrevDayJob != matronjob || current->m_PrevNightJob != matronjob)))
 		{	// Sanity check! Don't process dead girls and only process those with matron jobs
@@ -271,7 +268,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 		{
 			// if a matron was found and she is healthy, not tired and not on maternity leave... send her back to work
 			if ((current->m_PrevDayJob == matronjob || current->m_PrevNightJob == matronjob) &&
-				(g_Girls.GetStat(current, STAT_HEALTH) >= 50 && g_Girls.GetStat(current, STAT_TIREDNESS) <= 50) &&
+				(current->health() >= 50 && current->tiredness() <= 50) &&
 				current->m_PregCooldown < cfg.pregnancy.cool_down())
 				// Matron job is more important so she will go back to work at 50% instead of regular 80% health and 20% tired
 			{
@@ -287,16 +284,16 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 		totalPay = totalTips = totalGold = 0;
 		sum = EVENT_SUMMARY; summary = ""; ss.str("");
 
-		// `J` she can refuse the first shift then decide to work the second shift 
+		// `J` she can refuse the first shift then decide to work the second shift
 		if (!current->m_Refused_To_Work_Day && Day0Night1 == SHIFT_NIGHT)	// but if she worked the first shift she continues the rest of the night
 		{
 			matron = true;
 			ss << girlName << " continued to help the other girls throughout the night.";
 		}
-		else if (g_Girls.DisobeyCheck(current, ACTION_WORKMATRON, brothel))
+		else if (current->disobey_check(ACTION_WORKMATRON, brothel))
 		{
 			(Day0Night1 ? current->m_Refused_To_Work_Night = true : current->m_Refused_To_Work_Day = true);
-			brothel->m_Fame -= g_Girls.GetStat(current, STAT_FAME);
+			brothel->m_Fame -= current->fame();
 			ss << girlName << " refused to work as the Farm Manager.";
 			sum = EVENT_NOWORK;
 		}
@@ -313,12 +310,12 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 			current->m_Pay += max(0, totalGold);
 			current->m_Pay = current->m_Tips = 0;
 
-			brothel->m_Fame += g_Girls.GetStat(current, STAT_FAME);
+			brothel->m_Fame += current->fame();
 			/* */if (totalGold > 0)		{ ss << girlName << " earned a total of " << totalGold << " gold directly from you. She gets to keep it all."; }
 			else if (totalGold == 0)	{ ss << girlName << " made no money."; }
-			else if (totalGold < 0)		{ sum = EVENT_DEBUG; ss << "ERROR: She has a loss of " << totalGold << " gold\n\n Please report this to the Pink Petal Devloment Team at http://pinkpetal.org"; }
+			else if (totalGold < 0)		{ sum = EVENT_DEBUG; ss << "ERROR: She has a loss of " << totalGold << " gold\n \nPlease report this to the Pink Petal Devloment Team at http://pinkpetal.org\n \nGirl Name: " << current->m_Realname << "\nJob: " << m_JobManager.JobName[(Day0Night1 ? current->m_NightJob : current->m_DayJob)] << "\nPay:     " << current->m_Pay << "\nTips:   " << current->m_Tips << "\nTotal: " << totalGold; }
 		}
-		current->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, sum);
+		if (ss.str().length() > 0) current->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, sum);
 
 		current = current->m_Next;	// Next Girl
 		matrondone = true;			// there can be only one matron so this ends the while loop
@@ -331,7 +328,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 	while (current)
 	{
 		sw = (Day0Night1 ? current->m_NightJob : current->m_DayJob);
-		if (current->health() <= 0 || sw != restjob)
+		if (current->is_dead() || sw != restjob)
 		{	// skip dead girls and anyone not resting
 			if (current->m_Next) { current = current->m_Next; continue; }
 			else { current = 0; break; }
@@ -347,64 +344,66 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 		{
 			m_JobManager.JobFunc[restjob](current, brothel, Day0Night1, summary);
 		}
-		else
-		{	// if she is healthy enough to go back to work... 
-			if (matron)	// and there is a marton working...
-			{
-				psw = (Day0Night1 ? current->m_PrevNightJob : current->m_PrevDayJob);
-				if (psw != restjob && psw != 255)
-				{	// if she had a previous job, put her back to work.
-					if (Day0Night1 == SHIFT_DAY)
-					{
-						current->m_DayJob = current->m_PrevDayJob;
-						if (current->m_NightJob == restjob && current->m_PrevNightJob != restjob && current->m_PrevNightJob != 255)
-							current->m_NightJob = current->m_PrevNightJob;
-					}
-					else
-					{
-						if (current->m_DayJob == restjob && current->m_PrevDayJob != restjob && current->m_PrevDayJob != 255)
-							current->m_DayJob = current->m_PrevDayJob;
+		else if (matron)	// send her back to work
+		{
+			psw = (Day0Night1 ? current->m_PrevNightJob : current->m_PrevDayJob);
+			if (psw != restjob && psw != 255)
+			{	// if she had a previous job, put her back to work.
+				if (Day0Night1 == SHIFT_DAY)
+				{
+					current->m_DayJob = current->m_PrevDayJob;
+					if (current->m_NightJob == restjob && current->m_PrevNightJob != restjob && current->m_PrevNightJob != 255)
 						current->m_NightJob = current->m_PrevNightJob;
-					}
-					ss << "The Farm Manager puts " << girlName << " back to work.\n";
 				}
-				else if (current->m_DayJob == restjob && current->m_NightJob == restjob)
-				{	// if they have no job at all, assign them a job
-					ss << "The Farm Manager assigns " << girlName << " to ";
-					// `J` zzzzzz need to add this in
-					ss << "do nothing because this part of the code has not been added yet.";
-					/*
-					JOB_MARKETER		// free girl, only one
-
-					JOB_VETERINARIAN
-					JOB_FARMHAND
-					JOB_RESEARCH
-
-					JOB_FARMER
-					JOB_GARDENER
-					JOB_SHEPHERD
-					JOB_RANCHER
-					JOB_CATACOMBRANCHER
-					JOB_BEASTCAPTURE
-					JOB_MILKER
-					JOB_MILK
-
-					JOB_BUTCHER
-					JOB_BAKER
-					JOB_BREWER
-					JOB_MAKEITEM
-					JOB_MAKEPOTIONS
-					//*/
+				else
+				{
+					if (current->m_DayJob == restjob && current->m_PrevDayJob != restjob && current->m_PrevDayJob != 255)
+						current->m_DayJob = current->m_PrevDayJob;
+					current->m_NightJob = current->m_PrevNightJob;
 				}
-				current->m_PrevDayJob = current->m_PrevNightJob = 255;
-				sum = EVENT_BACKTOWORK;
+				ss << "The Farm Manager puts " << girlName << " back to work.\n";
 			}
-			else	// no one to send her back to work
-			{
-				ss << "WARNING " << girlName << " is doing nothing!\n";
-				sum = EVENT_WARNING;
+			else if (current->m_DayJob == restjob && current->m_NightJob == restjob)
+			{	// if they have no job at all, assign them a job
+				ss << "The Farm Manager assigns " << girlName << " to ";
+				// `J` zzzzzz need to add this in
+				ss << "do nothing because this part of the code has not been added yet.";
+				/*
+				JOB_MARKETER		// free girl, only one
+
+				JOB_VETERINARIAN
+				JOB_FARMHAND
+				JOB_RESEARCH
+
+				JOB_FARMER
+				JOB_GARDENER
+				JOB_SHEPHERD
+				JOB_RANCHER
+				JOB_CATACOMBRANCHER
+				JOB_BEASTCAPTURE
+				JOB_MILKER
+				JOB_MILK
+
+				JOB_BUTCHER
+				JOB_BAKER
+				JOB_BREWER
+				JOB_MAKEITEM
+				JOB_MAKEPOTIONS
+				//*/
 			}
+			current->m_PrevDayJob = current->m_PrevNightJob = 255;
+			sum = EVENT_BACKTOWORK;
 		}
+		else if (current->health() < 100 || current->tiredness() > 0)	// if there is no matron to send her somewhere just do resting
+		{
+			m_JobManager.JobFunc[restjob](current, brothel, Day0Night1, summary);
+		}
+		else	// no one to send her back to work
+		{
+			ss << "WARNING " << girlName << " is doing nothing!\n";
+			sum = EVENT_WARNING;
+		}
+
 		if (ss.str().length() > 0) current->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, sum);
 
 		current = current->m_Next;
@@ -443,7 +442,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 	while (current)
 	{
 		sw = (Day0Night1 ? current->m_NightJob : current->m_DayJob);
-		if (current->health() <= 0 || sw == restjob || sw == matronjob || sw == JOB_MARKETER)
+		if (current->is_dead() || sw == restjob || sw == matronjob || sw == JOB_MARKETER)
 		{	// skip dead girls, resting girls and the matron
 			if (current->m_Next) { current = current->m_Next; continue; }
 			else { current = 0; break; }
@@ -463,7 +462,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 		//		Summary Messages
 		if (refused)
 		{
-			brothel->m_Fame -= g_Girls.GetStat(current, STAT_FAME);
+			brothel->m_Fame -= current->fame();
 			ss << girlName << " refused to work so made no money.";
 		}
 		else
@@ -471,7 +470,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 			ss << m_JobManager.GirlPaymentText(brothel, current, totalTips, totalPay, totalGold, Day0Night1);
 			if (totalGold < 0) sum = EVENT_DEBUG;
 
-			brothel->m_Fame += g_Girls.GetStat(current, STAT_FAME);
+			brothel->m_Fame += current->fame();
 		}
 		if (ss.str().length() > 0) current->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, sum);
 
@@ -487,7 +486,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 	while (current)
 	{
 		sw = (Day0Night1 ? current->m_NightJob : current->m_DayJob);
-		if (current->health() <= 0 || sw != JOB_MARKETER)
+		if (current->is_dead() || sw != JOB_MARKETER)
 		{	// skip dead girls, resting girls and the matron
 			if (current->m_Next) { current = current->m_Next; continue; }
 			else { current = 0; break; }
@@ -507,7 +506,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 		//		Summary Messages
 		if (refused)
 		{
-			brothel->m_Fame -= g_Girls.GetStat(current, STAT_FAME);
+			brothel->m_Fame -= current->fame();
 			ss << girlName << " refused to work so made no money.";
 		}
 		else
@@ -515,13 +514,12 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 			ss << m_JobManager.GirlPaymentText(brothel, current, totalTips, totalPay, totalGold, Day0Night1);
 			if (totalGold < 0) sum = EVENT_DEBUG;
 
-			brothel->m_Fame += g_Girls.GetStat(current, STAT_FAME);
+			brothel->m_Fame += current->fame();
 		}
 		if (ss.str().length() > 0) current->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, sum);
 
 		current = current->m_Next; // Next Girl
 	}
-
 
 	///////////////////////////////////
 	//  Finaly do end of day stuff.  //
@@ -529,7 +527,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 	current = brothel->m_Girls;
 	while (current)
 	{
-		if (current->health() <= 0)
+		if (current->is_dead())
 		{	// skip dead girls
 			if (current->m_Next) { current = current->m_Next; continue; }
 			else { current = 0; break; }
@@ -543,87 +541,83 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 		// Level the girl up if nessessary
 		g_Girls.LevelUp(current);
 		// Natural healing, 2% health and 2% tiredness per day
-		g_Girls.UpdateStat(current, STAT_HEALTH, 2, false);
-		g_Girls.UpdateStat(current, STAT_TIREDNESS, -2, false);
+		current->health(2, false);
+		current->tiredness(-2, false);
 
-
-		if (g_Girls.GetStat(current, STAT_HAPPINESS) < 40)
+		sw = (Day0Night1 ? current->m_NightJob : current->m_DayJob);
+		if (current->happiness()< 40)
 		{
-			if (current->m_NightJob != matronjob && matron && brothel->m_NumGirls > 1 && g_Dice.percent(70))
+			if (sw != matronjob && matron && brothel->m_NumGirls > 1 && g_Dice.percent(70))
 			{
 				ss << "The Farm Manager helps cheer up " << girlName << " when she is feeling sad.\n";
-				g_Girls.UpdateStat(current, STAT_HAPPINESS, g_Dice % 10 + 5);
+				current->happiness(g_Dice % 10 + 5);
 			}
 			else if (brothel->m_NumGirls > 10 && g_Dice.percent(50))
 			{
 				ss << "Some of the other girls help cheer up " << girlName << " when she is feeling sad.\n";
-				g_Girls.UpdateStat(current, STAT_HAPPINESS, g_Dice % 8 + 3);
+				current->happiness(g_Dice % 8 + 3);
 			}
 			else if (brothel->m_NumGirls > 1 && g_Dice.percent(max(brothel->m_NumGirls, 50)))
 			{
 				ss << "One of the other girls helps cheer up " << girlName << " when she is feeling sad.\n";
-				g_Girls.UpdateStat(current, STAT_HAPPINESS, g_Dice % 6 + 2);
+				current->happiness(g_Dice % 6 + 2);
 			}
 			else if (brothel->m_NumGirls == 1 && g_Dice.percent(70))
 			{
 				ss << girlName << " plays around in the empty building until she feels better.\n";
-				g_Girls.UpdateStat(current, STAT_HAPPINESS, g_Dice % 10 + 10);
+				current->happiness(g_Dice % 10 + 10);
 			}
-			else if (g_Girls.GetStat(current, STAT_HAPPINESS) < 20) // no one helps her and she is really unhappy
+			else if (current->health()< 20) // no one helps her and she is really unhappy
 			{
 				ss << girlName << " is looking very depressed. You may want to do something about that before she does something drastic.\n";
 				sum = EVENT_WARNING;
 			}
 		}
 
-		if (g_Girls.GetStat(current, STAT_TIREDNESS) > 80 || g_Girls.GetStat(current, STAT_HEALTH) < 40)
+		int t = current->tiredness();
+		int h = current->health();
+		if (sw == matronjob && (t > 60 || h < 40))
 		{
-			int t = g_Girls.GetStat(current, STAT_TIREDNESS);
-			int h = g_Girls.GetStat(current, STAT_HEALTH);
-
+			ss << "As Farm Manager, " << girlName << " has the keys to the store room.\nShe used them to 'borrow' ";
+			if (t > 50 && h < 50)
+			{
+				ss << "some potions";
+				current->health(20 + g_Dice % 20, false);
+				current->tiredness(-(20 + g_Dice % 20), false);
+				g_Gold.consumable_cost(20, true);
+			}
+			else if (t > 50)
+			{
+				ss << "a resting potion";
+				current->tiredness(-(20 + g_Dice % 20), false);
+				g_Gold.consumable_cost(10, true);
+			}
+			else if (h < 50)
+			{
+				ss << "a healing potion";
+				current->health(20 + g_Dice % 20, false);
+				g_Gold.consumable_cost(10, true);
+			}
+			else
+			{
+				ss << "a potion";
+				current->health(10 + g_Dice % 10, false);
+				current->tiredness(-(10 + g_Dice % 10), false);
+				g_Gold.consumable_cost(5, true);
+			}
+			ss << " for herself.\n";
+		}
+		else if (t > 80 || h < 40)
+		{
 			if (!matron)	// do no matron first as it is the easiest
 			{
 				ss << "WARNING! " << girlName;
-				if (t > 80 && h < 20)		ss << " is in real bad shape, she is tired and injured.\nShe should go to the Clinic.\n";
+				/* */if (t > 80 && h < 20)	ss << " is in real bad shape, she is tired and injured.\nShe should go to the Clinic.\n";
 				else if (t > 80 && h < 40)	ss << " is in bad shape, she is tired and injured.\nShe should rest or she may die!\n";
-				else if (t > 80)			ss << " is desparatly in need of rest.\nGive her some free time\n";
-				else if (h < 20)			ss << " is badly injured.\nShe should rest or go to the Clinic.\n";
-				else if (h < 40)			ss << " is hurt.\nShe should rest and recuperate.\n";
-			}
-			else if (current->m_NightJob == matronjob && matron)	// do matron	
-			{
-				if (t > 90 && h < 10)	// The matron may take herself off work if she is really bad off
-				{
-					current->m_PrevDayJob = current->m_DayJob;
-					current->m_PrevNightJob = current->m_NightJob;
-					current->m_DayJob = current->m_NightJob = restjob;
-					ss << "The Farm Manager takes herself off duty because she is just too damn sore.\n";
-					g_Girls.UpdateEnjoyment(current, ACTION_WORKMATRON, -10);
-				}
-				else
-				{
-					ss << "As Farm Manager, " << girlName << " has the keys to the store room.\nShe used them to 'borrow' ";
-					if (t > 80 && h < 40)
-					{
-						ss << "some potions";
-						g_Gold.consumable_cost(20, true);
-						current->m_Stats[STAT_HEALTH] = min(current->m_Stats[STAT_HEALTH] + 20, 100);
-						current->m_Stats[STAT_TIREDNESS] = max(current->m_Stats[STAT_TIREDNESS] - 20, 0);
-					}
-					else if (t > 80)
-					{
-						ss << "a resting potion";
-						g_Gold.consumable_cost(10, true);
-						current->m_Stats[STAT_TIREDNESS] = max(current->m_Stats[STAT_TIREDNESS] - 20, 0);
-					}
-					else if (h < 40)
-					{
-						ss << "a healing potion";
-						g_Gold.consumable_cost(10, true);
-						current->m_Stats[STAT_HEALTH] = min(current->m_Stats[STAT_HEALTH] + 20, 100);
-					}
-					ss << " for herself.\n";
-				}
+				else if (t > 80)/*      */	ss << " is desparatly in need of rest.\nGive her some free time\n";
+				else if (h < 20)/*      */	ss << " is badly injured.\nShe should rest or go to the Clinic.\n";
+				else if (h < 40)/*      */	ss << " is hurt.\nShe should rest and recuperate.\n";
+				sum = EVENT_WARNING;
 			}
 			else	// do all other girls with a matron working
 			{
@@ -637,6 +631,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 					else if (t > 80)		ss << "tiredness.\n";
 					else if (h < 40)		ss << "low health.\n";
 					else /*       */		ss << "current state.\n";
+					sum = EVENT_WARNING;
 				}
 				else	// the girl has already been taken off duty by the matron
 				{
@@ -646,18 +641,18 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 						if (t > 80 && h < 40)
 						{
 							ss << girlName << " recuperate.\n";
-							g_Girls.UpdateStat(current, STAT_TIREDNESS, -(g_Dice % 4 + 2));
-							g_Girls.UpdateStat(current, STAT_HEALTH, (g_Dice % 4 + 2));
+							current->health(2 + g_Dice % 4, false);
+							current->tiredness(-(2 + g_Dice % 4), false);
 						}
 						else if (t > 80)
 						{
 							ss << girlName << " to relax.\n";
-							g_Girls.UpdateStat(current, STAT_TIREDNESS, -(g_Dice % 5 + 5));
+							current->tiredness(-(5 + g_Dice % 5), false);
 						}
 						else if (h < 40)
 						{
 							ss << " heal " << girlName << ".\n";
-							g_Girls.UpdateStat(current, STAT_HEALTH, (g_Dice % 5 + 5));
+							current->health(5 + g_Dice % 5, false);
 						}
 					}
 				}
@@ -669,7 +664,7 @@ void cFarmManager::UpdateGirls(sBrothel* brothel, bool Day0Night1)		// Start_Bui
 		current = current->m_Next;		// Process next girl
 	}
 
-	m_Processing_Shift = -1;	// WD: Finished Processing Shift set flag
+    m_Processing_Shift = -1;	// WD: Finished Processing Shift set flag
 }
 
 TiXmlElement* cFarmManager::SaveDataXML(TiXmlElement* pRoot)
@@ -708,6 +703,8 @@ TiXmlElement* sFarm::SaveFarmXML(TiXmlElement* pRoot)
 	if (m_MaxNumRooms < 200)		m_MaxNumRooms = 200;
 	else if (m_MaxNumRooms > 600)	m_MaxNumRooms = 600;
 	pBrothel->SetAttribute("MaxNumRooms", m_MaxNumRooms);
+	pBrothel->SetAttribute("Fame", m_Fame);
+	pBrothel->SetAttribute("Happiness", m_Happiness);
 	pBrothel->SetAttribute("Filthiness", m_Filthiness);
 	pBrothel->SetAttribute("SecurityLevel", m_SecurityLevel);
 	// save variables for sex restrictions
@@ -782,7 +779,7 @@ bool cFarmManager::LoadDataXML(TiXmlHandle hBrothelManager)
 
 bool sFarm::LoadFarmXML(TiXmlHandle hBrothel)
 {
-	//no need to init this, we just created it
+	// no need to init this, we just created it
 	TiXmlElement* pBrothel = hBrothel.ToElement();
 	if (pBrothel == 0)
 	{
@@ -805,6 +802,16 @@ bool sFarm::LoadFarmXML(TiXmlHandle hBrothel)
 	pBrothel->QueryIntAttribute("MaxNumRooms", &tempInt); m_MaxNumRooms = tempInt; tempInt = 0;
 	if (m_MaxNumRooms < 200)		m_MaxNumRooms = 200;
 	else if (m_MaxNumRooms > 600)	m_MaxNumRooms = 600;
+	if (pBrothel->Attribute("Fame"))
+	{
+		pBrothel->QueryIntAttribute("Fame", &tempInt); m_Fame = tempInt; tempInt = 0;
+	}
+	else m_Fame = 0;
+	if (pBrothel->Attribute("Happiness"))
+	{
+		pBrothel->QueryValueAttribute<unsigned short>("Happiness", &m_Happiness);
+	}
+	else m_Happiness = 0;
 	pBrothel->QueryIntAttribute("Filthiness", &m_Filthiness);
 	pBrothel->QueryIntAttribute("SecurityLevel", &m_SecurityLevel);
 	// load variables for sex restrictions

@@ -20,6 +20,7 @@
 #define __INTERFACEPROCESSES_H
 
 #include <string>
+#include <algorithm>
 #include "tinyxml.h"
 #include "cBrothel.h"
 using namespace std;
@@ -29,26 +30,16 @@ void GetString();
 void GetInt();
 void NewGame();
 void BrothelScreen();
-void Turnsummary();
 void NextWeek();
 void GameEvents();
-void Gallery();
-void Gallery2();
 void AutoSaveGame();
 void SaveGame(bool saveCSV = false);
 void SaveGameXML(string filename);
 void SimpleSaveGameXML(string filename);
-bool LoadGame(string directory, string filename);
-bool LoadGameXML(TiXmlHandle hDoc);
+void LoadSettingsScreen();
 void LoadGameScreen();
-//the master file has been done away with! yay! It was only a stub anyways
-//all the info is now in the XML savegame
-//void SaveMasterFile(string filename);
 void LoadGameInfoFiles();
 void LoadGirlsFiles();
-void TransferGirls();
-void TransferGirlsRightToLeft(int rightBrothel, int leftBrothel);
-void TransferGirlsLeftToRight(int rightBrothel, int leftBrothel);
 void SaveGirlsCSV(string filename);
 string Girl2CSV(sGirl* girl);
 string CSVifyString(string name);

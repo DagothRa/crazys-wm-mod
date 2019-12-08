@@ -62,11 +62,32 @@ typedef struct sGang
 
 	int magic()			{ return m_Skills[SKILL_MAGIC]; }
 	int combat()		{ return m_Skills[SKILL_COMBAT]; }
+	int service()		{ return m_Skills[SKILL_SERVICE]; }		// `J` added for .06.02.41
 	int intelligence()	{ return m_Stats[STAT_INTELLIGENCE]; }
 	int agility()		{ return m_Stats[STAT_AGILITY]; }
 	int constitution()	{ return m_Stats[STAT_CONSTITUTION]; }
 	int charisma()		{ return m_Stats[STAT_CHARISMA]; }
 	int strength()		{ return m_Stats[STAT_STRENGTH]; }
+	int happy()			{ return m_Stats[STAT_HAPPINESS]; }
+
+
+	// `J` added for .06.02.41
+	void AdjustGangSkill(sGang* gang, int skill, int amount);
+	void AdjustGangStat(sGang* gang, int stat, int amount);
+	void AdjustGangSkill(int skill, int amount);
+	void AdjustGangStat(int stat, int amount);
+
+	void magic(int amount)			{ AdjustGangSkill(SKILL_MAGIC, amount); }
+	void combat(int amount)			{ AdjustGangSkill(SKILL_COMBAT, amount); }
+	void service(int amount)			{ AdjustGangSkill(SKILL_SERVICE, amount); }
+	void intelligence(int amount)	{ AdjustGangStat(STAT_INTELLIGENCE, amount); }
+	void agility(int amount)			{ AdjustGangStat(STAT_AGILITY, amount); }
+	void constitution(int amount)	{ AdjustGangStat(STAT_CONSTITUTION, amount); }
+	void charisma(int amount)		{ AdjustGangStat(STAT_CHARISMA, amount); }
+	void strength(int amount)		{ AdjustGangStat(STAT_STRENGTH, amount); }
+	void happy(int amount)			{ AdjustGangStat(STAT_HAPPINESS, amount); }
+
+
 
 	sGang()
 	{
@@ -108,15 +129,17 @@ public:
 	void FireGang(int gangID);	// fired a gang, so send it back to recruitables (or just delete if full up)
 	void AddHireableGang(sGang* gang);
 	void AddGang(sGang* gang);
-	void RemoveHireableGang(int gangID);	// removed a recruitable gang from the list
+	void RemoveHireableGang(int gangID);								// removed a recruitable gang from the list
 	void RemoveHireableGang(sGang* gang);
-	void RemoveGang(int gangID);	// removed a controlled gang completely from service
+	void RemoveGang(int gangID);										// removed a controlled gang completely from service
 	void RemoveGang(sGang* gang);
-	void SendGang(int gangID, int missID);	// sends a gang on a mission
-	sGang* GetGang(int gangID);	// gets a gang
-	sGang* GetHireableGang(int gangID);	// gets a recruitable gang
-	sGang* GetGangOnMission(u_int missID);	// gets a gang on the current mission
-	sGang* GetGangRecruitingNotFull(int roomfor = 0);	// gets a gang recruiting with room to spare
+	void SendGang(int gangID, int missID);								// sends a gang on a mission
+	sGang* GetGang(int gangID);											// gets a gang
+	sGang* GetHireableGang(int gangID);									// gets a recruitable gang
+	sGang* GetGangOnMission(u_int missID);								// gets a gang on the current mission
+	sGang* GetRandomGangOnMission(u_int missID);						// gets a random gang on the current mission
+	sGang* GetGangNotFull(int roomfor = 0, bool recruiting = true);		// gets a gang with room to spare
+	sGang* GetGangRecruitingNotFull(int roomfor = 0);					// gets a gang recruiting with room to spare
 	void UpdateGangs();
 
 	int GetMaxNumGangs();
@@ -124,11 +147,11 @@ public:
 	int GetNumHireableGangs();
 	bool GangCombat(sGirl* girl, sGang* gang);								// returns true if the girl wins
 	bool GangBrawl(sGang* gang1, sGang* gang2, bool rivalVrival = false);	// returns true if gang1 wins
-	sGang* GetTempGang();			// creates a new gang
-	sGang* GetTempGang(int mod);	// creates a new gang with stat/skill mod
-	void BoostGangSkill(int* affect_skill, int count = 1);  // increases a specific skill/stat the specified number of times
+	sGang* GetTempGang();													// creates a new gang
+	sGang* GetTempGang(int mod);											// creates a new gang with stat/skill mod
+	void BoostGangSkill(int* affect_skill, int count = 1);					// increases a specific skill/stat the specified number of times
 	void BoostGangRandomSkill(vector<int*>* possible_skills, int count = 1, int boost_count = 1);  // chooses from the passed skills/stats and raises one or more of them
-	void BoostGangCombatSkills(sGang* gang, int count = 1);  // simple function to increase a gang's combat skills a bit
+	void BoostGangCombatSkills(sGang* gang, int count = 1);					// simple function to increase a gang's combat skills a bit
 
 	sGang* GetTempWeakGang();
 
@@ -150,8 +173,6 @@ public:
 	int GetHealingRestock() {return m_KeepHealStocked;}					// 
 	int healing_limit();												// 
 
-
-
 	bool sabotage_mission(sGang* gang);									// 
 	bool recapture_mission(sGang* gang);								// 
 	bool extortion_mission(sGang* gang);								// 
@@ -161,7 +182,7 @@ public:
 	bool catacombs_mission(sGang* gang);								// 
 	bool gangtraining(sGang* gang);										// 
 	bool gangrecruiting(sGang* gang);									// 
-
+	bool service_mission(sGang* gang);									// 
 	bool losegang(sGang* gang);
 	void check_gang_recruit(sGang* gang);
 	void GangStartOfShift();

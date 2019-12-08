@@ -53,12 +53,14 @@ bool cJobManager::WorkCrystalPurifier(sGirl* girl, sBrothel* brothel, bool Day0N
 	// No film crew.. then go home	// `J` this will be taken care of in building flow, leaving it in for now
 	if (g_Studios.GetNumGirlsOnJob(0, JOB_CAMERAMAGE, SHIFT_NIGHT) == 0 || g_Studios.GetNumGirlsOnJob(0, JOB_CRYSTALPURIFIER, SHIFT_NIGHT) == 0)
 	{
-		girl->m_Events.AddMessage("There was no crew to film the scene, so she took the day off", IMGTYPE_PROFILE, EVENT_NOWORK);
+		ss << "There was no crew to film the scene, so " << girlName << " took the day off";
+		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
 		return false;	// not refusing
 	}
 	else if (g_Studios.Num_Actress(0) < 1)
 	{
-		girl->m_Events.AddMessage("There were no actresses to film, so she took the day off", IMGTYPE_PROFILE, EVENT_NOWORK);
+		ss << "There were no actresses to film, so " << girlName << " took the day off";
+		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
 		return false;	// not refusing
 	}
 
@@ -72,13 +74,13 @@ bool cJobManager::WorkCrystalPurifier(sGirl* girl, sBrothel* brothel, bool Day0N
 		ss << "The Director assigned " << girlName << "to edit the scenes for the week";
 	}
 
-	
+
 	g_Girls.UnequipCombat(girl);	// not for studio crew
 
 	int roll = g_Dice.d100();
 	if (!SkipDisobey)	// `J` skip the disobey check because it has already been done in the building flow
 	{
-		if (roll <= 10 && g_Girls.DisobeyCheck(girl, actiontype, brothel))
+		if (roll <= 10 && girl->disobey_check(actiontype, brothel))
 		{
 			if (girl->m_DayJob == JOB_FILMFREETIME)
 			{
@@ -98,25 +100,26 @@ bool cJobManager::WorkCrystalPurifier(sGirl* girl, sBrothel* brothel, bool Day0N
 			return true;
 		}
 	}
-	ss << ".\n\n";
+	ss << ".\n \n";
 
 	int wages = 50;
+	int tips = 0;
 	int enjoy = 0;
 
 	if (roll <= 10)
 	{
 		enjoy -= g_Dice % 3 + 1;
-		ss << "She did not like working in the studio today.\n\n";
+		ss << "She did not like working in the studio today.\n \n";
 	}
 	else if (roll >= 90)
 	{
 		enjoy += g_Dice % 3 + 1;
-		ss << "She had a great time working today.\n\n";
+		ss << "She had a great time working today.\n \n";
 	}
 	else
 	{
 		enjoy += g_Dice % 2;
-		ss << "Otherwise, the shift passed uneventfully.\n\n";
+		ss << "Otherwise, the shift passed uneventfully.\n \n";
 	}
 	double jobperformance = JP_CrystalPurifier(girl, false);
 	jobperformance += enjoy * 2;
@@ -142,21 +145,22 @@ bool cJobManager::WorkCrystalPurifier(sGirl* girl, sBrothel* brothel, bool Day0N
 
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, Day0Night1);
 	g_Studios.m_PurifierQaulity += (int)jobperformance;
-	girl->m_Pay = wages;
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 
 	// Improve stats
 	int xp = 5, skill = 3, libido = 1;
 	if (jobperformance > 5)	skill += 1;
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 3; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 3; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
+	if (girl->has_trait( "Quick Learner"))		{ skill += 1; xp += 3; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; xp -= 3; }
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
 
 	if (g_Dice % 2 == 1)
-		g_Girls.UpdateStat(girl, STAT_INTELLIGENCE, g_Dice%skill);
-	g_Girls.UpdateSkill(girl, SKILL_SERVICE, g_Dice%skill + 1);
-	g_Girls.UpdateStat(girl, STAT_EXP, xp);
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
+		girl->intelligence(g_Dice%skill);
+	girl->service(g_Dice%skill + 1);
+	girl->exp(xp);
+	girl->upd_temp_stat(STAT_LIBIDO, libido);
 
 	return false;
 }
@@ -176,12 +180,16 @@ double cJobManager::JP_CrystalPurifier(sGirl* girl, bool estimate)// not used
 	}
 	else// for the actual check
 	{
+		int t = girl->tiredness() - 80;
+		if (t > 0)
+			jobperformance -= t / 3;
+
 		jobperformance += (girl->spirit() - 50) / 10;
 		jobperformance += (girl->intelligence() - 50) / 10;
-		jobperformance += g_Girls.GetSkill(girl, SKILL_SERVICE) / 10;
+		jobperformance += girl->service() / 10;
 		jobperformance /= 3;
-		jobperformance += g_Girls.GetStat(girl, STAT_LEVEL);
-		jobperformance += g_Girls.GetStat(girl, STAT_FAME) / 10;
+		jobperformance += girl->level();
+		jobperformance += girl->fame() / 10;
 		jobperformance += g_Dice % 4 - 1;	// should add a -1 to +3 random element --PP
 
 	}

@@ -159,7 +159,7 @@ void cTriggerList::LoadTriggersLegacy(ifstream& ifs)
 
 bool cTrigger::LoadTriggerXML(TiXmlHandle hTrigger)
 {
-	//no need to init this, we just created it
+	// no need to init this, we just created it
 	TiXmlElement* pTrigger = hTrigger.ToElement();
 	if (pTrigger == 0) return false;
 
@@ -182,17 +182,32 @@ bool cTrigger::LoadTriggerXML(TiXmlHandle hTrigger)
 	// load additional data
 	if (m_Type == TRIGGER_SKILL)
 	{
-		pTrigger->QueryIntAttribute("Skill", &m_Values[0]);			// skill/stat id
-		pTrigger->QueryIntAttribute("Type", &m_Values[1]);			// what value it must reach
+		string skill = pTrigger->Attribute("Skill");				// Check if the trigger is sending a name
+		if (skill.size() > 2)
+		{
+			m_Values[0] = sGirl::lookup_skill_code(skill);
+		}
+		else  pTrigger->QueryIntAttribute("Skill", &m_Values[0]);	// otherwise get the number
+		pTrigger->QueryIntAttribute("Value", &m_Values[1]);			// what value it must reach
 	}
 	else if (m_Type == TRIGGER_STAT)
 	{
-		pTrigger->QueryIntAttribute("Stat", &m_Values[0]);			// skill/stat id
+		string stat = pTrigger->Attribute("Stat");				// Check if the trigger is sending a name
+		if (stat.size() > 2)
+		{
+			m_Values[0] = sGirl::lookup_stat_code(stat);
+		}
+		else  pTrigger->QueryIntAttribute("Stat", &m_Values[0]);	// otherwise get the number
 		pTrigger->QueryIntAttribute("Value", &m_Values[1]);			// what value it must reach
 	}
 	else if (m_Type == TRIGGER_STATUS)
 	{
-		pTrigger->QueryIntAttribute("Status", &m_Values[0]);		// status number id
+		string status = pTrigger->Attribute("Status");				// Check if the trigger is sending a name
+		if (status.size() > 2)
+		{
+			m_Values[0] = sGirl::lookup_status_code(status);
+		}
+		else  pTrigger->QueryIntAttribute("Status", &m_Values[0]);	// otherwise get the number
 		pTrigger->QueryIntAttribute("Value", &m_Values[1]);			// 0 means has status, 1 means doesn't have status
 	}
 	else if (m_Type == TRIGGER_MONEY)
@@ -463,7 +478,7 @@ void cTriggerList::ProcessTriggers()
 		case TRIGGER_SKILL:
 		{
 			if (m_GirlTarget
-				&& g_Girls.GetSkill(m_GirlTarget, curr->m_Values[0]) >= curr->m_Values[1]
+				&& m_GirlTarget->get_skill(curr->m_Values[0]) >= curr->m_Values[1]
 				&& (curr->m_Chance >= 100 || g_Dice.percent(curr->m_Chance)))
 				AddToQue(curr);
 		}break;
@@ -471,7 +486,7 @@ void cTriggerList::ProcessTriggers()
 		case TRIGGER_STAT:
 		{
 			if (m_GirlTarget
-				&& g_Girls.GetStat(m_GirlTarget, curr->m_Values[0]) >= curr->m_Values[1]
+				&& m_GirlTarget->get_stat(curr->m_Values[0]) >= curr->m_Values[1]
 				&& (curr->m_Chance >= 100 || g_Dice.percent(curr->m_Chance)))
 				AddToQue(curr);
 		}break;
@@ -660,9 +675,12 @@ void cTriggerList::ProcessNextQueItem(string fileloc)
 	{
 		cScriptManager sm;
 
-		string file = fileloc;
-		file += top->m_Trigger->m_Script;
-		sm.Load(file, m_GirlTarget);
+		// Missing a path separator
+		//string file = fileloc;
+		//file += top->m_Trigger->m_Script;
+
+		DirPath script = DirPath(fileloc.c_str()) << top->m_Trigger->m_Script;
+		sm.Load(script, m_GirlTarget);
 	}
 	top->m_Trigger->m_Triggered++;
 	RemoveFromQue(top->m_Trigger);

@@ -1111,6 +1111,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorkBarCook.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\WorkBarmaid.cpp"
 				>
 			</File>
@@ -1279,6 +1283,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorkFarmPonyGirl.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\WorkFarmResearch.cpp"
 				>
 			</File>
@@ -1299,6 +1307,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorkFilmAction.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\WorkFilmAnal.cpp"
 				>
 			</File>
@@ -1311,7 +1323,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorkFilmBuk.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\WorkFilmChef.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\WorkFilmDirector.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\WorkFilmDominatrix.cpp"
 				>
 			</File>
 			<File
@@ -1335,11 +1359,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorkFilmMusic.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\WorkFilmOral.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\WorkFilmPromoter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\WorkFilmPublicBDSM.cpp"
 				>
 			</File>
 			<File
@@ -1352,6 +1384,14 @@
 			</File>
 			<File
 				RelativePath=".\WorkFilmStrip.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\WorkFilmTease.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\WorkFilmThroat.cpp"
 				>
 			</File>
 			<File
@@ -1419,6 +1459,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorkHouseCook.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\WorkHousePet.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\WorkHouseVacation.cpp"
 				>
 			</File>
@@ -1428,6 +1476,10 @@
 			</File>
 			<File
 				RelativePath=".\WorkJanitor.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\WorkJeweler.cpp"
 				>
 			</File>
 			<File

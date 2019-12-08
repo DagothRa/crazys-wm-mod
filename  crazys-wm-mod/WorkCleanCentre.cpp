@@ -49,13 +49,13 @@ bool cJobManager::WorkCleanCentre(sGirl* girl, sBrothel* brothel, bool Day0Night
 	int actiontype = ACTION_WORKCLEANING;
 	stringstream ss; string girlName = girl->m_Realname; ss << girlName;
 	int roll_a = g_Dice.d100(), roll_b = g_Dice.d100(), roll_c = g_Dice.d100();
-	if (roll_a <= 50 && g_Girls.DisobeyCheck(girl, actiontype, brothel))
+	if (roll_a <= 50 && girl->disobey_check(actiontype, brothel))
 	{
-		ss << " refused to clean the centre.";
+		ss << " refused to clean the Centre.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
 		return true;
 	}
-	ss << " worked cleaning the centre.\n\n";
+	ss << " worked cleaning the Centre.\n \n";
 
 	g_Girls.UnequipCombat(girl);	// put that shit away
 
@@ -72,7 +72,7 @@ bool cJobManager::WorkCleanCentre(sGirl* girl, sBrothel* brothel, bool Day0Night
 		enjoy -= g_Dice % 3 + 1;
 		CleanAmt *= 0.8;
 		if (roll_b < 50)	ss << "She spilled a bucket of something unpleasant all over herself.";
-		else				ss << "She did not like cleaning the centre today.";
+		else				ss << "She did not like cleaning the Centre today.";
 	}
 	else if (roll_a >= 90)
 	{
@@ -86,7 +86,7 @@ bool cJobManager::WorkCleanCentre(sGirl* girl, sBrothel* brothel, bool Day0Night
 		enjoy += g_Dice % 2;
 		ss << "The shift passed uneventfully.";
 	}
-	ss << "\n\n";
+	ss << "\n \n";
 
 	// slave girls not being paid for a job that normally you would pay directly for, do less work
 	if ((girl->is_slave() && !cfg.initial.slave_pay_outofpocket()))
@@ -96,31 +96,31 @@ bool cJobManager::WorkCleanCentre(sGirl* girl, sBrothel* brothel, bool Day0Night
 	}
 	else
 	{
-		wages = (int)CleanAmt; // `J` Pay her based on how much she cleaned
+		wages = min(30, int(30 + (CleanAmt / 10))); // `J` Pay her based on how much she cleaned
 	}
 
 	// `J` if she can clean more than is needed, she has a little free time after her shift
 	if (brothel->m_Filthiness < CleanAmt / 2) playtime = true;
-	ss << gettext("\n\nCleanliness rating improved by ") << CleanAmt;
+	ss << "\n \nCleanliness rating improved by " << (int)CleanAmt;
 	if (playtime)	// `J` needs more variation
 	{
 		if (roll_a < 20 && roll_b < 60 && roll_c < 50)
 		{
-			ss << "\n\n" << girlName << " finished her cleaning early so took a long bath to clean herself off.";
+			ss << "\n \n" << girlName << " finished her cleaning early so took a long bath to clean herself off.";
 			girl->happiness((g_Dice % 3) + 1);
 			girl->tiredness(-(g_Dice % 3));
 			imagetype = IMGTYPE_BATH;
 		}
 		else if (roll_c < 50)
 		{
-			ss << "\n\n" << girlName << " finished her cleaning early so she played with the children a bit.";
+			ss << "\n \n" << girlName << " finished her cleaning early so she played with the children a bit.";
 			girl->happiness((g_Dice % 5) + 3);
 			girl->tiredness(g_Dice % 3);
 			girl->morality(g_Dice % 2);
 		}
 		else
 		{
-			ss << "\n\n" << girlName << " finished her cleaning early so she took nap.";
+			ss << "\n \n" << girlName << " finished her cleaning early so she took nap.";
 			girl->happiness(g_Dice % 3);
 			girl->tiredness(-1 - (g_Dice % 10));
 			girl->morality(-(g_Dice % 2));
@@ -135,8 +135,8 @@ bool cJobManager::WorkCleanCentre(sGirl* girl, sBrothel* brothel, bool Day0Night
 	// Push out the turn report
 	girl->m_Events.AddMessage(ss.str(), imagetype, msgtype);
 	// Money
-	if (wages < 0)	wages = 0;	girl->m_Pay = wages;
-	if (tips < 0)	tips = 0;	girl->m_Tips = tips;
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 
 	// Base Improvement and trait modifiers
 	int xp = 5, libido = 1, skill = 3;
@@ -144,19 +144,19 @@ bool cJobManager::WorkCleanCentre(sGirl* girl, sBrothel* brothel, bool Day0Night
 	else if (girl->has_trait("Slow Learner"))	{ skill -= 1; xp -= 3; }
 	/* */if (girl->has_trait("Nymphomaniac"))	{ libido += 2; }
 	// EXP and Libido
-	g_Girls.UpdateStat(girl, STAT_EXP, (g_Dice % xp) + 1);
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
+	girl->exp((g_Dice % xp) + 1);
+	girl->upd_temp_stat(STAT_LIBIDO, libido,false);
 
 
 	// primary improvement (+2 for single or +1 for multiple)
-	g_Girls.UpdateSkill(girl, SKILL_SERVICE, (g_Dice % skill) + 2);
+	girl->service((g_Dice % skill) + 2);
 	// secondary improvement (-1 for one then -2 for others)
-	g_Girls.UpdateStat(girl, STAT_MORALITY, max(-1, (g_Dice % skill) - 1));		// possibly go down but mostly go up
-	g_Girls.UpdateStat(girl, STAT_REFINEMENT, max(-1, (g_Dice % skill) - 2));	// possibly go up or down
+	girl->morality(max(-1, (g_Dice % skill) - 1));		// possibly go down but mostly go up
+	girl->refinement(max(-1, (g_Dice % skill) - 2));	// possibly go up or down
 
 
 	// Update Enjoyment
-	g_Girls.UpdateEnjoyment(girl, actiontype, enjoy);
+	girl->upd_Enjoyment(actiontype, enjoy);
 	// Gain Traits
 	if (g_Dice.percent(girl->service()))
 		g_Girls.PossiblyGainNewTrait(girl, "Maid", 70, actiontype, girlName + " has cleaned enough that she could work professionally as a Maid anywhere.", Day0Night1);
@@ -169,55 +169,5 @@ bool cJobManager::WorkCleanCentre(sGirl* girl, sBrothel* brothel, bool Day0Night
 
 double cJobManager::JP_CleanCentre(sGirl* girl, bool estimate)// not used
 {
-	double CleanAmt = 0.0;
-	if (estimate)	// for third detail string
-	{
-		CleanAmt = girl->service() * 1.5;
-		CleanAmt += girl->morality() * 0.5;
-	}
-	else
-	{
-		CleanAmt = ((girl->service() / 10) + 5) * 10;
-		CleanAmt += (girl->morality() / 10);			// evil girls may intentionally break something
-	}
-
-	if (g_Girls.HasTrait(girl, "Maid"))						CleanAmt += 20;
-	if (g_Girls.HasTrait(girl, "Powerful Magic"))			CleanAmt += 10;
-	if (g_Girls.HasTrait(girl, "Strong Magic"))				CleanAmt += 5;
-	if (g_Girls.HasTrait(girl, "Handyman"))					CleanAmt += 5;
-	if (g_Girls.HasTrait(girl, "Waitress"))					CleanAmt += 5;
-	if (g_Girls.HasTrait(girl, "Agile"))					CleanAmt += 5;
-	if (g_Girls.HasTrait(girl, "Fleet of Foot"))			CleanAmt += 2;
-	if (g_Girls.HasTrait(girl, "Strong"))					CleanAmt += 5;
-	if (g_Girls.HasTrait(girl, "Assassin"))					CleanAmt += 1;
-	if (g_Girls.HasTrait(girl, "Psychic"))					CleanAmt += 2;
-	if (g_Girls.HasTrait(girl, "Manly"))					CleanAmt += 1;
-	if (g_Girls.HasTrait(girl, "Tomboy"))					CleanAmt += 2;
-	if (g_Girls.HasTrait(girl, "Optimist"))					CleanAmt += 1;
-	if (g_Girls.HasTrait(girl, "Sharp-Eyed"))				CleanAmt += 1;
-	if (g_Girls.HasTrait(girl, "Giant"))					CleanAmt += 2;
-	if (g_Girls.HasTrait(girl, "Prehensile Tail"))			CleanAmt += 3;
-
-	if (g_Girls.HasTrait(girl, "Blind"))					CleanAmt -= 20;
-	if (g_Girls.HasTrait(girl, "Queen"))					CleanAmt -= 20;
-	if (g_Girls.HasTrait(girl, "Princess"))					CleanAmt -= 10;
-	if (g_Girls.HasTrait(girl, "Mind Fucked"))				CleanAmt -= 10;
-	if (g_Girls.HasTrait(girl, "Bimbo"))					CleanAmt -= 5;
-	if (g_Girls.HasTrait(girl, "Retarded"))					CleanAmt -= 5;
-	if (g_Girls.HasTrait(girl, "Smoker"))					CleanAmt -= 1;
-	if (g_Girls.HasTrait(girl, "Clumsy"))					CleanAmt -= 5;
-	if (g_Girls.HasTrait(girl, "Delicate"))					CleanAmt -= 1;
-	if (g_Girls.HasTrait(girl, "Elegant"))					CleanAmt -= 5;
-	if (g_Girls.HasTrait(girl, "Malformed"))				CleanAmt -= 1;
-	if (g_Girls.HasTrait(girl, "Massive Melons"))			CleanAmt -= 1;
-	if (g_Girls.HasTrait(girl, "Abnormally Large Boobs"))	CleanAmt -= 3;
-	if (g_Girls.HasTrait(girl, "Titanic Tits"))				CleanAmt -= 5;
-	if (g_Girls.HasTrait(girl, "Broken Will"))				CleanAmt -= 5;
-	if (g_Girls.HasTrait(girl, "Pessimist"))				CleanAmt -= 1;
-	if (g_Girls.HasTrait(girl, "Meek"))						CleanAmt -= 2;
-	if (g_Girls.HasTrait(girl, "Nervous"))					CleanAmt -= 2;
-	if (g_Girls.HasTrait(girl, "Dependant"))				CleanAmt -= 5;
-	if (g_Girls.HasTrait(girl, "Bad Eyesight"))				CleanAmt -= 5;
-
-	return CleanAmt;
+	return JP_Cleaning(girl, estimate);		// just use cleaning so there is 1 less thing to edit
 }

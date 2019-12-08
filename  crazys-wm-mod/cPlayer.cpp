@@ -34,7 +34,6 @@ cPlayer::cPlayer()			// constructor
 	m_RealName = "";
 	m_FirstName = "";
 	m_Surname = "";
-	m_RealName = "";
 	m_BirthYear = 1190;
 	m_BirthMonth = 0;
 	m_BirthDay = 0;
@@ -127,7 +126,7 @@ int	cPlayer::Scale200(int nValue, int nStat)
 	double	fRatio = nStat / 200.0;
 	int		nRetValue = static_cast <int> (nValue * fRatio);
 
-	//printf("cPlayer::Scale200 nRetValue = %d, fRatio = %.2f.\n\n", nRetValue, fRatio);
+	//printf("cPlayer::Scale200 nRetValue = %d, fRatio = %.2f.\n \n", nRetValue, fRatio);
 	if (abs(nRetValue) > 1) return nRetValue;						// Value is larger than 1				
 	return (bSign ? 1 : -1);
 }

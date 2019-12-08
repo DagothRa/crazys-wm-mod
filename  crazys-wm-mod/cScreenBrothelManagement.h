@@ -16,31 +16,41 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
+
+#include "DirPath.h"
 #include "cInterfaceWindow.h"
+#include "InterfaceGlobals.h"
 
 class cScreenBrothelManagement : public cInterfaceWindowXML
 {
-	void set_ids();
+private:
+	static bool id_set;		// --- interface/event IDs --- //
 	
-	static bool id_set;
+	int buildinglabel_id;
+	int background_id;
+	int walk_id;			// Walk Around Town button
 
-	int id_header;
-	int id_details;
-	int id_image;
-	int id_girls;
-	int id_staff;
-	int id_setup;
-	int id_dungeon;
-	int id_town;
-	int id_turn;
-	int id_week;
-	int id_save;
-	int id_quit;
-	int id_prev;
-	int id_next;
+	int weeks_id;			// next week map button
+	int	buildingdetails_id;	// centre description text
+	int girls_id;			// girl managment map button
+	int staff_id;			// gang map button
+	int setup_id;			// setup map button
+	int dungeon_id;			// 
+	int turns_id;			// turn summary map button
 
+	int girlimage_id;		// Girl image
+	int back_id;			// 
+
+	int nextbrothel_id;		// next brothel button
+	int prevbrothel_id;		// prev brothel button
+
+	int town_id;
+	int save_id;
+	int quit_id;
+
+	void set_ids();
 public:
-
 	cScreenBrothelManagement();
 	~cScreenBrothelManagement();
 

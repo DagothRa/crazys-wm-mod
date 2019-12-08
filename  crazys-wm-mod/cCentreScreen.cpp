@@ -39,11 +39,13 @@ extern	cWindowManager		g_WinManager;
 extern	cInterfaceEventManager	g_InterfaceEvents;
 extern bool g_Cheats;
 extern	bool	eventrunning;
-extern string g_ReturnText;
 extern cGangManager g_Gangs;
 extern bool g_AllTogle;
+extern int g_CurrentScreen;
 extern int g_Building;
 extern bool g_TryCentre;
+
+extern	bool	g_CTRLDown;
 
 bool cCentreScreen::ids_set = false;
 
@@ -67,6 +69,9 @@ void cCentreScreen::set_ids()
 
 void cCentreScreen::init()
 {
+	g_CurrentScreen = SCREEN_ARENA;
+	g_Building = BUILDING_CENTRE;
+
 	// buttons enable/disable
 	DisableButton(walk_id, g_TryCentre);
 }
@@ -128,7 +133,7 @@ void cCentreScreen::process()
 	else if (g_InterfaceEvents.CheckButton(turns_id))
 	{
 		g_InitWin = true;
-		g_WinManager.Push(Turnsummary, &g_Turnsummary);
+		g_WinManager.push("Turn Summary");
 		return;
 	}
 	else if (g_InterfaceEvents.CheckButton(setup_id))
@@ -147,9 +152,9 @@ void cCentreScreen::process()
 	else if (g_InterfaceEvents.CheckButton(weeks_id))
 	{
 		g_InitWin = true;
-		AutoSaveGame();
+		if (!g_CTRLDown) { g_CTRLDown = false; AutoSaveGame(); }
 		NextWeek();
-		g_WinManager.Push(Turnsummary, &g_Turnsummary);
+		g_WinManager.push("Turn Summary");
 		return;
 	}
 	else if (g_InterfaceEvents.CheckButton(nextbrothel_id))

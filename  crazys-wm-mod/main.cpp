@@ -19,12 +19,13 @@
 
 #if 0	// `J` change this to 1 to enable Visual Leak Detector
 #include <vld.h>
-#endif	// if you don't have Visual Leak Detector, get it here - https://vld.codeplex.com/ 
+#endif	// if you don't have Visual Leak Detector, get it here - https://vld.codeplex.com/
 
 #include "main.h"
 #include "cScreenMainMenu.h"
 #include "cScreenNewGame.h"
 #include "cScreenBrothelManagement.h"
+#include "cScreenPreparingGame.h"
 #include "InterfaceGlobals.h"
 #include "GameFlags.h"
 #include "InterfaceProcesses.h"
@@ -58,8 +59,10 @@ Globals _G;
 
 extern cScreenMainMenu g_MainMenu;
 extern cScreenNewGame g_NewGame;
+extern cScreenPreparingGame g_Preparing;
 extern cScreenBrothelManagement g_BrothelManagement;
 sInterfaceIDs g_interfaceid;
+extern sGirl *selected_girl;
 
 // Function Defs
 void NextWeek();
@@ -86,9 +89,10 @@ bool g_ShiftDown = false;	bool g_CTRLDown = false;
 bool g_LeftArrow = false;	bool g_RightArrow = false;	bool g_UpArrow = false;		bool g_DownArrow = false;
 bool g_EnterKey = false;	bool g_SpaceKey = false;	bool g_TabKey = false;		bool g_EscapeKey = false;
 bool g_HomeKey = false;		bool g_EndKey = false;		bool g_PageUpKey = false;	bool g_PageDownKey = false;
+bool g_PeriodKey = false;	bool g_SlashKey = false;	bool g_BackSlashKey = false;
 
-bool g_1_Key = false;		bool g_2_Key = false;		bool g_3_Key = false;		bool g_4_Key = false;		
-bool g_5_Key = false;		bool g_6_Key = false;		bool g_7_Key = false;		bool g_8_Key = false;		
+bool g_1_Key = false;		bool g_2_Key = false;		bool g_3_Key = false;		bool g_4_Key = false;
+bool g_5_Key = false;		bool g_6_Key = false;		bool g_7_Key = false;		bool g_8_Key = false;
 bool g_9_Key = false;		bool g_0_Key = false;
 
 bool g_F1_Key = false;		bool g_F2_Key = false;		bool g_F3_Key = false;		bool g_F4_Key = false;
@@ -119,7 +123,6 @@ extern CSurface* g_BrothelImages[7];
 extern bool g_InitWin;
 extern sGirl* MarketSlaveGirls[20];
 extern int MarketSlaveGirlsDel[20];
-extern string g_ReturnText;
 
 
 // SDL Graphics interface
@@ -139,7 +142,6 @@ cTraits g_Traits;
 
 // Girl manager
 cGirls g_Girls;
-cAbstractGirls *g_GirlsPtr = &g_Girls;
 
 // Brothel Manager
 cBrothelManager g_Brothels;
@@ -186,9 +188,6 @@ unsigned long g_Day;
 // Keeping track of what screen is currently showing
 int g_CurrentScreen = 0;
 
-// the players gold
-cGold g_Gold;
-
 // Inventory manager
 cInventory g_InvManager;
 
@@ -197,7 +196,11 @@ int IDS = 0;
 cRng g_Dice;
 cConfig cfg;
 
-cNameList		g_NameList;
+// the players gold
+cGold g_Gold;
+
+cNameList	g_GirlNameList;
+cNameList	g_BoysNameList;
 cSurnameList g_SurnameList;
 
 void handle_hotkeys()
@@ -212,7 +215,7 @@ void handle_hotkeys()
 	case SDLK_LCTRL:
 		g_CTRLDown = true;		// enable multi select
 		break;
-		
+
 	case SDLK_RETURN:
 	case SDLK_KP_ENTER:	g_EnterKey = true;	break;
 
@@ -227,12 +230,15 @@ void handle_hotkeys()
 	case SDLK_PAGEDOWN:	g_PageDownKey = true;	break;
 	case SDLK_TAB:		g_TabKey = true;		break;
 	case SDLK_ESCAPE:	g_EscapeKey = true;		break;
+	case SDLK_PERIOD:	g_PeriodKey = true;		break;
+	case SDLK_SLASH:	g_SlashKey = true;		break;
+	case SDLK_BACKSLASH:g_BackSlashKey = true;	break;
 
-	case SDLK_1:		g_1_Key = true;			break; 
-	case SDLK_2:		g_2_Key = true;			break; 
+	case SDLK_1:		g_1_Key = true;			break;
+	case SDLK_2:		g_2_Key = true;			break;
 	case SDLK_3:		g_3_Key = true;			break;
-	case SDLK_4:		g_4_Key = true;			break; 
-	case SDLK_5:		g_5_Key = true;			break; 
+	case SDLK_4:		g_4_Key = true;			break;
+	case SDLK_5:		g_5_Key = true;			break;
 	case SDLK_6:		g_6_Key = true;			break;
 	case SDLK_7:		g_7_Key = true;			break;
 	case SDLK_8:		g_8_Key = true;			break;
@@ -285,7 +291,7 @@ void handle_hotkeys()
 
 
 	// Process the keys for every screen except MainMenu, LoadGame and NewGame - they have their own keys
-	if (g_WinManager.GetWindow() != &g_MainMenu && g_WinManager.GetWindow() != &g_LoadGame && g_WinManager.GetWindow() != &g_NewGame)
+	if (g_WinManager.GetWindow() != &g_MainMenu && g_WinManager.GetWindow() != &g_LoadGame && g_WinManager.GetWindow() != &g_Preparing && g_WinManager.GetWindow() != &g_NewGame)
 	{
 		int br_no = 0;
 		string msg = "";
@@ -331,6 +337,8 @@ void handle_hotkeys()
 			// girl management screen
 		case SDLK_g:    if (g_AltKeys)  break;
 		case SDLK_F1:
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering Brothel");
+			if (g_Building != BUILDING_BROTHEL) selected_girl = 0;
 			g_Building = BUILDING_BROTHEL;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_CurrentScreen = SCREEN_GIRLMANAGEMENT;
@@ -343,6 +351,8 @@ void handle_hotkeys()
 			// staff management screen (gang management)
 		case SDLK_t:    if (g_AltKeys)  break;
 		case SDLK_F2:
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering  Gang Management");
+			selected_girl = 0;
 			g_Building = BUILDING_BROTHEL;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_CurrentScreen = SCREEN_GANGMANAGEMENT;
@@ -353,6 +363,8 @@ void handle_hotkeys()
 			// Dungeon
 		case SDLK_d:    if (g_AltKeys)  break;
 		case SDLK_F3:
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering  Dungeon");
+			selected_girl = 0;
 			g_Building = BUILDING_BROTHEL;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_InitWin = true;
@@ -363,6 +375,8 @@ void handle_hotkeys()
 			// Slave market screen
 		case SDLK_s:    if (g_AltKeys)  break;
 		case SDLK_F4:
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering  Slave Market");
+			selected_girl = 0;
 			g_Building = BUILDING_BROTHEL;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_InitWin = true;
@@ -378,7 +392,9 @@ void handle_hotkeys()
 				g_MessageQue.AddToQue(msg, 0);
 				break;
 			}
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering  Studio");
 			// Yes!
+			if (g_Building != BUILDING_STUDIO) selected_girl = 0;
 			g_Building = BUILDING_STUDIO;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_CurrentScreen = SCREEN_STUDIO;
@@ -400,6 +416,8 @@ void handle_hotkeys()
 				break;
 			}
 			// Yes!
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering  Arena");
+			if (g_Building != BUILDING_ARENA) selected_girl = 0;
 			g_Building = BUILDING_ARENA;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_CurrentScreen = SCREEN_ARENA;
@@ -419,6 +437,8 @@ void handle_hotkeys()
 				break;
 			}
 			// Yes!
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering  Centre");
+			if (g_Building != BUILDING_CENTRE) selected_girl = 0;
 			g_Building = BUILDING_CENTRE;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_CurrentScreen = SCREEN_CENTRE;
@@ -440,6 +460,8 @@ void handle_hotkeys()
 				break;
 			}
 			// Yes!
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering  Clinic");
+			if (g_Building != BUILDING_CLINIC) selected_girl = 0;
 			g_Building = BUILDING_CLINIC;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_CurrentScreen = SCREEN_CLINIC;
@@ -460,6 +482,8 @@ void handle_hotkeys()
 				break;
 			}
 			// Yes!
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering  Farm");
+			if (g_Building != BUILDING_FARM) selected_girl = 0;
 			g_Building = BUILDING_FARM;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_CurrentScreen = SCREEN_FARM;
@@ -481,17 +505,16 @@ void handle_hotkeys()
 			}
 			else
 				g_AllTogle = true;
-			g_Building = BUILDING_BROTHEL;
-			g_WinManager.PopToWindow(&g_BrothelManagement);
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering Inventory");
 			g_CurrentScreen = SCREEN_INVENTORY;
 			g_InitWin = true;
-			g_WinManager.push("Town");
 			g_WinManager.push("Item Management");
 			break;
 
 			// town screen
 		case SDLK_o:    if (g_AltKeys)  break;
 		case SDLK_F10:
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering Town");
 			g_Building = BUILDING_BROTHEL;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_CurrentScreen = SCREEN_TOWN;
@@ -507,19 +530,20 @@ void handle_hotkeys()
 				g_AltKeys = true;
 				msg = "Alternate HotKeys Active\n";
 				g_MessageQue.AddToQue(msg, 0);
-				g_ChoiceManager.CreateChoiceBox(224, 825, 352, 600, 0, 1, 32, strlen(gettext("Close")));
-				g_ChoiceManager.AddChoice(0, gettext("Close"), 0);
+				g_ChoiceManager.CreateChoiceBox(224, 825, 352, 600, 0, 1, 32, strlen(("Close")));
+				g_ChoiceManager.AddChoice(0, ("Close"), 0);
 				g_ChoiceManager.SetActive(0);
 				g_ChoiceManager.Free();
 				break;
 			}
 		case SDLK_a:    if (g_AltKeys && vent.key.keysym.sym == SDLK_a)  break;
 		case SDLK_F11:
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering Turn Summary");
 			g_Building = BUILDING_BROTHEL;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_CurrentScreen = SCREEN_TURNSUMMARY;
 			g_InitWin = true;
-			g_WinManager.Push(Turnsummary, &g_Turnsummary);
+			g_WinManager.push("Turn Summary");
 			break;
 
 		case SDLK_HOME:
@@ -529,13 +553,15 @@ void handle_hotkeys()
 				g_AltKeys = false;
 				msg = "Default HotKeys Active\n";
 				g_MessageQue.AddToQue(msg, 0);
-				g_ChoiceManager.CreateChoiceBox(224, 825, 352, 600, 0, 1, 32, strlen(gettext("Close")));
-				g_ChoiceManager.AddChoice(0, gettext("Close"), 0);
+				g_ChoiceManager.CreateChoiceBox(224, 825, 352, 600, 0, 1, 32, strlen(("Close")));
+				g_ChoiceManager.AddChoice(0, ("Close"), 0);
 				g_ChoiceManager.SetActive(0);
 				g_ChoiceManager.Free();
 				break;
 			}
 		case SDLK_F12:  // House
+			if (cfg.debug.log_debug())	g_LogFile.write("Entering House");
+			if (g_Building != BUILDING_HOUSE) selected_girl = 0;
 			g_Building = BUILDING_HOUSE;
 			g_WinManager.PopToWindow(&g_BrothelManagement);
 			g_CurrentScreen = SCREEN_HOUSE;
@@ -599,15 +625,17 @@ void handle_hotkeys()
 				{
 				case SCREEN_BROTHEL:
 					msg += "Brothel Screen:\n";
-					msg += "Right Arrown    Next Brothel\n";
-					msg += "Left Arrow      Previous Brothel\n\n";
+					msg += "Right Arrow     Next Brothel\n";
+					msg += "Left Arrow      Previous Brothel\n";
+					msg += "\n";
 					break;
 				case SCREEN_TURNSUMMARY:
 					msg += "Turn Summary Screen:\n";
 					msg += "Up Arrow     Previous Girl\n";
 					msg += "Down Arrow   Next Girl\n";
 					msg += "Left Arrow   Previous Event\n";
-					msg += "Right Arrow  Next Event\n\n";
+					msg += "Right Arrow  Next Event\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Girl\n";
 					msg += "D     Next Girl\n";
@@ -615,7 +643,9 @@ void handle_hotkeys()
 					msg += "S     Next Event\n";
 					msg += "Q     Next Catagory\n";
 					msg += "E     Previous Catagory\n";
-					msg += "Space Change current picture\n\n";
+					msg += "Space Change current picture\n";
+					if (cfg.resolution.next_turn_enter()) msg += "Enter  Goto Next Week\n";
+					msg += "\n";
 					break;
 				case SCREEN_GALLERY:
 				case SCREEN_GALLERY2:
@@ -623,22 +653,26 @@ void handle_hotkeys()
 					msg += "Left Arrow     Previous Picture\n";
 					msg += "Right Arrow    Next Picture\n";
 					msg += "Up Arrow     Previous Gallery\n";
-					msg += "Down Arrow     Next Gallery\n\n";
+					msg += "Down Arrow     Next Gallery\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Picture\n";
 					msg += "D     Next Picture\n";
 					msg += "W     Previous Gallery\n";
-					msg += "S     Next Gallery\n\n";
+					msg += "S     Next Gallery\n";
+					msg += "\n";
 					break;
 				case SCREEN_TRANSFERGIRLS:
 					msg += "Transfer Screen:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_GIRLMANAGEMENT:
 					msg += "Girl Management:\n";
 					msg += "Up Arrow     Previous Girl\n";
-					msg += "Down Arrow   Next Girl\n\n";
+					msg += "Down Arrow   Next Girl\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Girl\n";
 					msg += "D     Next Girl\n";
@@ -648,18 +682,23 @@ void handle_hotkeys()
 					msg += "E     Next Job\n";
 					msg += "Z     Day Shift\n";
 					msg += "C     Night Shift\n";
-					msg += "Space   Goto Girl Details\n\n";
+					msg += "Space   Goto Girl Details\n";
+					msg += "Enter   Goto Girl Details\n";
+					msg += "\n";
 					break;
 				case SCREEN_GIRLDETAILS:
 					msg += "Girl Details:\n";
 					msg += "Up Arrow    Previous Girl\n";
-					msg += "Down Arrow  Next Girl\n\n";
+					msg += "Down Arrow  Next Girl\n";
+					msg += "\n";
 					msg += "A    Previous Girl\n";
 					msg += "D    Next Girl\n";
 					msg += "S    More Details\n";
-					msg += "Space    Gallery\n\n";
+					msg += "Space    Gallery\n";
+					msg += "\n";
 					msg += "J    House Percent Up\n";
-					msg += "H    House Percent Down\n\n";
+					msg += "H    House Percent Down\n";
+					msg += "\n";
 					break;
 				case SCREEN_INVENTORY:
 					msg += "Inventory Screen:\n";
@@ -668,16 +707,18 @@ void handle_hotkeys()
 					msg += "Owner list left :          T           G\n";
 					msg += "Owner list right :        Y           H\n";
 					msg += "Items list left :          U           J\n";
-					msg += "Items list right :         I           K\n\n\n";
+					msg += "Items list right :         I           K\n";
+					msg += "\n";
 					msg += "There are no hotkeys for buy and sell buttons\n";
 					msg += "or for equip or unequip buttons\n";
 					msg += "to prevent accidental buying, selling or equiping of items\n";
-					msg += "\n\n";
+					msg += "\n";
 					break;
 				case SCREEN_GANGMANAGEMENT:
 					msg += "Gang Management:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Gang\n";
 					msg += "D     Next Gang\n";
@@ -685,107 +726,147 @@ void handle_hotkeys()
 					msg += "S     Next Mission\n";
 					msg += "Q     Previous Recruits\n";
 					msg += "E     Next Recruits\n";
-					msg += "Space    Hire Gang\n\n";
+					msg += "Space    Hire Gang\n";
+					msg += "\n";
 					break;
 				case SCREEN_BROTHELMANAGEMENT:
 					msg += "Brothel Management:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_DUNGEON:
 					msg += "Dungeon:\n";
 					msg += "Up Arrow    Previous girl\n";
-					msg += "Down Arrow  Next Girl\n\n";
+					msg += "Down Arrow  Next Girl\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Girl\n";
-					msg += "D     Next Girl\n\n";
+					msg += "D     Next Girl\n";
+					msg += "\n";
 					break;
 				case SCREEN_TOWN:
 					msg += "Town:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_MAYOR:
 					msg += "Mayor:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_BANK:
 					msg += "Bank:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_JAIL:
 					msg += "Jail:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Girl\n";
-					msg += "D     Next Girl\n\n";
+					msg += "D     Next Girl\n";
+					msg += "\n";
 					break;
 				case SCREEN_HOUSE:
 					msg += "House:\n";
-					msg += "Space   Goto Girl Details\n\n";
+					msg += "Space   Goto Girl Details\n";
+					msg += "Enter   Goto Girl Details\n";
+					msg += "\n";
 					break;
 				case SCREEN_CLINIC:
 					msg += "Clinic:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Girl\n";
-					msg += "D     Next Girl\n\n";
-					msg += "Space   Goto Girl Details\n\n";
+					msg += "D     Next Girl\n";
+					msg += "\n";
+					msg += "Space   Goto Girl Details\n";
+					msg += "Enter   Goto Girl Details\n";
+					msg += "\n";
 					break;
 				case SCREEN_ARENA:
 					msg += "Arena:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Girl\n";
-					msg += "D     Next Girl\n\n";
-					msg += "Space   Goto Girl Details\n\n";
+					msg += "D     Next Girl\n";
+					msg += "\n";
+					msg += "Space   Goto Girl Details\n";
+					msg += "Enter   Goto Girl Details\n";
+					msg += "\n";
 					break;
 				case SCREEN_TRYOUTS:
 					msg += "Try Outs:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_CENTRE:
 					msg += "Centre:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Girl\n";
-					msg += "D     Next Girl\n\n";
-					msg += "Space   Goto Girl Details\n\n";
+					msg += "D     Next Girl\n";
+					msg += "\n";
+					msg += "Space   Goto Girl Details\n";
+					msg += "Enter   Goto Girl Details\n";
+					msg += "\n";
 					break;
 				case SCREEN_STUDIO:
 					msg += "Studio:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Girl\n";
-					msg += "D     Next Girl\n\n";
-					msg += "Space   Goto Girl Details\n\n";
+					msg += "D     Next Girl\n";
+					msg += "\n";
+					msg += "Space   Goto Girl Details\n";
+					msg += "Enter   Goto Girl Details\n";
+					msg += "\n";
+					msg += "C     Create Movie\n";
+					msg += "\n";
 					break;
 				case SCREEN_CREATEMOVIE:
 					msg += "Create Movie:\n";
-					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Q     Available Scene Select Up\n";
+					msg += "A     Available Scene Select Down\n";
+					msg += "W     Current Movie Select Up\n";
+					msg += "S     Current Movie Select Down\n";
+					msg += "E     Current Movie Move Up \n";
+					msg += "D     Current Movie Move Down\n";
+					msg += "R     Add Scene\n";
+					msg += "F     Remove Scene\n";
+					msg += "\n";
 					break;
 				case SCREEN_BUILDINGMANAGEMENT:
 					msg += "Building Management:\n";
-					msg += "This screen is not implimented yet\n\n";
+					msg += "This screen is not implimented yet\n";
+					msg += "\n";
 					break;
 				case SCREEN_SLAVEMARKET:
 					msg += "Slave Market:\n";
 					msg += "Up Arrow    Previous girl\n";
-					msg += "Down Arrow  Next Girl\n\n";
+					msg += "Down Arrow  Next Girl\n";
+					msg += "\n";
 					msg += "For left handed control:\n";
 					msg += "A     Previous Girl\n";
 					msg += "D     Next Girl\n";
 					msg += "S     More Details\n";
-					msg += "Space   Purchase Girl\n\n";
+					msg += "Space   Purchase Girl\n";
+					msg += "\n";
 					break;
 				}
 			}
@@ -796,118 +877,141 @@ void handle_hotkeys()
 				case SCREEN_BROTHEL:
 					msg += "Brothel Screen";
 					msg += "Right Arrown    Next Brothel\n";
-					msg += "Left Arrow      Previous Brothel\n\n";
+					msg += "Left Arrow      Previous Brothel\n";
+					msg += "\n";
 					break;
 				case SCREEN_TURNSUMMARY:
 					msg += "Up Arrow     Previous Girl\n";
 					msg += "Down Arrow   Next Girl\n";
 					msg += "Left Arrow   Previous Event\n";
-					msg += "Right Arrow  Next Event\n\n";
+					msg += "Right Arrow  Next Event\n";
+					msg += "\n";
 					break;
 				case SCREEN_GALLERY:
 					msg += "Gallery:\n";
 					msg += "Left Arrow     Previous Picture\n";
-					msg += "Right Arrow    Next Picture\n\n";
+					msg += "Right Arrow    Next Picture\n";
+					msg += "\n";
 					break;
 				case SCREEN_TRANSFERGIRLS:
 					msg += "Transfer Screen:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_GIRLMANAGEMENT:
 					msg += "Girl Management:\n";
 					msg += "Up Arrow     Previous Girl\n";
-					msg += "Down Arrow   Next Girl\n\n";
+					msg += "Down Arrow   Next Girl\n";
+					msg += "\n";
 					break;
 				case SCREEN_GIRLDETAILS:
 					msg += "Girl Details\n";
 					msg += "Up Arrow    Previous Girl\n";
-					msg += "Down Arrow  Next Girl\n\n";
+					msg += "Down Arrow  Next Girl\n";
+					msg += "\n";
 					break;
 				case SCREEN_INVENTORY:
 					msg += "Inventory Screen:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_GANGMANAGEMENT:
 					msg += "Gang Management:\n";
 					msg += "Up Arrow    Previous Gang\n";
 					msg += "Down Arrow  Next Gang\n";
-					msg += "Space     Hire gang\n\n";
+					msg += "Space     Hire gang\n";
+					msg += "\n";
 					break;
 				case SCREEN_BROTHELMANAGEMENT:
 					msg += "Brothel Management:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_DUNGEON:
 					msg += "Dungeon:\n";
 					msg += "Up Arrow    Previous girl\n";
-					msg += "Down Arrow  Next Girl\n\n";
+					msg += "Down Arrow  Next Girl\n";
+					msg += "\n";
 					break;
 				case SCREEN_TOWN:
 					msg += "Town:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_MAYOR:
 					msg += "Mayor:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_BANK:
 					msg += "Bank:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_JAIL:
 					msg += "Jail:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					break;
 				case SCREEN_HOUSE:
 					msg += "House:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_CLINIC:
 					msg += "Clinic:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					break;
 				case SCREEN_ARENA:
 					msg += "Arena:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					break;
 				case SCREEN_TRYOUTS:
 					msg += "Try Outs:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_CENTRE:
 					msg += "Centre:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					break;
 				case SCREEN_STUDIO:
 					msg += "Studio:\n";
 					msg += "Up Arrow    Previous Gang\n";
-					msg += "Down Arrow  Next Gang\n\n";
+					msg += "Down Arrow  Next Gang\n";
+					msg += "\n";
 					break;
 				case SCREEN_CREATEMOVIE:
 					msg += "Create Movie:\n";
 					msg += "No special hotkeys\n";
-					msg += "Yet...\n\n";
+					msg += "Yet...\n";
+					msg += "\n";
 					break;
 				case SCREEN_BUILDINGMANAGEMENT:
 					msg += "Building Management:\n";
-					msg += "This screen is not implimented yet\n\n";
+					msg += "This screen is not implimented yet\n";
+					msg += "\n";
 					break;
 				case SCREEN_SLAVEMARKET:
 					msg += "Slave Market:\n";
 					msg += "Up Arrow    Previous girl\n";
-					msg += "Down Arrow  Next Girl\n\n";
+					msg += "Down Arrow  Next Girl\n";
+					msg += "\n";
 					break;
 				}
 			}
@@ -916,7 +1020,7 @@ void handle_hotkeys()
 
 		case SDLK_0:
 		{
-			
+
 			msg = "Global Hotkeys:\n";
 			msg += "1-7         Brothels\n";
 			msg += "Tab         Cycle Brothels\n";
@@ -937,10 +1041,15 @@ void handle_hotkeys()
 			msg += "9           List Hotkeys for this screen.\n";
 			msg += "0           List Global Hotkeys.\n";
 			msg += "I           Shop Screen (Inventory)\n";
-			msg += "\n\n";
-			msg += "Space Key   Clears message boxes.\n";
+			msg += "\n";
+			msg += "Any Key     Clears message boxes.\n";
 			msg += "Ctrl + Home Default HotKeys\n";
 			msg += "Ctrl + End  Alternate HotKeys\n";
+			msg += "\n";
+			msg += "Choice Boxes:\n";
+			msg += "Up Arrow    Move Selection Up\n";
+			msg += "Down Arrow  Move Selection Down\n";
+			msg += "Enter       Make Selection\n";
 			g_MessageQue.AddToQue(msg, 0);
 			break;
 		}
@@ -975,6 +1084,9 @@ void handle_hotkeys()
 		case SDLK_PAGEDOWN:	g_PageDownKey = true;	break;
 		case SDLK_TAB:		g_TabKey = true;		break;
 		case SDLK_ESCAPE:	g_EscapeKey = true;		break;
+		case SDLK_PERIOD:	g_PeriodKey = true;		break;
+		case SDLK_SLASH:	g_SlashKey = true;		break;
+		case SDLK_BACKSLASH:g_BackSlashKey = true;	break;
 
 		case SDLK_1:		g_1_Key = true;			break;
 		case SDLK_2:		g_2_Key = true;			break;
@@ -1046,84 +1158,11 @@ int main(int ac, char* av[])	// `J` Bookmark - #1 - Entering the game
 
 
 
-#if 0
-	// testing 		enemy_gang->m_Num = (max(1, g_Dice.bell(-5, 25) - 10));
-
-// prepare the draw result range
-	int low = -20;	// lower than the lowest expected result
-	int high = 20;	// higher than the highest expected result
-	int range = high - low + 1;
-
-// clear the field
-	int a[1000][2];	for (int i = 0; i < range; i++) { a[i][0] = i + low; a[i][1] = 0; }
-
-	for (int i = 0; i < 100; i++)
-	{
-// enter your test here
-
-
-		int r = (max(1, g_Dice.bell(-5, 15)));
-
-
-
-// correct the output for a[]
-		r -= 0 + low; a[r][1]++;
-	}
-// send the results to gamelog.txt
-	for (int i = 0; i < range; i++) { g_LogFile.ss() << a[i][0] << "     " << a[i][1];  g_LogFile.ssend(); }
-#endif
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-#if 0
-	// testing g_Dice.bell
-	int low = -100;
-	int high = 100;
-	int range=high-low +1;
-
-	int a[1000][2];
-	for (int i = 0; i < range; i++) { a[i][0] = i+low; a[i][1] = 0; }
-
-	for (int i = 0; i < 100000; i++)
-	{
-		int r = g_Dice.bell(low, high);
-		r -= 0+low;
-		a[r][1]++;
-	}
-
-	for (int i = 0; i < range; i++) g_LogFile.ss() << a[i][0] << "     "<< a[i][1]; g_LogFile.ssend();
-#endif
-
-
-
-
-
-
-#if 0
-	// testing disp modifier for gang recruiting
-	for (int disp = -100; disp < 101; disp++)
-	{
-		int chance = 0;
-		if (disp < -50)				chance += (disp + 50) / 2;	// -25 for -100 disp
-		if (disp > -20 && disp < 0)	chance += (22 + disp) / 2;	// +1 for -19  to +10 for -2
-		if (disp == 0)				chance += 10;				// +10 for -2,-1,0,1,2
-		if (disp < 20 && disp > 0)	chance += (22 - disp) / 2;	// +1 for 19   to +10 for 2
-		if (disp > 50)				chance -= (disp - 50) / 3;	// -16 for > 98 disp
-		g_LogFile.ss() << disp << "        " << chance; g_LogFile.ssend();
-	}
-#endif
 
 
 	g_LogFile.ss() << "\n`J` DEBUG CODE - this section is used to debug a piece of code.\n"; g_LogFile.ssend();
@@ -1137,28 +1176,12 @@ int main(int ac, char* av[])	// `J` Bookmark - #1 - Entering the game
 	bindtextdomain("whoremaster", base);
 	textdomain("whoremaster");
 
-	
+
 	bool running = true;
 	bool quitPending = false;
 	bool mouseDown = false;
 
-	DirPath locationch = DirPath() << "..\\";
-	XMLFileList test(locationch, "config.xml");
-	if (test.size() > 0)
-	{
-		cfg.reload("..\\config.xml");
-	}
-
-
-	g_LogFile.ss()
-		<< "Startup: checking for variant config: argc = " << ac << ".\n";
-	if (ac > 1) {
-		g_LogFile.ss() << "     attempting to load '" << av[1] << "'\n";
-		cfg.reload(av[1]);
-	}
-
-	CLog log = log;
-	log.write("calling init");
+	g_LogFile.write("\n------------------------------------------------------------------------------------------------------------------------\nCalling Init");
 	// INit the program
 	if (!Init())
 		return 1;
@@ -1245,6 +1268,9 @@ int main(int ac, char* av[])	// `J` Bookmark - #1 - Entering the game
 					case SDLK_PAGEDOWN:	g_PageDownKey = false;	break;
 					case SDLK_TAB:		g_TabKey = false;		break;
 					case SDLK_ESCAPE:	g_EscapeKey = false;	break;
+					case SDLK_PERIOD:	g_PeriodKey = false;	break;
+					case SDLK_SLASH:	g_SlashKey = false;		break;
+					case SDLK_BACKSLASH:g_BackSlashKey = false;	break;
 
 					case SDLK_1:		g_1_Key = false;		break;
 					case SDLK_2:		g_2_Key = false;		break;
@@ -1296,36 +1322,40 @@ int main(int ac, char* av[])	// `J` Bookmark - #1 - Entering the game
 					case SDLK_x:		g_X_Key = false;		break;
 					case SDLK_y:		g_Y_Key = false;		break;
 					case SDLK_z:		g_Z_Key = false;		break;
-				}
+					}
 				}
 			}
 			else if (vent.type == SDL_KEYDOWN)
 			{
-				if (!g_MessageBox.IsActive() && !g_ChoiceManager.IsActive())
+				if (g_MessageBox.IsActive())
+				{
+					g_MessageBox.Advance();
+				}
+				else if (!g_MessageBox.IsActive() && !g_ChoiceManager.IsActive())
 				{
 					if (g_WinManager.HasEditBox())
 					{
 						if (g_WinManager.GetWindow() == &g_NewGame)
 						{
-							if (vent.key.keysym.sym == SDLK_UP			|| vent.key.keysym.sym == SDLK_DOWN
-								|| vent.key.keysym.sym == SDLK_LEFT		|| vent.key.keysym.sym == SDLK_RIGHT
-								|| vent.key.keysym.sym == SDLK_TAB		|| vent.key.keysym.sym == SDLK_ESCAPE
-								|| vent.key.keysym.sym == SDLK_HOME		|| vent.key.keysym.sym == SDLK_END
-								|| vent.key.keysym.sym == SDLK_PAGEUP	|| vent.key.keysym.sym == SDLK_PAGEDOWN
+							if (vent.key.keysym.sym == SDLK_UP || vent.key.keysym.sym == SDLK_DOWN
+								|| vent.key.keysym.sym == SDLK_LEFT || vent.key.keysym.sym == SDLK_RIGHT
+								|| vent.key.keysym.sym == SDLK_TAB || vent.key.keysym.sym == SDLK_ESCAPE
+								|| vent.key.keysym.sym == SDLK_HOME || vent.key.keysym.sym == SDLK_END
+								|| vent.key.keysym.sym == SDLK_PAGEUP || vent.key.keysym.sym == SDLK_PAGEDOWN
 
-								|| vent.key.keysym.sym == SDLK_1		|| vent.key.keysym.sym == SDLK_2
-								|| vent.key.keysym.sym == SDLK_3		|| vent.key.keysym.sym == SDLK_4
-								|| vent.key.keysym.sym == SDLK_5		|| vent.key.keysym.sym == SDLK_6
-								|| vent.key.keysym.sym == SDLK_7		|| vent.key.keysym.sym == SDLK_8
-								|| vent.key.keysym.sym == SDLK_9		|| vent.key.keysym.sym == SDLK_0
+								|| vent.key.keysym.sym == SDLK_1 || vent.key.keysym.sym == SDLK_2
+								|| vent.key.keysym.sym == SDLK_3 || vent.key.keysym.sym == SDLK_4
+								|| vent.key.keysym.sym == SDLK_5 || vent.key.keysym.sym == SDLK_6
+								|| vent.key.keysym.sym == SDLK_7 || vent.key.keysym.sym == SDLK_8
+								|| vent.key.keysym.sym == SDLK_9 || vent.key.keysym.sym == SDLK_0
 
-								|| vent.key.keysym.sym == SDLK_F1		|| vent.key.keysym.sym == SDLK_F2
-								|| vent.key.keysym.sym == SDLK_F3		|| vent.key.keysym.sym == SDLK_F4
-								|| vent.key.keysym.sym == SDLK_F5		|| vent.key.keysym.sym == SDLK_F6
-								|| vent.key.keysym.sym == SDLK_F7		|| vent.key.keysym.sym == SDLK_F8
-								|| vent.key.keysym.sym == SDLK_F9		|| vent.key.keysym.sym == SDLK_F10
-								|| vent.key.keysym.sym == SDLK_F11		|| vent.key.keysym.sym == SDLK_F12
-								
+								|| vent.key.keysym.sym == SDLK_F1 || vent.key.keysym.sym == SDLK_F2
+								|| vent.key.keysym.sym == SDLK_F3 || vent.key.keysym.sym == SDLK_F4
+								|| vent.key.keysym.sym == SDLK_F5 || vent.key.keysym.sym == SDLK_F6
+								|| vent.key.keysym.sym == SDLK_F7 || vent.key.keysym.sym == SDLK_F8
+								|| vent.key.keysym.sym == SDLK_F9 || vent.key.keysym.sym == SDLK_F10
+								|| vent.key.keysym.sym == SDLK_F11 || vent.key.keysym.sym == SDLK_F12
+
 								)
 								handle_hotkeys();
 						}
@@ -1336,10 +1366,18 @@ int main(int ac, char* av[])	// `J` Bookmark - #1 - Entering the game
 								|| vent.key.keysym.sym == SDLK_RETURN)
 								handle_hotkeys();
 						}
+						if (g_WinManager.GetWindow() == &g_Preparing)
+						{
+
+						}
 
 						if (vent.key.keysym.sym == SDLK_BACKSPACE)		g_WinManager.UpdateKeyInput('-');
 						else if (vent.key.keysym.sym == SDLK_RETURN)	g_EnterKey = true;
 						else if (vent.key.keysym.sym == SDLK_KP_ENTER)	g_EnterKey = true;
+						else if (vent.key.keysym.sym == SDLK_PERIOD || vent.key.keysym.sym == SDLK_SLASH || vent.key.keysym.sym == SDLK_BACKSLASH)
+						{
+							g_WinManager.UpdateKeyInput((char)vent.key.keysym.sym);
+						}
 						else if ((vent.key.keysym.sym >= 97 && vent.key.keysym.sym <= 122) || vent.key.keysym.sym == 39 || vent.key.keysym.sym == 32 || (vent.key.keysym.sym >= 48 && vent.key.keysym.sym <= 57) || ((vent.key.keysym.sym >= 256 && vent.key.keysym.sym <= 265)))
 						{
 							if (vent.key.keysym.sym >= 256)
@@ -1372,6 +1410,26 @@ int main(int ac, char* av[])	// `J` Bookmark - #1 - Entering the game
 					if (g_MessageBox.IsActive())
 						g_MessageBox.Advance();
 					g_SpaceKey = false;
+				}
+				else if (vent.key.keysym.sym == SDLK_RETURN || vent.key.keysym.sym == SDLK_KP_ENTER)
+				{
+					if (g_MessageBox.IsActive())
+						g_MessageBox.Advance();
+					else if (g_ChoiceManager.IsActive())
+					{
+						g_EnterKey = true;
+						g_ChoiceManager.ButtonClicked(0, 0);
+					}
+					g_EnterKey = false;
+				}
+				else if (g_ChoiceManager.IsActive())
+				{
+					if (vent.key.keysym.sym == SDLK_UP || vent.key.keysym.sym == SDLK_DOWN)
+					{
+						/* */if (vent.key.keysym.sym == SDLK_UP)		g_UpArrow = true;
+						else if (vent.key.keysym.sym == SDLK_DOWN)		g_DownArrow = true;
+						g_ChoiceManager.ButtonClicked(0, 0);
+					}
 				}
 			}
 			else if (vent.type == SDL_MOUSEMOTION)

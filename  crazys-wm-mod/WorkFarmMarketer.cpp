@@ -43,7 +43,7 @@ bool cJobManager::WorkFarmMarketer(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 	int actiontype = ACTION_WORKCUSTSERV;
 	stringstream ss; string girlName = girl->m_Realname; ss << girlName;
 	int roll_a = g_Dice.d100(), roll_b = g_Dice.d100(), roll_c = g_Dice.d100();
-	if (g_Girls.DisobeyCheck(girl, actiontype, brothel))			// they refuse to work 
+	if (girl->disobey_check(actiontype, brothel))			// they refuse to work
 	{
 		ss << " refused to work during the " << (Day0Night1 ? "night" : "day") << " shift.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
@@ -53,7 +53,7 @@ bool cJobManager::WorkFarmMarketer(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 
 	g_Girls.UnequipCombat(girl);	// put that shit away, you'll scare off the customers!
 
-	double wages = 20, tips = 0;
+	int wages = 20, tips = 0;
 	int enjoy = 0;
 	int imagetype = IMGTYPE_PROFILE;
 	int msgtype = Day0Night1;
@@ -106,7 +106,7 @@ bool cJobManager::WorkFarmMarketer(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 			ugirl->m_Events.AddMessage(Umsg.str(), IMGTYPE_PROFILE, EVENT_DUNGEON);
 			g_Brothels.GetDungeon()->AddGirl(ugirl, DUNGEON_NEWGIRL);	// Either type of girl goes to the dungeon
 
-			ss << "\n\nA merchant from a far off village brought a girl from his village to trade for " << cost << " units of food.\n" << ugirl->m_Realname << " has been sent to your dungeon.\n";
+			ss << "\n \nA merchant from a far off village brought a girl from his village to trade for " << cost << " units of food.\n" << ugirl->m_Realname << " has been sent to your dungeon.\n";
 			g_Brothels.add_to_food(-cost);
 		}
 	}
@@ -116,31 +116,31 @@ bool cJobManager::WorkFarmMarketer(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 
 	if (jobperformance >= 245)
 	{
-		ss << " She must be the perfect at this.\n\n";
+		ss << " She must be the perfect at this.\n \n";
 		pricemultiplier += 1.0;
 	}
 	else if (jobperformance >= 185)
 	{
-		ss << " She's unbelievable at this.\n\n";
+		ss << " She's unbelievable at this.\n \n";
 		pricemultiplier += 0.5;
 	}
 	else if (jobperformance >= 145)
 	{
-		ss << " She's good at this job.\n\n";
+		ss << " She's good at this job.\n \n";
 		pricemultiplier += 0.2;
 	}
 	else if (jobperformance >= 100)
 	{
-		ss << " She made a few mistakes but overall she is okay at this.\n\n";
+		ss << " She made a few mistakes but overall she is okay at this.\n \n";
 	}
 	else if (jobperformance >= 70)
 	{
-		ss << " She was nervous and made a few mistakes. She isn't that good at this.\n\n";
+		ss << " She was nervous and made a few mistakes. She isn't that good at this.\n \n";
 		pricemultiplier -= 0.2;
 	}
 	else
 	{
-		ss << " She was nervous and constantly making mistakes. She really isn't very good at this job.\n\n";
+		ss << " She was nervous and constantly making mistakes. She really isn't very good at this job.\n \n";
 		pricemultiplier -= 0.5;
 	}
 
@@ -166,7 +166,7 @@ bool cJobManager::WorkFarmMarketer(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 		enjoy += g_Dice % 2;
 		ss << "The shift passed uneventfully.";
 	}
-	ss << "\n\n";
+	ss << "\n \n";
 
 #pragma endregion
 #pragma region	//	Money					//
@@ -226,7 +226,7 @@ bool cJobManager::WorkFarmMarketer(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 			else ss << Sell_Alchemy << " of the " << ForSale_Alchemy;
 			ss << " Alchemy Items.\n";
 		}
-		ss << "She made a total of " << (int)gold << " from it all.\nShe gets 1% of the sales: " << (int)(gold / 100)<<".\nThe rest goes directly into your coffers.\n\n";
+		ss << "She made a total of " << (int)gold << " from it all.\nShe gets 1% of the sales: " << (int)(gold / 100)<<".\nThe rest goes directly into your coffers.\n \n";
 		wages += (int)(gold / 100); // `J` Pay her based on how much she brought in
 		gold -= (int)(gold / 100);
 		enjoy += (int)(wages / 100);		// the more she gets paid, the more she likes selling
@@ -237,30 +237,30 @@ bool cJobManager::WorkFarmMarketer(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 
 
 	// Money
-	if (wages < 0)	wages = 0;	girl->m_Pay = (int)wages;
-	if (tips < 0)	tips = 0;	girl->m_Tips = (int)tips;
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 	g_Gold.farm_income(gold);
 
 	// Improve stats
 	int xp = 10, libido = 1, skill = 3;
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 3; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 3; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
+	if (girl->has_trait( "Quick Learner"))		{ skill += 1; xp += 3; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; xp -= 3; }
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
 
 	// EXP and Libido
-	int I_xp = (g_Dice % xp) + 1;							g_Girls.UpdateStat(girl, STAT_EXP, I_xp);
-	int I_libido = (g_Dice % libido) + 1;					g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, I_libido);
+	int I_xp = (g_Dice % xp) + 1;							girl->exp(I_xp);
+	int I_libido = (g_Dice % libido) + 1;					girl->upd_temp_stat(STAT_LIBIDO, I_libido);
 
 	// primary (+2 for single or +1 for multiple)
-	int I_charisma		= max(0, (g_Dice % skill) + 1);		g_Girls.UpdateStat(girl, STAT_CHARISMA, I_charisma);
-	int I_confidence	= max(0, (g_Dice % skill) + 1);		g_Girls.UpdateStat(girl, STAT_CONFIDENCE, I_confidence);
+	int I_charisma		= max(0, (g_Dice % skill) + 1);		girl->charisma(I_charisma);
+	int I_confidence	= max(0, (g_Dice % skill) + 1);		girl->confidence(I_confidence);
 	// secondary (-1 for one then -2 for others)
-	int I_intelligence	= max(0, (g_Dice % skill) - 1);		g_Girls.UpdateStat(girl, STAT_INTELLIGENCE, I_intelligence);
-	int I_fame			= max(0, (g_Dice % skill) - 2);		g_Girls.UpdateStat(girl, STAT_FAME, I_fame);
-	int I_farming		= max(0, (g_Dice % skill) - 2);		g_Girls.UpdateSkill(girl, SKILL_FARMING, I_farming);
+	int I_intelligence	= max(0, (g_Dice % skill) - 1);		girl->intelligence(I_intelligence);
+	int I_fame			= max(0, (g_Dice % skill) - 2);		girl->fame(I_fame);
+	int I_farming		= max(0, (g_Dice % skill) - 2);		girl->farming(I_farming);
 
-	g_Girls.UpdateEnjoyment(girl, actiontype, enjoy);
+	girl->upd_Enjoyment(actiontype, enjoy);
 	g_Girls.PossiblyGainNewTrait(girl,		"Charismatic",	30, actiontype, girlName + " has been selling long enough that she has learned to be more Charismatic.", Day0Night1);
 	g_Girls.PossiblyLoseExistingTrait(girl, "Meek",			40, actiontype, girlName + "'s having to work with customers every day has forced her to get over her meekness.", Day0Night1);
 	g_Girls.PossiblyLoseExistingTrait(girl, "Shy",			50, actiontype, girlName + " has been selling for so long now that her confidence is super high and she is no longer Shy.", Day0Night1);
@@ -269,7 +269,7 @@ bool cJobManager::WorkFarmMarketer(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 
 	if (cfg.debug.log_show_numbers())
 	{
-		ss << "\n\nNumbers:"
+		ss << "\n \nNumbers:"
 			<< "\n Job Performance = " << (int)jobperformance
 			<< "\n Wages = " << (int)wages
 			<< "\n Tips = " << (int)tips
@@ -300,27 +300,33 @@ double cJobManager::JP_FarmMarketer(sGirl* girl, bool estimate)// not used
 		((girl->intelligence() + girl->fame() + girl->farming()) / 3) +
 		// level bonus
 		girl->level();
+	if (!estimate)
+	{
+		int t = girl->tiredness() - 80;
+		if (t > 0)
+			jobperformance -= (t + 2) * (t / 5);
+	}
 
 	if (girl->morality() > 50)						jobperformance -= 5;	// too honest to cheat the customer
 	else if (girl->morality() < -50)				jobperformance -= 5;	// too crooked to be trusted with an honest price
 
 	//good traits
-	if (g_Girls.HasTrait(girl, "Charismatic"))		jobperformance += 15;
-	if (g_Girls.HasTrait(girl, "Sexy Air"))			jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Cool Person"))		jobperformance += 10;  //people love to be around her
-	if (g_Girls.HasTrait(girl, "Cute"))				jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Charming"))			jobperformance += 15;  //people like charming people
-	if (g_Girls.HasTrait(girl, "Quick Learner"))	jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Psychic"))			jobperformance += 10;
+	if (girl->has_trait( "Charismatic"))		jobperformance += 15;
+	if (girl->has_trait( "Sexy Air"))			jobperformance += 5;
+	if (girl->has_trait( "Cool Person"))		jobperformance += 10;  //people love to be around her
+	if (girl->has_trait( "Cute"))				jobperformance += 5;
+	if (girl->has_trait( "Charming"))			jobperformance += 15;  //people like charming people
+	if (girl->has_trait( "Quick Learner"))	jobperformance += 5;
+	if (girl->has_trait( "Psychic"))			jobperformance += 10;
 
 
 
 	//bad traits
-	if (g_Girls.HasTrait(girl, "Dependant"))		jobperformance -= 50; //needs others to do the job
-	if (g_Girls.HasTrait(girl, "Clumsy")) 			jobperformance -= 20; //spills food and breaks things often
-	if (g_Girls.HasTrait(girl, "Aggressive")) 		jobperformance -= 20; //gets mad easy
-	if (g_Girls.HasTrait(girl, "Nervous"))			jobperformance -= 30; //don't like to be around people	
-	if (g_Girls.HasTrait(girl, "Meek"))				jobperformance -= 20;
+	if (girl->has_trait( "Dependant"))		jobperformance -= 50; // needs others to do the job
+	if (girl->has_trait( "Clumsy")) 			jobperformance -= 20; //spills food and breaks things often
+	if (girl->has_trait( "Aggressive")) 		jobperformance -= 20; //gets mad easy
+	if (girl->has_trait( "Nervous"))			jobperformance -= 30; //don't like to be around people
+	if (girl->has_trait( "Meek"))				jobperformance -= 20;
 
 	return jobperformance;
 }

@@ -23,7 +23,7 @@ const int EVENT_BUTTONCLICKED = 1;
 const int EVENT_SELECTIONCHANGE = 2;
 const int EVENT_CHECKBOXCLICKED = 3;
 const int EVENT_SLIDERCHANGE = 4;
-//need to think about this
+// need to think about this
 class cInterfaceEvent
 {
 public:
@@ -59,8 +59,11 @@ public:
 
 	bool CheckEvent(int EventID, int ObjectID)
 	{
-		if(!m_Events)
+		if (!m_Events)
+		{
+			m_NumEvents = 0;
 			return false;
+		}
 
 		cInterfaceEvent* current = m_Events;
 		cInterfaceEvent* last = 0;
@@ -104,8 +107,11 @@ public:
 		newEvent->m_ObjectID = Object;
 		newEvent->m_Next = 0;
 
-		if(!m_Events)
+		if (!m_Events)
+		{
+			m_NumEvents = 0;
 			m_Events = newEvent;
+		}
 		else
 		{
 			cInterfaceEvent* current = m_Events;

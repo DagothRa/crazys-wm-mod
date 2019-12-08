@@ -23,24 +23,29 @@
 
 struct sBrothel;
 
-// customers are randomly generated
+// Individual customers are randomly generated
 typedef struct sCustomer
 {
 	// Regular Stats
-	unsigned char m_IsWoman;		// 0 means a man, 1 means a woman
-	unsigned char m_Amount;			// how many customers this represents
-	unsigned char m_Class;			// is the person rich, poor or middle class
-	unsigned char m_Official;		// is the person an official of the town
+	bool m_IsWoman;		// 0 means a man, 1 means a woman
+	int m_Amount;			// how many customers this represents
+	int m_Class;			// is the person rich, poor or middle class
+	bool m_Official;		// is the person an official of the town
 
-	unsigned int m_Money;
+	int m_Money;
 
-	bool m_HasAIDS = false;			// `J` Does the customer have AIDS?
-	bool m_HasChlamydia = false;	// `J` Does the customer have Chlamydia?
-	bool m_HasSyphilis = false;		// `J` Does the customer have Syphilis?
-	bool m_HasHerpes = false;		// `J` Does the customer have Herpes?
+	bool m_HasAIDS;					// `J` Does the customer have AIDS?
+	bool m_HasChlamydia;			// `J` Does the customer have Chlamydia?
+	bool m_HasSyphilis;				// `J` Does the customer have Syphilis?
+	bool m_HasHerpes;				// `J` Does the customer have Herpes?
 
 	int m_Stats[NUM_STATS];
 	int m_Skills[NUM_SKILLS];
+
+	// `J` What the customers want to do in the building
+	unsigned char m_GoalA;			// Primary goal
+	unsigned char m_GoalB;			// Secondary goal
+	unsigned char m_GoalC;			// Backup goal
 
 	unsigned char m_Fetish;			// the customers fetish
 	unsigned char m_SexPref;		// their sex preference
@@ -51,51 +56,35 @@ typedef struct sCustomer
 	sCustomer* m_Next;
 	sCustomer* m_Prev;
 
-	sCustomer()
-	{
-		m_Fetish = 0;
-		m_Next = 0;
-		m_Prev = 0;
-		m_Official = 0;
-	}
-
-	~sCustomer()
-	{
-		if (m_Next) delete m_Next;
-		m_Next = 0;
-		m_Prev = 0;
-	}
-	int happiness() 
+	sCustomer();
+	~sCustomer();
+	int happiness()
 	{
 		return m_Stats[STAT_HAPPINESS];
 	}
 }sCustomer;
 
+// Customer base
 class cCustomers
 {
 public:
-	cCustomers() 
-	{
-		//	m_Parent=0;
-		m_NumCustomers=0;
-		ChangeCustomerBase();
-		//	m_Last=0;
-	}
-	~cCustomers()
-	{
-		Free();
-	}
+	cCustomers();
+	~cCustomers();
 
 	void Free();
 
-	void GenerateCustomers(sBrothel *, bool Day0Night1 = SHIFT_DAY);	// generates a random amount of possible customers based on the number of poor, rich, and middle class
-//	sCustomer* GetParentCustomer();		// Gets a random customer from the customer base
-	void GetCustomer(sCustomer& customer, sBrothel *brothel);
+	void GenerateCustomers(sBrothel& brothel, bool Day0Night1 = SHIFT_DAY);	// generates a random amount of possible customers based on the number of poor, rich, and middle class
+	sCustomer* CreateCustomer(sBrothel& brothel);
+
+	//	sCustomer* GetParentCustomer();		// Gets a random customer from the customer base
+	sCustomer GetCustomer(sBrothel& brothel); // Creates a new customer.
 	void ChangeCustomerBase();	// Changes customer base, it is based on how much money the player is bring into the town
-	int GetNumCustomers() {return m_NumCustomers;}
-	void AdjustNumCustomers(int amount) {m_NumCustomers+=amount;}
-//	void Remove(sCustomer* cust);
-//	int GetHappiness();	//mod
+	int GetNumCustomers() { return m_NumCustomers; }
+	void AdjustNumCustomers(int amount) { m_NumCustomers += amount; }
+	void Add(sCustomer* cust);
+	void Remove(sCustomer* cust);
+	void SetGoals(sCustomer* cust);
+	//	int GetHappiness();	//mod
 
 private:
 	int m_Poor;		// percentage of poor people in the town
@@ -103,8 +92,8 @@ private:
 	int m_Rich;		// percentage of rich people in the town
 
 	int m_NumCustomers;
-//	sCustomer* m_Parent;
-//	sCustomer* m_Last;
+	sCustomer* m_Parent;
+	sCustomer* m_Last;
 };
 
 #endif

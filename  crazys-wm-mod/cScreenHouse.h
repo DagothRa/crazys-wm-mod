@@ -22,32 +22,54 @@
 #include "cInterfaceWindow.h"
 #include "InterfaceGlobals.h"
 
+class cBuilding;
+
 class cScreenHouse : public cInterfaceWindowXML 
 {
-public:
-
 private:
+	int BuyBrothel;
+	bool GetName;
 
-	static bool ids_set;
-/*
- *	interface/event IDs
- */
-	int back_id;		// Back button
-	int details_id;		// House Details text
-	int header_id;		// page header text ("Your House")
-	int slavedate_id;	// Set if slaves can date or not
+	static	bool		ids_set;
+
+	int buildinglabel_id;
+	int background_id;
+	int walk_id;			// Walk Around Town button
+
+	int weeks_id;			// next week map button
+	int	housedetails_id;	// house description text
+	int girls_id;			// girl managment map button
+	int staff_id;			// gang map button
+	int setup_id;			// setup map button
+	int dungeon_id;			// 
+	int turns_id;			// turn summary map button
+
+	int girlimage_id;		// Girl image
+	int back_id;			// 
+
+	int nextbrothel_id;		// next brothel button
+	int prevbrothel_id;		// prev brothel button
+	int	house_id;			// House map button
+
+	bool m_first_walk;
 
 	void set_ids();
+	void check_brothel(int BrothelNum);
+	void check_house(int HouseNum);
 public:
-	cScreenHouse()
-	{
-		
-		DirPath dp = DirPath() << "Resources" << "Interface" << cfg.resolution.resolution() << "house_screen.xml";
-		m_filename = dp.c_str();
-	}
-	~cScreenHouse() {}
+	cScreenHouse();
+	~cScreenHouse();
 
 	void init();
 	void process();
 	void check_events();
+	void more_button();
+	void release_button();
+	void update_details();
+	sGirl* get_selected_girl();
+	void selection_change();
+	bool check_keys();
+	void do_walk();
+	string walk_no_luck();
+
 };

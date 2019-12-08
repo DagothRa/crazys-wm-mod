@@ -45,12 +45,14 @@ CHOICE 2
 "beating a girl"
 INT 0 65535
 BOOL
-"AddRandomGirlToDungeon ~ ~ ~ ~ ~"
+"AddRandomGirlToDungeon ~ ~ ~ ~ ~ ~ ~"
 CHOICE 2
 "Kidnaped"
 "Captured"
 INT 0 65535
 INT 0 65535
+BOOL
+BOOL
 BOOL
 BOOL
 "Set Global ~ ~"
@@ -58,11 +60,11 @@ INT 0 4
 INT 0 65535
 "SetGirlFlag ~ ~"
 INT 0 29
-INT 0 254
+INT -254 254
 "AddRandomValueToGold ~ ~"
 INT 0 65535
 INT 0 65535
-"AddManyRandomGirlsToDungeon ~ ~ ~ ~ ~ ~"
+"AddManyRandomGirlsToDungeon ~ ~ ~ ~ ~ ~ ~"
 INT 0 65535
 CHOICE 2
 "Kidnaped"
@@ -71,9 +73,10 @@ INT 0 65535
 INT 0 65535
 BOOL
 BOOL
+BOOL
 "Add Target Girl"
 "AdjustTargetGirlStat ~ ~"
-CHOICE 49
+CHOICE 51
 "CHARISMA"
 "HAPPINESS"
 "LIBIDO"
@@ -101,6 +104,8 @@ CHOICE 49
 "DIGNITY"
 "LACTATION"
 "STRENGTH"
+"NPCLOVE"
+"SANITY"
 "ANAL"
 "MAGIC"
 "BDSM"
@@ -151,7 +156,7 @@ CHOICE 22
 "FOOTJOB"
 "COOKING"
 "IfPassStatCheck ~"
-CHOICE 27
+CHOICE 29
 "CHARISMA"
 "HAPPINESS"
 "LIBIDO"
@@ -179,6 +184,8 @@ CHOICE 27
 "DIGNITY"
 "LACTATION"
 "STRENGTH"
+"NPCLOVE"
+"SANITY"
 "IfGirlFlag ~ ~ ~"
 INT 0 29
 CHOICE 6
@@ -188,10 +195,10 @@ CHOICE 6
 "GreaterThan"
 "GreaterOrEqualTo"
 "NotEqualTo"
-INT 0 254
+INT -254 254
 "GameOver"
 "IfStat ~ ~ ~"
-CHOICE 27
+CHOICE 29
 "CHARISMA"
 "HAPPINESS"
 "LIBIDO"
@@ -219,6 +226,8 @@ CHOICE 27
 "DIGNITY"
 "LACTATION"
 "STRENGTH"
+"NPCLOVE"
+"SANITY"
 CHOICE 6
 "EqualTo"
 "LessThan"
@@ -328,3 +337,189 @@ CHOICE 8
 "Farm"
 "House"
 INT 0 6
+"Have Dominatrix"
+"AdjustGirlFlag ~ ~"
+INT 0 29
+INT -254 254
+"AdjustTraitTemp ~ ~"
+TEXT
+INT -255 255
+"AdjustTargetGirlSkill ~ ~"
+CHOICE 22
+"ANAL"
+"MAGIC"
+"BDSM"
+"NORMALSEX"
+"BEASTIALITY"
+"GROUP"
+"LESBIAN"
+"SERVICE"
+"STRIP"
+"COMBAT"
+"ORALSEX"
+"TITTYSEX"
+"MEDICINE"
+"PERFORMANCE"
+"HANDJOB"
+"CRAFTING"
+"HERBALISM"
+"FARMING"
+"BREWING"
+"ANIMALHANDLING"
+"FOOTJOB"
+"COOKING"
+INT -255 255
+"Have Deep"
+"Have EatOut"
+"Have StrapOn"
+"Have Les69ing"
+"Have Dildo"
+"Have Sub"
+"Have Lick"
+"Have SuckBalls"
+"Have CowGirl"
+"Have RevCowGirl"
+"Have SexDoggy"
+"Have NormalSexWithRandom"
+"IfGirlHasItem ~"
+TEXT
+"AddItemtoGirl ~ ~ ~"
+TEXT
+INT 0 255
+BOOL
+"GivePlayerItem ~ ~"
+TEXT
+INT 0 255
+"IfPlayerHasItem ~"
+TEXT
+"GiveGirlInvItem ~ ~"
+TEXT
+BOOL
+"IfGirlIsSlave"
+"IfGirlIsFree"
+"GiveGoldToGirl ~ ~"
+INT -30000 30000
+INT -30000 30000
+"AdjustTargetGirlStatR ~ ~ ~ ~"
+CHOICE 29
+"CHARISMA"
+"HAPPINESS"
+"LIBIDO"
+"CONSTITUTION"
+"INTELLIGENCE"
+"CONFIDENCE"
+"MANA"
+"AGILITY"
+"FAME"
+"LEVEL"
+"ASKPRICE"
+"HOUSE"
+"EXP"
+"AGE"
+"OBEDIENCE"
+"SPIRIT"
+"BEAUTY"
+"TIREDNESS"
+"HEALTH"
+"PCFEAR"
+"PCLOVE"
+"PCHATE"
+"MORALITY"
+"REFINEMENT"
+"DIGNITY"
+"LACTATION"
+"STRENGTH"
+"NPCLOVE"
+"SANITY"
+INT -100 100
+INT -100 100
+BOOL
+"AdjustTargetGirlSkillR ~ ~ ~ ~"
+CHOICE 22
+"ANAL"
+"MAGIC"
+"BDSM"
+"NORMALSEX"
+"BEASTIALITY"
+"GROUP"
+"LESBIAN"
+"SERVICE"
+"STRIP"
+"COMBAT"
+"ORALSEX"
+"TITTYSEX"
+"MEDICINE"
+"PERFORMANCE"
+"HANDJOB"
+"CRAFTING"
+"HERBALISM"
+"FARMING"
+"BREWING"
+"ANIMALHANDLING"
+"FOOTJOB"
+"COOKING"
+INT -100 100
+INT -100 100
+BOOL
+"EndIfNew"
+"IfGirlStatus ~ is ~"
+CHOICE 14
+"None"
+"Poisoned"
+"Badly Poisoned"
+"Pregnant"
+"Pregnant By Player"
+"Slave"
+"Has Daughter"
+"Has Son"
+"Inseminated"
+"Controlled"
+"Catacombs"
+"Arena"
+"Your Daughter"
+"Is Daughter"
+BOOL
+"SetGirlStatus ~ to ~"
+CHOICE 14
+"None"
+"Poisoned"
+"Badly Poisoned"
+"Pregnant"
+"Pregnant By Player"
+"Slave"
+"Has Daughter"
+"Has Son"
+"Inseminated"
+"Controlled"
+"Catacombs"
+"Arena"
+"Your Daughter"
+"Is Daughter"
+BOOL
+"EndPregnancy"
+"CreatePregnancy type ~ chance ~ force ~"
+CHOICE 3
+"Player"
+"Customer"
+"Beast"
+INT 0 255
+BOOL
+"ElseNew"
+"Have Branding"
+"Have Rape"
+"Have Beast Rape"
+"Have Human Birth"
+"Have Human Birth Multiple"
+"Have Monster Birth"
+"Have Impregnate Sex"
+"Have Impregnate Group"
+"Have Impregnate Bondage"
+"Have Impregnate Beast"
+"Have Virgin Sex"
+"Have Virgin Group"
+"Have Virgin Bondage"
+"Have Virgin Beast"
+"Have Escort"
+"Have Sport"
+"Have Study"
+"Have Teacher"

@@ -113,14 +113,67 @@ private:
 	sScript* Script_SignTarget(sScript* Script);					// `J` new
 	sScript* Script_PresentedTarget(sScript* Script);				// `J` new
 	sScript* Script_GetRandomGirl(sScript* Script);					// `J` new
-	//sScript* Script_GirlNameTarget(sScript* Script);
+	sScript* Script_DomTarget(sScript* Script);						// `J` new
+	sScript* Script_AdjustGirlFlag(sScript *Script);				// `J` new
+	sScript* Script_AdjustTraitTemp(sScript *Script);				// `J` new
+	sScript* Script_AdjustTargetGirlSkill(sScript *Script);			// `J` new
+	sScript* Script_DeepTarget(sScript* Script);					// `J` new
+	sScript* Script_EatOutTarget(sScript* Script);					// `J` new
+	sScript* Script_StrapOnTarget(sScript* Script);					// `J` new
+	sScript* Script_Les69ingTarget(sScript* Script);				// `J` new
+	sScript* Script_DildoTarget(sScript* Script);					// `J` new
+	sScript* Script_SubTarget(sScript* Script);						// `J` new
+	sScript* Script_LickTarget(sScript* Script);					// `J` new
+	sScript* Script_SuckBallsTarget(sScript* Script);				// `J` new
+	sScript* Script_CowGirlTarget(sScript* Script);					// `J` new
+	sScript* Script_RevCowGirlTarget(sScript* Script);				// `J` new
+	sScript* Script_SexDoggyTarget(sScript* Script);				// `J` new
+	sScript* Script_NormalSexWithRandomTarget(sScript* Script);		// `J` new
+	sScript* Script_IfGirlHasItem(sScript* Script);					// `J` new .06.02.55
+	sScript* Script_AddItemtoGirl(sScript* Script);					// `J` new .06.02.55
+	sScript* Script_GivePlayerItem(sScript* Script);				// `J` new .06.02.55
+	sScript* Script_IfPlayerHasItem(sScript* Script);				// `J` new .06.02.57
+	sScript* Script_GiveGirlInvItem(sScript* Script);				// `J` new .06.02.57
+	sScript* Script_IfGirlIsSlave(sScript* Script);					// `J` new .06.02.57
+	sScript* Script_IfGirlIsFree(sScript* Script);					// `J` new .06.02.57
+	sScript* Script_GiveGoldToGirl(sScript* Script);				// `J` new .06.02.57
+	sScript* Script_AdjustTargetGirlStatR(sScript* Script);			// `J` new .06.02.57
+	sScript* Script_AdjustTargetGirlSkillR(sScript* Script);		// `J` new .06.02.57
+	sScript* Script_EndIfNew(sScript* Script);						// `J` new .06.03.00
+	sScript* Script_IfGirlStatus(sScript* Script);					// `J` new .06.03.00
+	sScript* Script_SetGirlStatus(sScript* Script);					// `J` new .06.03.00
+	sScript* Script_EndPregnancy(sScript* Script);					// `J` new .06.03.00
+	sScript* Script_CreatePregnancy(sScript* Script);				// `J` new .06.03.00
+	sScript* Script_ElseNew(sScript* Script);						// `J` new .06.03.01
+	sScript* Script_BrandTarget(sScript* Script);					// `J` new .06.03.01 for DarkArk
+	sScript* Script_RapeTarget(sScript* Script);					// `J` new .06.03.01 for DarkArk
+	sScript* Script_RapeBeastTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_BirthHumanTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_BirthHumanMultipleTarget(sScript* Script);		// `J` new .06.03.01 for DarkArk
+	sScript* Script_BirthBeastTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_ImpregSexTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_ImpregGroupTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_ImpregBDSMTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_ImpregBeastTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_VirginSexTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_VirginGroupTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_VirginBDSMTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_VirginBeastTarget(sScript* Script);				// `J` new .06.03.01 for DarkArk
+	sScript* Script_EscortTarget(sScript* Script);					// `J` new .06.03.02 for grishnak
+	sScript* Script_SportTarget(sScript* Script);					// `J` new .06.03.02 for grishnak
+	sScript* Script_StudyTarget(sScript* Script);					// `J` new .06.03.02 for grishnak
+	sScript* Script_TeacherTarget(sScript* Script);					// `J` new .06.03.02 for grishnak
+
+	// `J` When modifying Scripts, search for "J-Change-Scripts"  :  found in >> cGameScript.h
+	// `J` When modifying Image types, search for "J-Change-Image-Types"  :  found in >> cGameScript.h
 
 	// The overloaded process function
 	sScript *Process(sScript *Script);
 
 	bool IsIfStatement(int type)
 	{
-		if(type == 40 || type == 9 || type == 13 || type == 27 || type == 28 || type == 29 || type == 31 || type == 32 || type == 33)
+		if (type == 9 || type == 13 || type == 27 || type == 28 || type == 29 || type == 31 || type == 32 || type == 33 || type == 40 || type == 95 || type == 98 
+			|| type == 100 || type == 101 || type == 106)
 			return true;
 		return false;
 	}

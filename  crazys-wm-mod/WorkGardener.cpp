@@ -43,17 +43,17 @@ bool cJobManager::WorkGardener(sGirl* girl, sBrothel* brothel, bool Day0Night1, 
 	int actiontype = ACTION_WORKFARM;
 	stringstream ss; string girlName = girl->m_Realname; ss << girlName;
 	int roll_a = g_Dice.d100(), roll_b = g_Dice.d100(), roll_c = g_Dice.d100();
-	if (g_Girls.DisobeyCheck(girl, actiontype, brothel))			// they refuse to work 
+	if (girl->disobey_check(actiontype, brothel))			// they refuse to work
 	{
 		ss << " refused to work during the " << (Day0Night1 ? "night" : "day") << " shift.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
 		return true;
 	}
-	ss << " worked as a gardener on the farm.\n\n";
+	ss << " worked as a gardener on the farm.\n \n";
 
 	g_Girls.UnequipCombat(girl);	// put that shit away, you'll scare off the customers!
 
-	double wages = 20, tips = 0;
+	int wages = 20, tips = 0;
 	int enjoy = 0;
 	int imagetype = IMGTYPE_FARM;
 	int msgtype = Day0Night1;
@@ -93,7 +93,7 @@ bool cJobManager::WorkGardener(sGirl* girl, sBrothel* brothel, bool Day0Night1, 
 		ss << " She was nervous and constantly making mistakes. She really isn't very good at this job.";
 		wages -= 15;
 	}
-	ss << "\n\n";
+	ss << "\n \n";
 
 #pragma endregion
 #pragma region	//	Enjoyment and Tiredness		//
@@ -165,7 +165,7 @@ bool cJobManager::WorkGardener(sGirl* girl, sBrothel* brothel, bool Day0Night1, 
 	if (additemnum > 0)
 	{
 		msgtype = EVENT_GOODNEWS;
-		ss << "\n\n" << girlName << " was able to harvest ";
+		ss << "\n \n" << girlName << " was able to harvest ";
 		if (additemnum == 1)
 		{
 			ss << "one " << additems[0] << ".";
@@ -197,9 +197,9 @@ bool cJobManager::WorkGardener(sGirl* girl, sBrothel* brothel, bool Day0Night1, 
 	if (girl->is_slave() && !cfg.initial.slave_pay_outofpocket()) wages = 0;    // You own her so you don't have to pay her.
 	else
 	{
-		int roll_max = (g_Girls.GetStat(girl, STAT_INTELLIGENCE)
-			+ g_Girls.GetStat(girl, SKILL_HERBALISM)
-			+ g_Girls.GetSkill(girl, SKILL_FARMING));
+		int roll_max = (girl->intelligence()
+			+ girl->herbalism()
+			+ girl->farming());
 		roll_max /= 6;
 		wages += 10 + g_Dice%roll_max;
 	}
@@ -212,29 +212,29 @@ bool cJobManager::WorkGardener(sGirl* girl, sBrothel* brothel, bool Day0Night1, 
 
 
 
-	g_Girls.UpdateEnjoyment(girl, actiontype, enjoy);
+	girl->upd_Enjoyment(actiontype, enjoy);
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, msgtype);
 
 	// Money
-	if (wages < 0)	wages = 0;	girl->m_Pay = (int)wages;
-	if (tips < 0)	tips = 0;	girl->m_Tips = (int)tips;
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 
 	// Improve stats
 	int xp = 5, libido = 1, skill = 3;
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 3; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 3; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
+	if (girl->has_trait( "Quick Learner"))		{ skill += 1; xp += 3; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; xp -= 3; }
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
 
-	g_Girls.UpdateStat(girl, STAT_EXP, (g_Dice % xp) + 1);
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
+	girl->exp((g_Dice % xp) + 1);
+	girl->upd_temp_stat(STAT_LIBIDO, libido);
 
 	// primary (+2 for single or +1 for multiple)
-	g_Girls.UpdateSkill(girl, SKILL_HERBALISM, (g_Dice%skill) + 2);
+	girl->herbalism((g_Dice%skill) + 2);
 	// secondary (-1 for one then -2 for others)
-	g_Girls.UpdateSkill(girl, SKILL_FARMING, max(0, (g_Dice % skill) - 1));
-	g_Girls.UpdateStat(girl, STAT_INTELLIGENCE, max(0, (g_Dice % skill) - 2));
-	g_Girls.UpdateStat(girl, STAT_CONSTITUTION, max(0, (g_Dice % skill) - 2));
+	girl->farming(max(0, (g_Dice % skill) - 1));
+	girl->intelligence(max(0, (g_Dice % skill) - 2));
+	girl->constitution(max(0, (g_Dice % skill) - 2));
 
 #pragma endregion
 	return false;
@@ -249,17 +249,23 @@ double cJobManager::JP_Gardener(sGirl* girl, bool estimate)// not used
 		((girl->farming() + girl->intelligence() + girl->constitution()) / 3) +
 		// level bonus
 		girl->level();
+	if (!estimate)
+	{
+		int t = girl->tiredness() - 80;
+		if (t > 0)
+			jobperformance -= (t + 2) * (t / 3);
+	}
 
 	//good traits
-	if (g_Girls.HasTrait(girl, "Quick Learner"))  jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Psychic"))		  jobperformance += 10;
+	if (girl->has_trait( "Quick Learner"))  jobperformance += 5;
+	if (girl->has_trait( "Psychic"))		  jobperformance += 10;
 
 	//bad traits
-	if (g_Girls.HasTrait(girl, "Dependant"))	jobperformance -= 50; //needs others to do the job
-	if (g_Girls.HasTrait(girl, "Clumsy")) 		jobperformance -= 20; //spills food and breaks things often
-	if (g_Girls.HasTrait(girl, "Aggressive")) 	jobperformance -= 20; //gets mad easy
-	if (g_Girls.HasTrait(girl, "Nervous"))		jobperformance -= 30; //don't like to be around people	
-	if (g_Girls.HasTrait(girl, "Meek"))			jobperformance -= 20;
+	if (girl->has_trait( "Dependant"))	jobperformance -= 50; // needs others to do the job
+	if (girl->has_trait( "Clumsy")) 		jobperformance -= 20; //spills food and breaks things often
+	if (girl->has_trait( "Aggressive")) 	jobperformance -= 20; //gets mad easy
+	if (girl->has_trait( "Nervous"))		jobperformance -= 30; //don't like to be around people
+	if (girl->has_trait( "Meek"))			jobperformance -= 20;
 
 
 	return jobperformance;

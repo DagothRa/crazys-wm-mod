@@ -42,7 +42,7 @@ extern cRng g_Dice;
 extern cGold g_Gold;
 extern cGangManager g_Gangs;
 extern cInventory g_InvManager;
-
+extern cPlayer* The_Player;
 
 extern unsigned long g_Year;
 extern unsigned long g_Month;
@@ -74,14 +74,14 @@ string cRivalManager::rivals_plunder_pc_gold(cRival* rival)
 	rival->m_Gold += gold;									// add the aount to rival coffers
 
 	stringstream ss;
-	ss << gettext("\nThey get away with ") << gold << gettext(" gold.");	// format a message and store it in the string that was passed to us
+	ss << "\nThey get away with " << gold << " gold.";	// format a message and store it in the string that was passed to us
 	return ss.str();
 }
 
 void cRivalManager::Update(int& NumPlayerBussiness)
 {
 	cRival* curr = m_Rivals;
-	
+
 
 	if (g_Year >= 1209 && g_Month > 3) m_PlayerSafe = false;
 
@@ -105,11 +105,11 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 
 		// `J` added - rival power
 		// `J` reworked to reduce the rival's power
-		curr->m_Power = 
+		curr->m_Power =
 			max(0, curr->m_NumBrothels * 5) +
 			max(0, curr->m_NumGamblingHalls * 2) +
 			max(0, curr->m_NumBars * 1);
-	
+
 		// check if a rival is in danger
 		if (curr->m_Gold <= 0 || curr->m_NumBrothels <= 0 || curr->m_NumGirls <= 0 || curr->m_NumGamblingHalls <= 0 || curr->m_NumBars <= 0)
 		{
@@ -166,9 +166,9 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 		}
 
 		// process money
-		totalincome += income; totalupkeep += upkeep; curr->m_Gold += income; curr->m_Gold += upkeep; profit = totalincome + totalupkeep; 
+		totalincome += income; totalupkeep += upkeep; curr->m_Gold += income; curr->m_Gold += upkeep; profit = totalincome + totalupkeep;
 		income = upkeep = 0;
-		
+
 		for (int i = 0; i < curr->m_NumGirls; i++)	// from girls
 		{
 			// If a rival has more girls than their brothels can handle, the rest work on the streets
@@ -255,7 +255,7 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 		}
 
 		// process money
-		totalincome += income; totalupkeep += upkeep; curr->m_Gold += income; curr->m_Gold += upkeep; profit = totalincome + totalupkeep; 
+		totalincome += income; totalupkeep += upkeep; curr->m_Gold += income; curr->m_Gold += upkeep; profit = totalincome + totalupkeep;
 		income = upkeep = 0;
 
 		// Work out gang missions
@@ -291,7 +291,7 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 				case 6:
 					missionid = MISS_CATACOMBS;		// random but dangerous
 					break;
-				default:	
+				default:
 					missionid = MISS_GUARDING;		// don't do anything but guard
 					break;
 				}
@@ -327,19 +327,19 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 							sGang* miss1 = g_Gangs.GetGangOnMission(MISS_GUARDING);
 							if (miss1)									// if you have a gang guarding
 							{
-								ss << gettext("Your guards encounter ") << curr->m_Name << gettext(" going after some of your territory.");
+								ss << "Your guards encounter " << curr->m_Name << (" going after some of your territory.");
 
 								sGang* rGang = g_Gangs.GetTempGang(curr->m_Power);
 								if (g_Gangs.GangBrawl(miss1, rGang))	// if you win
 								{
 									if (rGang->m_Num == 0) curr->m_NumGangs--;
-									ss << gettext("\nBut you maintain control of the territory.");
+									ss << ("\nBut you maintain control of the territory.");
 									miss1->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_GANG);
 								}
 								else									// if you lose
 								{
 									if (miss1->m_Num == 0) g_Gangs.RemoveGang(miss1);
-									ss << gettext("\nYou lose the territory.");
+									ss << ("\nYou lose the territory.");
 									NumPlayerBussiness--;
 									curr->m_BusinessesExtort++;
 									g_MessageQue.AddToQue(ss.str(), COLOR_RED);
@@ -348,7 +348,7 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 							}
 							else										// if you do not have a gang guarding
 							{
-								ss << gettext("Your rival ") << curr->m_Name << gettext(" has taken one of the undefended territories you control.");
+								ss << ("Your rival ") << curr->m_Name << (" has taken one of the undefended territories you control.");
 								g_MessageQue.AddToQue(ss.str(), COLOR_RED);
 								NumPlayerBussiness--;
 								curr->m_BusinessesExtort++;
@@ -357,7 +357,7 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 					}
 					else	// attack another rival
 					{
-						ss << gettext("The ") << curr->m_Name << gettext(" attacked the territories of ");
+						ss << ("The ") << curr->m_Name << (" attacked the territories of ");
 						cRival* rival = GetRival(who);
 						if (rival != curr && rival->m_BusinessesExtort > 0)
 						{
@@ -370,12 +370,12 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 									rival->m_NumGangs--;
 									rival->m_BusinessesExtort--;
 									curr->m_BusinessesExtort++;
-									ss << gettext(" and won.");
+									ss << (" and won.");
 								}
 								else
 								{
 									curr->m_NumGangs--;
-									ss << gettext(" and lost.");
+									ss << (" and lost.");
 								}
 								delete rG1; rG1 = 0;	// cleanup
 							}
@@ -425,25 +425,25 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 						sGang* miss1 = g_Gangs.GetGangOnMission(MISS_GUARDING);
 						if (miss1)
 						{
-							ss << gettext("Your rival the ") << curr->m_Name << gettext(" attack your assets.");
+							ss << ("Your rival the ") << curr->m_Name << (" attack your assets.");
 
 							if (!g_Gangs.GangBrawl(miss1, cG1))
 							{
 								if (miss1->m_Num == 0) g_Gangs.RemoveGang(miss1);
-								ss << gettext("\nYour men are defeated.");
+								ss << ("\nYour men are defeated.");
 								int num = (g_Dice % 2) + 1;
 								damage = true;
 							}
 							else
 							{
 								if (cG1->m_Num == 0) curr->m_NumGangs--;
-								ss << gettext(" But they fail.");
+								ss << (" But they fail.");
 								miss1->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_GANG);
 							}
 						}
 						else
 						{
-							ss << gettext("You have no guards so your rival ") << curr->m_Name << gettext(" attacks.");
+							ss << ("You have no guards so your rival ") << curr->m_Name << (" attacks.");
 							if (NumPlayerBussiness > 0 || g_Gold.ival() > 0)
 							{
 								num = (g_Dice % 3) + 1;
@@ -474,7 +474,7 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 					}
 					else
 					{
-						ss << gettext("The ") << curr->m_Name << gettext(" launched an assault on ");
+						ss << ("The ") << curr->m_Name << (" launched an assault on ");
 						cRival* rival = GetRival(who);
 						if (rival && rival != curr)
 						{
@@ -486,12 +486,12 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 								if (g_Gangs.GangBrawl(cG1, rG1, true))
 								{
 									rival->m_NumGangs--;
-									ss << gettext(" and won.");
+									ss << (" and won.");
 									num = (g_Dice % 2) + 1;
 								}
 								else
 								{
-									ss << gettext(" and lost.");
+									ss << (" and lost.");
 									curr->m_NumGangs--;
 								}
 								delete rG1; rG1 = 0;	// cleanup
@@ -595,7 +595,7 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 					{
 						bool quit = false; bool add = false;
 						sInventoryItem* temp;
-						do { temp = g_InvManager.GetRandomItem(); 
+						do { temp = g_InvManager.GetRandomItem();
 						} while (!temp || temp->m_Rarity < RARITYSHOP25 || temp->m_Rarity > RARITYCATACOMB01);
 
 						switch (temp->m_Rarity)
@@ -630,7 +630,7 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 		}	// end Gang Missions
 
 		// process money
-		totalincome += income; totalupkeep += upkeep; curr->m_Gold += income; curr->m_Gold += upkeep; profit = totalincome + totalupkeep; 
+		totalincome += income; totalupkeep += upkeep; curr->m_Gold += income; curr->m_Gold += upkeep; profit = totalincome + totalupkeep;
 		income = upkeep = 0;
 
 		bool danger = false;
@@ -703,7 +703,7 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 		}
 
 		// process money
-		totalincome += income; totalupkeep += upkeep; curr->m_Gold += income; curr->m_Gold += upkeep; profit = totalincome + totalupkeep; 
+		totalincome += income; totalupkeep += upkeep; curr->m_Gold += income; curr->m_Gold += upkeep; profit = totalincome + totalupkeep;
 		income = upkeep = 0;
 
 		if (!danger)
@@ -743,7 +743,7 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 				curr->m_NumGangs++;
 				upkeep -= 90;
 			}
-			// buy a gambling hall 
+			// buy a gambling hall
 			if (g_Dice.percent(30) && curr->m_Gold + income + upkeep - 10000 >= 0 && curr->m_NumGamblingHalls < curr->m_NumBrothels)
 			{
 				curr->m_NumGamblingHalls++;
@@ -777,11 +777,11 @@ void cRivalManager::Update(int& NumPlayerBussiness)
 		}
 
 		// process money
-		totalincome += income; totalupkeep += upkeep; curr->m_Gold += income; curr->m_Gold += upkeep; profit = totalincome + totalupkeep; 
+		totalincome += income; totalupkeep += upkeep; curr->m_Gold += income; curr->m_Gold += upkeep; profit = totalincome + totalupkeep;
 		income = upkeep = 0;
 
-		// adjust their bribe rate		
-		if (profit > 1000)		curr->m_BribeRate += (long)(50);	// if doing well financially then increase 
+		// adjust their bribe rate
+		if (profit > 1000)		curr->m_BribeRate += (long)(50);	// if doing well financially then increase
 		else if (profit < 0)	curr->m_BribeRate -= (long)(50);	// if loosing money decrease
 		if (curr->m_BribeRate < 0) curr->m_BribeRate = 0;			// check 0
 		g_Brothels.UpdateBribeInfluence();							// update influence
@@ -924,6 +924,18 @@ int cRivalManager::GetNumBusinesses()
 	return number;
 }
 
+int cRivalManager::GetNumRivalGangs()
+{
+	int gangs = 0;
+	cRival* current = m_Rivals;
+	while (current)
+	{
+		gangs+= current->m_NumGangs;
+		current = current->m_Next;
+	}
+	return gangs;
+}
+
 cRival* cRivalManager::GetRival(string name)
 {
 	cRival* current = m_Rivals;
@@ -1032,6 +1044,13 @@ bool cRivalManager::LoadRivalsXML(TiXmlHandle hRivalManager)
 			// `J` cleanup rival power for .06.01.17
 			if (current->m_Power > 50) current->m_Power = max(0, current->m_NumBrothels * 5) + max(0, current->m_NumGamblingHalls * 2) + max(0, current->m_NumBars * 1);
 
+                                                    //jim: re-initializing rival inventory to zero (hopefully fixes Linux segfaults)
+                                                    current->m_NumInventory = 0;
+                                                    for(int i = 0; i <MAXNUM_RIVAL_INVENTORY; i++)
+                                                    {
+                                                                      current->m_Inventory[i] = 0;
+                                                    }
+                        
 			message = "loaded rival: ";
 			message += current->m_Name;
 			g_LogFile.write(message);
@@ -1045,7 +1064,7 @@ bool cRivalManager::LoadRivalsXML(TiXmlHandle hRivalManager)
 void cRivalManager::CreateRival(long bribeRate, int extort, long gold, int bars, int gambHalls, int Girls, int brothels, int gangs, int power)
 {
 	ifstream in;
-	
+
 
 	cRival* rival = new cRival();
 
@@ -1063,10 +1082,17 @@ void cRivalManager::CreateRival(long bribeRate, int extort, long gold, int bars,
 
 	// `J` added - rival power
 	// `J` reworked to reduce the rival's power
-	rival->m_Power = max(power, 
+	rival->m_Power = max(power,
 		max(0, rival->m_NumBrothels * 5) +
 		max(0, rival->m_NumGamblingHalls * 2) +
 		max(0, rival->m_NumBars * 1));
+        
+                //jim: initializing rival inventory to zero (hopefully fixes Linux segfaults)
+                  rival->m_NumInventory = 0;
+                  for(int i = 0; i <MAXNUM_RIVAL_INVENTORY; i++)
+                  {
+                                    rival->m_Inventory[i] = 0;
+                  }
 
 
 
@@ -1117,6 +1143,13 @@ void cRivalManager::CreateRandomRival()
 	while (rival->m_NumGirls == 0)
 		rival->m_NumGirls = (g_Dice % ((rival->m_NumBrothels) * 20)) + 20;
 	rival->m_NumGangs = g_Dice % 5+3;
+        
+                   //jim: initializing rival inventory to zero (hopefully fixes Linux segfaults)
+                  rival->m_NumInventory = 0;
+                  for(int i = 0; i <MAXNUM_RIVAL_INVENTORY; i++)
+                  {
+                                    rival->m_Inventory[i] = 0;
+                  }
 
 	for (;;) {
 		rival->m_Name = names.random();
@@ -1150,7 +1183,132 @@ void cRivalManager::RemoveRival(cRival* rival)
 	m_NumRivals--;
 }
 
+// `J` moved from cBrothel
+void cRivalManager::check_rivals()
+{
+	int num_rivals = GetNumRivals();
+	static bool peace = false;
+	if (num_rivals > 5) return;					// a full set of rivals = nothing to do
+	if (num_rivals == 0 && !peace)				// if there are no rivals, and we were not at peace last turn, peace has broken out
+	{
+		peace = true;
+		peace_breaks_out();
+	}
+	// we only create new rivals after the game has been won
+	// `J` added a chance for a new rival before the game is won
+	if (The_Player->m_WinGame == false && g_Dice.percent(100 - num_rivals)) return;
+	if (g_Dice.percent(70)) return;				// create new random rival or not!
+	peace = false;								// flag the war as on again, (should be a field somewhere)
+	CreateRandomRival();				// create a new rival and tell the player the good news
+	g_MessageQue.AddToQue(new_rival_text(), COLOR_RED);
+}
 
+// `J` moved from cBrothel
+string cRivalManager::new_rival_text()
+{
+	stringstream ss;
+
+	enum {
+		Slaver = 0,
+		Gladiator = 1,
+		Goon = 2,
+		Slave = 3,
+		Mage = 4,
+		Demon = 5,
+		Priest = 6,
+		Noble = 7,
+		Technologist = 8,
+		Patriarch = 9,	// or Matriarch
+		MaxChallengers = 10
+	};
+
+	bool male = g_Dice.percent(75);
+	/*
+	*	let's put the gender specific terms in
+	*	variables. Might make the code cleaner
+	*/
+	string man, boy, He, he, him, his, sorcerer, gladiator, fellow, patriarch;
+	if (male)
+	{
+		He = "He";
+		he = "he";
+		him = "him";
+		his = "his";
+		man = "man";
+		boy = "boy";
+		sorcerer = "sorcerer";
+		gladiator = "gladiator";
+		fellow = "fellow";
+		patriarch = "patriarch ";
+	}
+	else
+	{
+		He = "She";
+		he = "she";
+		him = "her";
+		his = "her";
+		man = "woman";
+		boy = "girl";
+		sorcerer = "sorceress";
+		gladiator = "gladiatrix";
+		fellow = "wench";			// not sure what the feminine of "fellow" is I did wonder about "fellatrix"...
+		patriarch = "matriarch ";
+	}
+
+	switch (g_Dice.random(MaxChallengers))
+	{
+	case Slaver:
+		ss << "A lieutenant reports that one of the professional slavers, finding customers be scarce, has taken to whoring out " << his << " slavegirls to make ends meet. Your men arranged a meet with " << him << " in order to explain your position on the subject, but the discussion did not go well, ending with bared steel and threats of blood.\n \nIt would seem you have a challenger.";
+		break;
+	case Gladiator:
+		ss << "Ask any Crossgate sports fan who rules the Arenas of the city. Almost always, the answer will be the same. For five long years one " << gladiator << " has stood " << his << " ground on the bloody sands and defied all who came before " << him << ".\n \nLast week, the " << gladiator << " bought " << his << " freedom from the arena, and chose to celebrate the occasion at one of your brothels. Sadly, an overindulgence in wine led to harsh words and a rash vow to show you how a whorehouse SHOULD be run.\n \nWith anyone else, the matter would have ended when the morning brought sobriety. But this is a " << man << " who has never turned " << his << " back on any sort of challenge. With wealthy admirers supplying premises and finance, and with a handful of arena veterans to provide the core of " << his << " enforcers, this is a challenger you would be foolish to ignore.";
+		break;
+	case Goon:
+		ss << "The " << boy << " was just skin and bones; a dull eyed waif from gutters of Sleaze Street, a dozen like " << him << " on any street corner. But put a knife in " << his << " hands and the " << boy << " became an artist, painting effortless masterpieces in blood and greased lightning.\n \nQuickly recruited into one of the goon squads, it soon became apparent that behind that flat unblinking stare, there lurked a mind almost as keen as " << his << " blades. The " << boy << " rose quickly, coming to head " << his << " own squad before becoming one of your trusted lieutenants. If only " << his << " ambition had stopped there...\n \n" << "" << ((male) ? "His" : "Her") << " challenge was almost over before it began; for you that is. That you still live says more about the skill of your healers than any talent you might lay claim to. Your newest rival is not only a deadly fighter and a clever strategist, but one who knows your operation, inside and out.\n \nThis will not be easy.";
+		break;
+	case Slave:
+		ss << "There are ways to beat a slaver tattoo. It wouldn't do were that to become widely known, of course. Nevertheless there are ways around it. One such is to find an area of unstable spacetime. Do it right, and you can overload the tracking spell, and the enchantment just falls apart. This is, of course wildly dangerous, but many escapees nevertheless head straight for the Crossgate sewers, which on a bad day can give the catacombs a run for their money.\n \nOver time, a community of ecapees has grown up in the sewers, survivor types, grown hardy in the most hostile environment. And as long as they stay down there, no one much minds. If nothing else they keep the monster population down. But now they seem to be organising a crusade. Against slavery. Against exploitation. Against you.\n \nRumour has it that their leader is one of your offspring, conceived of rape, born into slavery. True or not, this new factions seems determined to bring about your downfall.\n \nThis time, as the bards would say, it is personal.";
+		break;
+	case Mage:
+		ss << "The " << sorcerer << " blew into town with a travelling entertainer show, promising exotic pleasures and the taste of forbidden fruit. But behind the showman's patter and the coloured smoke, the pleasures on offer were of a distinctly carnal nature, and no more exotic than those you yourself could offer.\n \nFor a travelling show, this need not be a problem. For a week, or even two, you can stand to see a little competition. However, the newcomer has been here a month now and shows no sign of moving on. On the contrary, he appears to be shopping for permanent premises.\n \nWith this in mind, you send some men to explain the situation. To everyone's surprise, it turns out that behind the glib charlatanry, there lies genuine magecraft, most likely tantric in nature.\n \nIn your organisation you have no shortage of mages. Any fighting force in Crossgate needs a battle mage or two. This newcomer however operates on a level far beyond what you are used to. And he seems determined to stay, and challenge you for control of the city.";
+		break;
+	case Priest:
+		break;
+	case Noble:
+		ss << "They say " << he << " is a noble, an exile from " << his << " native land. Certainly, " << he << " has the manners of a courtier and the amused weariness of the jaded dilettante.\n \nAnd yet it seems there is steel behind the foppery, as many a Crossgate duelist has learned. And a wit to match the blade as well. An admirable " << fellow << " this, one you would be pleased to call 'friend', if only ...\n \nEarlier this week, your men were explaining to a handful of freelance scrubbers how prostitution worked in this city. If only " << he << " had not chosen to take the women's side against your men. If only " << his << " rash defiance had not caught the imagination of the city's duellists.\n \nAlas, such was not to be.\n \nEn Garde!";
+		break;
+	case Technologist:
+		ss << "From the distant city of Abby's Crossing comes a new rival to challenge for your throne, wielding some strange non-magic " << he << " calls 'technology', an alien art of smoke and steam and noise and lighting; one they say functions strangely in Mundiga, when it chooses to work at all.\n \nBut the hollow metal men that make up " << his << " enforcers would seem to work with deadly efficicency and the strange collapsible maze " << he << " calls a 'tesseract' seems to share many properties with the catacombs under your headquarters. Then there are rumours of strange procedures that can break a slavegirl's will, far faster than the most skilled of Crossgate's torturers.\n \nIn short, far from unreliable, " << his << " arts seem deadly efficient to you. You have no idea what other surprises this otherworldly artisan may have up " << his << " sleeve, but one thing is for certain: this challenge may not go unanswered.";
+		break;
+	case Patriarch:
+		ss << "Outside the walls of Crossgate, there is a shanty-town maze of tumbledown hovels, teeming with the poorest and most desperate of the City's inhabitants. Polygamy and incest are rife here, and extended families can run into the hundreds\n \nOne such family is ruled by the iron will of a dreadful old " << patriarch << " with a well earned reputation for utter ruthlessness. For years " << he << " has sent " << his << " progeny to the city markets, to trade, to steal, to bring back money for the clan in any way they can.\n \nNow it seems they are expanding their operation to include organised prostitution. Bad move.\n \nSomething about the " << patriarch << "'s operation disturbs you. There is a coldness in the way " << he << " sends sons and grandsons out to die for " << him << "; the way " << he << " casually rapes and enslaves " << his << " own daughters and granddaughters before sending them off to whore for " << him << ". This " << man << " holds up a mirror to what you are - or perhaps to what you could easily become. The image it presents is far from flattering.\n \nPersonal feelings aside, this is a situation that can only get worse. The time to end this, is now.";
+		break;
+	case Demon:
+		ss << "Somewhere in Crossgate, a hand trembled inscribing a pentagram; a tongue stumbled over the nine syllables of the charm of binding. A magical being slipped his arcane bonds and slaughtered those mages foolish enough to dream they might command it.\n \nA demon lord now stalks the streets of the city.\n \nWhich, in itself, is not so big a deal. It is not of unheard that the aristocracy of Hell should find themselves stumbling dazed and confused through Crossgate market. They just tend to recover quickly and promptly open a portal home.\n \nBut not this one. This one chooses to briefly linger, to partake of Crossgate society and seek such amusements as the city can offer. Unfortunately, it seems the demon finds amusement trafficking in human misery and human sex. As do you, in the eyes of many.\n \nFor a demon, 'briefly' may be anything from a day to a thousand years. You cannot afford to wait until it grows bored. A demon lord is a formidable opponent, but to ignore this challenge will send entirely the wrong signal to the other would be whore-masters in the city.\n \nLike it or not, this means war.";
+		break;
+	}
+	return ss.str();
+}
+
+// `J` moved from cBrothel
+void cRivalManager::peace_breaks_out()
+{
+	stringstream ss;
+	// if the PC already won, this is just an minor outbreak of peace in the day-to-day feuding in crossgate
+	if (The_Player->m_WinGame)
+	{
+		ss << "The last of your challengers has been overthrown. Your domination of Crossgate is absolute.\n \nUntil the next time that is...";
+		g_MessageQue.AddToQue(ss.str(), COLOR_GREEN);
+		return;
+	}
+	// otherwise, the player has just won flag it as such
+	The_Player->m_WinGame = true;
+	// let's have a bit of chat to mark the event
+	ss.str("");
+	ss << "The last of your father's killers has been brought before you for judgement. None remain who would dare to oppose you. For all intents and purposes, the city is yours.\n \nWhether or not your father will rest easier for your efforts, you cannot say, but now, with the city at your feet, you feel sure he would be proud of you at this moment.\n \nBut pride comes before a fall, and in Crossgate, complacency kills. The city's slums and slave markets and the fighting pits are full of hungry young bloods burning to make their mark on the world, and any one of them could rise to challenge you at any time.\n \nYou may have seized the city, but holding on to it is never going to be easy.";
+	g_MessageQue.AddToQue(ss.str(), COLOR_GREEN);
+	return;
+}
 
 int cRivalManager::AddRivalInv(cRival* rival, sInventoryItem* item)
 {

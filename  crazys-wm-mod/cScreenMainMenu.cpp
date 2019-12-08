@@ -21,17 +21,15 @@
 #include "cScriptManager.h"
 #include "cWindowManager.h"
 #include "FileList.h"
+#include "Revision.h"
 
 extern void NewGame();
 extern void LoadGameScreen();
+extern void LoadSettingsScreen();
 extern void GetString();
-
-extern void PreparingLoad();
 extern string g_ReturnText;
-
-
+extern int g_ReturnInt;
 extern cWindowManager g_WinManager;
-
 extern bool g_InitWin;
 extern int g_CurrentScreen;
 
@@ -45,12 +43,15 @@ bool cScreenMainMenu::ids_set = false;
 
 void cScreenMainMenu::set_ids()
 {
-	ids_set = true;
-	continue_id = get_id("Continue");
-	load_id = get_id("Load Game");
-	new_id = get_id("New Game");
-	settings_id = get_id("Settings");
-	quit_id = get_id("Quit Game");
+	ids_set			/**/ = true;
+	g_LogFile.write("set_ids in cScreenMainMenu");
+
+	continue_id		/**/ = get_id("Continue");
+	load_id			/**/ = get_id("Load Game");
+	new_id			/**/ = get_id("New Game");
+	settings_id		/**/ = get_id("Settings");
+	quit_id			/**/ = get_id("Quit Game");
+	version_id		/**/ = get_id("Version");
 }
 
 cScreenMainMenu::cScreenMainMenu()
@@ -67,27 +68,17 @@ void cScreenMainMenu::init()
 	{
 		Focused();
 		g_InitWin = false;
-		g_Girls.GetImgManager()->LoadList("Default");
 
-		
-		DirPath location;
-		if (cfg.folders.configXMLsa())
-			location = DirPath() << cfg.folders.saves();
-		else
-			location = DirPath() << "Saves";
-		const char *pattern = "autosave.gam";
-		FileList fl(location, pattern);
-		DisableButton(continue_id, fl.size() < 1);		// `J` disable continue button if autosave.gam is not found
-
-		pattern = "*.gam";
-		FileList fla(location, pattern);
-		DisableButton(load_id, fla.size() < 1);			// `J` disable load game button if there are no save games found
-
-
-		DisableButton(settings_id, true);			// `J` disable settings button until settings page is added
-
+		DirPath location = DirPath(cfg.folders.saves().c_str());
+		FileList fl(location, "autosave.gam");
+		FileList fla(location, "*.gam");
+		bool d_continue = fl.size() < 1;
+		bool d_load = (fla.size() < 1 || (fla.size() == 1 && !d_continue));
+		DisableButton(continue_id, d_continue);	// `J` disable continue button if autosave.gam is not found
+		DisableButton(load_id, d_load);			// `J` disable load game button if there are no save games found
+		DisableButton(settings_id, false);		// `J` disable settings button until settings page is added
+		if (version_id >= 0) EditTextItem(svn_revision, version_id);
 	}
-
 }
 
 void cScreenMainMenu::process()
@@ -100,32 +91,33 @@ void cScreenMainMenu::process()
 
 void cScreenMainMenu::check_events()
 {
-	// no events means we can go home
-	if (g_InterfaceEvents.GetNumEvents() == 0) return;
-
-	if (g_InterfaceEvents.CheckButton(new_id))
+	if (g_InterfaceEvents.GetNumEvents() == 0) return;	// no events means we can go home
+	if (g_InterfaceEvents.CheckButton(new_id))			// the new new game code
 	{
-		// the new new game code
 		g_WinManager.push("New Game");
 		g_InitWin = true;
 		return;
 	}
-
-	if (g_InterfaceEvents.CheckButton(continue_id))		// `J` not ready yet
+	if (g_InterfaceEvents.CheckButton(continue_id))
 	{
+		g_ReturnInt = 0;
 		g_ReturnText = "autosave.gam";
-		g_WinManager.Push(PreparingLoad, &g_Preparing);
+		g_WinManager.push("Preparing Game");
 		g_InitWin = true;
 		return;
 	}
-
 	if (g_InterfaceEvents.CheckButton(load_id))
 	{
 		g_WinManager.Push(LoadGameScreen, &g_LoadGame);
 		g_InitWin = true;
 		return;
 	}
-
+	if (g_InterfaceEvents.CheckButton(settings_id))
+	{
+		g_WinManager.push("Settings");
+		g_InitWin = true;
+		return;
+	}
 	if (g_InterfaceEvents.CheckButton(quit_id))
 	{
 		SDL_Event evn;
@@ -139,22 +131,29 @@ bool cScreenMainMenu::check_keys()
 	if (g_C_Key && !m_Buttons[continue_id]->m_Disabled)
 	{
 		g_C_Key = false;
+		g_ReturnInt = 0;
 		g_ReturnText = "autosave.gam";
-		g_WinManager.Push(PreparingLoad, &g_Preparing);
+		g_WinManager.push("Preparing Game");
 		g_InitWin = true;
 		return true;
 	}
-	if (g_L_Key)
+	if (g_L_Key && !m_Buttons[load_id]->m_Disabled)
 	{
 		g_L_Key = false;
 		g_WinManager.Push(LoadGameScreen, &g_LoadGame);
 		g_InitWin = true;
 		return true;
 	}
+	if (g_S_Key)
+	{
+		g_S_Key = false;
+		g_WinManager.push("Settings");
+		g_InitWin = true;
+		return true;
+	}
 	if (g_N_Key)
 	{
 		g_N_Key = false;
-		// the new new game code
 		g_WinManager.push("New Game");
 		g_InitWin = true;
 		return true;
@@ -167,11 +166,5 @@ bool cScreenMainMenu::check_keys()
 		SDL_PushEvent(&evn);
 		return true;
 	}
-	if (g_S_Key)
-	{
-		g_S_Key = false;
-		return true;
-	}
-
 	return false;
 }

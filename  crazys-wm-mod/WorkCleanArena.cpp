@@ -49,27 +49,23 @@ bool cJobManager::WorkCleanArena(sGirl* girl, sBrothel* brothel, bool Day0Night1
 	int actiontype = ACTION_WORKCLEANING;
 	stringstream ss; string girlName = girl->m_Realname; ss << girlName;
 	int roll_a = g_Dice.d100(), roll_b = g_Dice.d100();
-	if (roll_a <= 50 && g_Girls.DisobeyCheck(girl, actiontype, brothel))
+	if (roll_a <= 50 && girl->disobey_check(actiontype, brothel))
 	{
 		ss << " refused to clean the arena.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
 		return true;
 	}
-	ss << " worked cleaning the arena.\n\n";
-
-	
+	ss << " worked cleaning the arena.\n \n";
 
 	g_Girls.UnequipCombat(girl);	// put that shit away
 
-	double CleanAmt = ((g_Girls.GetSkill(girl, SKILL_SERVICE) / 10) + 5) * 10;
-	CleanAmt += JP_CleanArena(girl, false);
-
+	double CleanAmt = JP_CleanArena(girl, false);
 	int enjoy = 0;
 	int wages = 0;
-	int jobperformance = 0;
+	int tips = 0;
+	int imagetype = IMGTYPE_MAID;
+	int msgtype = Day0Night1;
 	bool playtime = false;
-
-
 
 	if (roll_a <= 10)
 	{
@@ -91,7 +87,7 @@ bool cJobManager::WorkCleanArena(sGirl* girl, sBrothel* brothel, bool Day0Night1
 		enjoy += g_Dice % 2;
 		ss << "The shift passed uneventfully.";
 	}
-	ss << "\n\n";
+	ss << "\n \n";
 
 	// slave girls not being paid for a job that normally you would pay directly for do less work
 	if ((girl->is_slave() && !cfg.initial.slave_pay_outofpocket()))
@@ -101,26 +97,28 @@ bool cJobManager::WorkCleanArena(sGirl* girl, sBrothel* brothel, bool Day0Night1
 	}
 	else
 	{
-		wages = (int)CleanAmt; // `J` Pay her based on how much she cleaned
+		wages = min(30, int(30 + (CleanAmt / 10))); // `J` Pay her based on how much she cleaned
 	}
 
 	// `J` if she can clean more than is needed, she has a little free time after her shift
 	if (brothel->m_Filthiness < CleanAmt / 2) playtime = true;
-	ss << gettext("\n\nCleanliness rating improved by ") << CleanAmt;
+	ss << "\n \nCleanliness rating improved by " << (int)CleanAmt;
 	if (playtime)	// `J` needs more variation
 	{
-		ss << "\n\n" << girlName << " finished her cleaning early so she played around with some of the equipment.";
-		g_Girls.UpdateSkill(girl, SKILL_COMBAT, (g_Dice % 3));
-		g_Girls.UpdateStat(girl, STAT_AGILITY, (g_Dice % 2));
-		g_Girls.UpdateStat(girl, STAT_CONSTITUTION, (g_Dice % 2));
-		g_Girls.UpdateStat(girl, STAT_CONFIDENCE, (g_Dice % 2));
-		g_Girls.UpdateEnjoyment(girl, ACTION_COMBAT, 1);
+		ss << "\n \n" << girlName << " finished her cleaning early so she played around with some of the equipment.";
+		girl->combat((g_Dice % 3));
+		girl->agility((g_Dice % 2));
+		girl->constitution((g_Dice % 2));
+		girl->confidence((g_Dice % 2));
+		girl->upd_Enjoyment(ACTION_COMBAT, 1);
 	}
 
 	// do all the output
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_MAID, Day0Night1);
 	brothel->m_Filthiness -= (int)CleanAmt;
-	girl->m_Pay = wages;
+	// Money
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 
 
 
@@ -129,17 +127,17 @@ bool cJobManager::WorkCleanArena(sGirl* girl, sBrothel* brothel, bool Day0Night1
 	// Improve girl
 	int xp = 5, libido = 1, skill = 3;
 	if (enjoy > 1)										{ xp += 1; skill += 1; }
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 3; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 3; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
+	if (girl->has_trait( "Quick Learner"))		{ skill += 1; xp += 3; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; xp -= 3; }
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
 
-	g_Girls.UpdateStat(girl, STAT_EXP, (g_Dice % xp) + 2);
-	g_Girls.UpdateSkill(girl, SKILL_SERVICE, (g_Dice % skill) + 2);
-	g_Girls.UpdateSkill(girl, SKILL_COMBAT, (g_Dice % 2));
-	g_Girls.UpdateSkill(girl, SKILL_CRAFTING, (g_Dice % 2));
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
+	girl->exp((g_Dice % xp) + 2);
+	girl->service((g_Dice % skill) + 2);
+	girl->combat((g_Dice % 2));
+	girl->crafting((g_Dice % 2));
+	girl->upd_temp_stat(STAT_LIBIDO, libido);
 
-	g_Girls.UpdateEnjoyment(girl, actiontype, enjoy);
+	girl->upd_Enjoyment(actiontype, enjoy);
 	// Gain Traits
 	if (g_Dice.percent(girl->service()))
 		g_Girls.PossiblyGainNewTrait(girl, "Maid", 70, actiontype, girlName + " has cleaned enough that she could work professionally as a Maid anywhere.", Day0Night1);
@@ -152,50 +150,5 @@ bool cJobManager::WorkCleanArena(sGirl* girl, sBrothel* brothel, bool Day0Night1
 
 double cJobManager::JP_CleanArena(sGirl* girl, bool estimate)// not used
 {
-	double jobperformance = 0.0;
-	if (estimate)// for third detail string
-	{
-		jobperformance += girl->service() + 2;
-	}
-	else// for the actual check
-	{
-	}
-	if (g_Girls.HasTrait(girl, "Maid"))						jobperformance += 20;
-	if (g_Girls.HasTrait(girl, "Powerful Magic"))			jobperformance += 10;
-	if (g_Girls.HasTrait(girl, "Strong Magic"))				jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Handyman"))					jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Waitress"))					jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Agile"))					jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Fleet of Foot"))			jobperformance += 2;
-	if (g_Girls.HasTrait(girl, "Strong"))					jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Assassin"))					jobperformance += 1;
-	if (g_Girls.HasTrait(girl, "Psychic"))					jobperformance += 2;
-	if (g_Girls.HasTrait(girl, "Manly"))					jobperformance += 1;
-	if (g_Girls.HasTrait(girl, "Tomboy"))					jobperformance += 2;
-	if (g_Girls.HasTrait(girl, "Optimist"))					jobperformance += 1;
-	if (g_Girls.HasTrait(girl, "Sharp-Eyed"))				jobperformance += 1;
-	if (g_Girls.HasTrait(girl, "Giant"))					jobperformance += 2;
-	if (g_Girls.HasTrait(girl, "Prehensile Tail"))			jobperformance += 3;
-
-	if (g_Girls.HasTrait(girl, "Blind"))					jobperformance -= 20;
-	if (g_Girls.HasTrait(girl, "Queen"))					jobperformance -= 20;
-	if (g_Girls.HasTrait(girl, "Princess"))					jobperformance -= 10;
-	if (g_Girls.HasTrait(girl, "Mind Fucked"))				jobperformance -= 10;
-	if (g_Girls.HasTrait(girl, "Bimbo"))					jobperformance -= 5;
-	if (g_Girls.HasTrait(girl, "Retarded"))					jobperformance -= 5;
-	if (g_Girls.HasTrait(girl, "Smoker"))					jobperformance -= 1;
-	if (g_Girls.HasTrait(girl, "Clumsy"))					jobperformance -= 5;
-	if (g_Girls.HasTrait(girl, "Delicate"))					jobperformance -= 1;
-	if (g_Girls.HasTrait(girl, "Elegant"))					jobperformance -= 5;
-	if (g_Girls.HasTrait(girl, "Malformed"))				jobperformance -= 1;
-	if (g_Girls.HasTrait(girl, "Massive Melons"))			jobperformance -= 1;
-	if (g_Girls.HasTrait(girl, "Abnormally Large Boobs"))	jobperformance -= 3;
-	if (g_Girls.HasTrait(girl, "Titanic Tits"))				jobperformance -= 5;
-	if (g_Girls.HasTrait(girl, "Broken Will"))				jobperformance -= 5;
-	if (g_Girls.HasTrait(girl, "Pessimist"))				jobperformance -= 1;
-	if (g_Girls.HasTrait(girl, "Meek"))						jobperformance -= 2;
-	if (g_Girls.HasTrait(girl, "Nervous"))					jobperformance -= 2;
-	if (g_Girls.HasTrait(girl, "Dependant"))				jobperformance -= 5;
-	if (g_Girls.HasTrait(girl, "Bad Eyesight"))				jobperformance -= 5;
-	return jobperformance;
+	return JP_Cleaning(girl, estimate);		// just use cleaning so there is 1 less thing to edit
 }

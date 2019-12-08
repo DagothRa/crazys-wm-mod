@@ -615,6 +615,7 @@
             this.textBox_Config_InitialSlaveHousePerc = new System.Windows.Forms.TextBox();
             this.textBox_Config_InitialGirlMeet = new System.Windows.Forms.TextBox();
             this.groupBox_Logging = new System.Windows.Forms.GroupBox();
+            this.checkBox_config_LogShowNumbers = new System.Windows.Forms.CheckBox();
             this.checkBox_config_LogDebug = new System.Windows.Forms.CheckBox();
             this.checkBox_config_LogExtraDetails = new System.Windows.Forms.CheckBox();
             this.checkBox_config_LogGirlFights = new System.Windows.Forms.CheckBox();
@@ -681,11 +682,21 @@
             this.label88 = new System.Windows.Forms.Label();
             this.label_Load_Config = new System.Windows.Forms.Label();
             this.tabPage5_Traits = new System.Windows.Forms.TabPage();
+            this.label206 = new System.Windows.Forms.Label();
+            this.label191 = new System.Windows.Forms.Label();
+            this.textBox_Traits_Random_Chance = new System.Windows.Forms.TextBox();
+            this.textBox_Traits_Inherit_Chance = new System.Windows.Forms.TextBox();
+            this.comboBox_Traits_Trait_Type = new System.Windows.Forms.ComboBox();
+            this.button_Traits_Update_Trait = new System.Windows.Forms.Button();
+            this.textBox_Traits_Trait_Name = new System.Windows.Forms.TextBox();
+            this.listBox_Traits_Names = new System.Windows.Forms.ListBox();
+            this.TBox_Traits_Description = new System.Windows.Forms.RichTextBox();
+            this.dataGridView_Trait_Types = new System.Windows.Forms.DataGridView();
             this.button_Clear_Traits = new System.Windows.Forms.Button();
             this.dataGridView_Traits = new System.Windows.Forms.DataGridView();
             this.dataGridView_Traits_Trait_Name = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridView_Traits_Trait_Desc = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridView_Traits_Trait_Type = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.dataGridView_Traits_Trait_Type = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridView_Traits_Trait_InheritChance = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridView_Traits_Trait_RandomChance = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.button_Load_Traits = new System.Windows.Forms.Button();
@@ -706,6 +717,8 @@
             this.button_Script_Load = new System.Windows.Forms.Button();
             this.tabPage7_FAQ = new System.Windows.Forms.TabPage();
             this.groupBox_Folders = new System.Windows.Forms.GroupBox();
+            this.label187 = new System.Windows.Forms.Label();
+            this.textBox_Config_Folders_Items = new System.Windows.Forms.TextBox();
             this.richTextBox3 = new System.Windows.Forms.RichTextBox();
             this.checkBox_Config_Folders_Backup_Saves = new System.Windows.Forms.CheckBox();
             this.checkBox_Config_Folders_Prefer_Default = new System.Windows.Forms.CheckBox();
@@ -733,7 +746,6 @@
             this.button24 = new System.Windows.Forms.Button();
             this.checkBox_ToggleTraitTooltips = new System.Windows.Forms.CheckBox();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
-            this.checkBox_config_LogShowNumbers = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage0_Info.SuspendLayout();
             this.tabPage1_Girls.SuspendLayout();
@@ -784,6 +796,7 @@
             this.groupBox_C_Gambling.SuspendLayout();
             this.groupBox_C_Income_Multipliers.SuspendLayout();
             this.tabPage5_Traits.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView_Trait_Types)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_Traits)).BeginInit();
             this.tabPage6_Scripts.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_Scripts)).BeginInit();
@@ -2042,6 +2055,8 @@
             this.StatsTBox_27.Size = new System.Drawing.Size(65, 20);
             this.StatsTBox_27.TabIndex = 38;
             this.StatsTBox_27.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.StatsTBox_27.TextChanged += new System.EventHandler(this.ValidateTextBox);
+            this.StatsTBox_27.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.LimitTextBox);
             // 
             // label195
             // 
@@ -5641,7 +5656,7 @@
             this.comboBox_affects_01.Items.AddRange(new object[] {
             "Skill",
             "Stat",
-            "Girl Status"});
+            "GirlStatus"});
             this.comboBox_affects_01.Location = new System.Drawing.Point(130, 15);
             this.comboBox_affects_01.Name = "comboBox_affects_01";
             this.comboBox_affects_01.Size = new System.Drawing.Size(101, 21);
@@ -7734,6 +7749,17 @@
             this.groupBox_Logging.TabStop = false;
             this.groupBox_Logging.Text = "What to Log";
             // 
+            // checkBox_config_LogShowNumbers
+            // 
+            this.checkBox_config_LogShowNumbers.AutoSize = true;
+            this.checkBox_config_LogShowNumbers.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.checkBox_config_LogShowNumbers.Location = new System.Drawing.Point(5, 123);
+            this.checkBox_config_LogShowNumbers.Name = "checkBox_config_LogShowNumbers";
+            this.checkBox_config_LogShowNumbers.Size = new System.Drawing.Size(98, 17);
+            this.checkBox_config_LogShowNumbers.TabIndex = 9;
+            this.checkBox_config_LogShowNumbers.Text = "Show Numbers";
+            this.checkBox_config_LogShowNumbers.UseVisualStyleBackColor = true;
+            // 
             // checkBox_config_LogDebug
             // 
             this.checkBox_config_LogDebug.AutoSize = true;
@@ -8500,6 +8526,16 @@
             // 
             // tabPage5_Traits
             // 
+            this.tabPage5_Traits.Controls.Add(this.label206);
+            this.tabPage5_Traits.Controls.Add(this.label191);
+            this.tabPage5_Traits.Controls.Add(this.textBox_Traits_Random_Chance);
+            this.tabPage5_Traits.Controls.Add(this.textBox_Traits_Inherit_Chance);
+            this.tabPage5_Traits.Controls.Add(this.comboBox_Traits_Trait_Type);
+            this.tabPage5_Traits.Controls.Add(this.button_Traits_Update_Trait);
+            this.tabPage5_Traits.Controls.Add(this.textBox_Traits_Trait_Name);
+            this.tabPage5_Traits.Controls.Add(this.listBox_Traits_Names);
+            this.tabPage5_Traits.Controls.Add(this.TBox_Traits_Description);
+            this.tabPage5_Traits.Controls.Add(this.dataGridView_Trait_Types);
             this.tabPage5_Traits.Controls.Add(this.button_Clear_Traits);
             this.tabPage5_Traits.Controls.Add(this.dataGridView_Traits);
             this.tabPage5_Traits.Controls.Add(this.button_Load_Traits);
@@ -8513,9 +8549,93 @@
             this.tabPage5_Traits.Text = "  Traits  ";
             this.tabPage5_Traits.UseVisualStyleBackColor = true;
             // 
+            // label206
+            // 
+            this.label206.AutoSize = true;
+            this.label206.Location = new System.Drawing.Point(280, 169);
+            this.label206.Name = "label206";
+            this.label206.Size = new System.Drawing.Size(76, 13);
+            this.label206.TabIndex = 15;
+            this.label206.Text = "Inherit Chance";
+            // 
+            // label191
+            // 
+            this.label191.AutoSize = true;
+            this.label191.Location = new System.Drawing.Point(280, 195);
+            this.label191.Name = "label191";
+            this.label191.Size = new System.Drawing.Size(87, 13);
+            this.label191.TabIndex = 14;
+            this.label191.Text = "Random Chance";
+            // 
+            // textBox_Traits_Random_Chance
+            // 
+            this.textBox_Traits_Random_Chance.Location = new System.Drawing.Point(385, 191);
+            this.textBox_Traits_Random_Chance.Name = "textBox_Traits_Random_Chance";
+            this.textBox_Traits_Random_Chance.Size = new System.Drawing.Size(48, 20);
+            this.textBox_Traits_Random_Chance.TabIndex = 13;
+            // 
+            // textBox_Traits_Inherit_Chance
+            // 
+            this.textBox_Traits_Inherit_Chance.Location = new System.Drawing.Point(385, 165);
+            this.textBox_Traits_Inherit_Chance.Name = "textBox_Traits_Inherit_Chance";
+            this.textBox_Traits_Inherit_Chance.Size = new System.Drawing.Size(48, 20);
+            this.textBox_Traits_Inherit_Chance.TabIndex = 13;
+            // 
+            // comboBox_Traits_Trait_Type
+            // 
+            this.comboBox_Traits_Trait_Type.FormattingEnabled = true;
+            this.comboBox_Traits_Trait_Type.Location = new System.Drawing.Point(731, 6);
+            this.comboBox_Traits_Trait_Type.Name = "comboBox_Traits_Trait_Type";
+            this.comboBox_Traits_Trait_Type.Size = new System.Drawing.Size(214, 21);
+            this.comboBox_Traits_Trait_Type.TabIndex = 12;
+            // 
+            // button_Traits_Update_Trait
+            // 
+            this.button_Traits_Update_Trait.Location = new System.Drawing.Point(280, 6);
+            this.button_Traits_Update_Trait.Name = "button_Traits_Update_Trait";
+            this.button_Traits_Update_Trait.Size = new System.Drawing.Size(75, 23);
+            this.button_Traits_Update_Trait.TabIndex = 11;
+            this.button_Traits_Update_Trait.Text = "Update Trait";
+            this.button_Traits_Update_Trait.UseVisualStyleBackColor = true;
+            // 
+            // textBox_Traits_Trait_Name
+            // 
+            this.textBox_Traits_Trait_Name.Location = new System.Drawing.Point(361, 7);
+            this.textBox_Traits_Trait_Name.Name = "textBox_Traits_Trait_Name";
+            this.textBox_Traits_Trait_Name.Size = new System.Drawing.Size(363, 20);
+            this.textBox_Traits_Trait_Name.TabIndex = 10;
+            // 
+            // listBox_Traits_Names
+            // 
+            this.listBox_Traits_Names.FormattingEnabled = true;
+            this.listBox_Traits_Names.Location = new System.Drawing.Point(114, 7);
+            this.listBox_Traits_Names.Name = "listBox_Traits_Names";
+            this.listBox_Traits_Names.Size = new System.Drawing.Size(159, 511);
+            this.listBox_Traits_Names.TabIndex = 9;
+            this.listBox_Traits_Names.SelectedIndexChanged += new System.EventHandler(this.listBox_Trait_Names_SelectedIndexChanged);
+            // 
+            // TBox_Traits_Description
+            // 
+            this.TBox_Traits_Description.Location = new System.Drawing.Point(279, 35);
+            this.TBox_Traits_Description.Name = "TBox_Traits_Description";
+            this.TBox_Traits_Description.Size = new System.Drawing.Size(666, 124);
+            this.TBox_Traits_Description.TabIndex = 8;
+            this.TBox_Traits_Description.Text = "";
+            // 
+            // dataGridView_Trait_Types
+            // 
+            this.dataGridView_Trait_Types.AllowUserToResizeColumns = false;
+            this.dataGridView_Trait_Types.AllowUserToResizeRows = false;
+            this.dataGridView_Trait_Types.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView_Trait_Types.Location = new System.Drawing.Point(3, 6);
+            this.dataGridView_Trait_Types.Name = "dataGridView_Trait_Types";
+            this.dataGridView_Trait_Types.Size = new System.Drawing.Size(104, 548);
+            this.dataGridView_Trait_Types.TabIndex = 6;
+            this.dataGridView_Trait_Types.SelectionChanged += new System.EventHandler(this.dataGridView_Trait_Types_SelectedIndexChanged);
+            // 
             // button_Clear_Traits
             // 
-            this.button_Clear_Traits.Location = new System.Drawing.Point(644, 461);
+            this.button_Clear_Traits.Location = new System.Drawing.Point(644, 564);
             this.button_Clear_Traits.Name = "button_Clear_Traits";
             this.button_Clear_Traits.Size = new System.Drawing.Size(80, 25);
             this.button_Clear_Traits.TabIndex = 5;
@@ -8550,7 +8670,7 @@
             dataGridViewCellStyle3.SelectionForeColor = System.Drawing.Color.Black;
             dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.dataGridView_Traits.DefaultCellStyle = dataGridViewCellStyle3;
-            this.dataGridView_Traits.Location = new System.Drawing.Point(6, 6);
+            this.dataGridView_Traits.Location = new System.Drawing.Point(279, 325);
             this.dataGridView_Traits.Name = "dataGridView_Traits";
             dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle4.BackColor = System.Drawing.Color.White;
@@ -8562,7 +8682,7 @@
             this.dataGridView_Traits.RowHeadersDefaultCellStyle = dataGridViewCellStyle4;
             this.dataGridView_Traits.RowHeadersVisible = false;
             this.dataGridView_Traits.RowTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridView_Traits.Size = new System.Drawing.Size(939, 445);
+            this.dataGridView_Traits.Size = new System.Drawing.Size(666, 229);
             this.dataGridView_Traits.TabIndex = 4;
             // 
             // dataGridView_Traits_Trait_Name
@@ -8585,26 +8705,8 @@
             this.dataGridView_Traits_Trait_Type.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.dataGridView_Traits_Trait_Type.DataPropertyName = "Type";
             this.dataGridView_Traits_Trait_Type.HeaderText = "Trait Type";
-            this.dataGridView_Traits_Trait_Type.Items.AddRange(new object[] {
-            "Species",
-            "Undead",
-            "Physical",
-            "Breasts",
-            "Appearance",
-            "Action",
-            "Perception",
-            "Social",
-            "Mental",
-            "Magical",
-            "Sexual",
-            "Job",
-            "Temporary",
-            "Addiction",
-            "Disease",
-            "Other",
-            ""});
             this.dataGridView_Traits_Trait_Type.Name = "dataGridView_Traits_Trait_Type";
-            this.dataGridView_Traits_Trait_Type.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            this.dataGridView_Traits_Trait_Type.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             this.dataGridView_Traits_Trait_Type.Width = 74;
             // 
             // dataGridView_Traits_Trait_InheritChance
@@ -8625,7 +8727,7 @@
             // 
             // button_Load_Traits
             // 
-            this.button_Load_Traits.Location = new System.Drawing.Point(6, 463);
+            this.button_Load_Traits.Location = new System.Drawing.Point(6, 566);
             this.button_Load_Traits.Name = "button_Load_Traits";
             this.button_Load_Traits.Size = new System.Drawing.Size(85, 23);
             this.button_Load_Traits.TabIndex = 2;
@@ -8637,7 +8739,7 @@
             // 
             this.label_Load_Traits.AutoSize = true;
             this.label_Load_Traits.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.label_Load_Traits.Location = new System.Drawing.Point(97, 454);
+            this.label_Load_Traits.Location = new System.Drawing.Point(97, 557);
             this.label_Load_Traits.Name = "label_Load_Traits";
             this.label_Load_Traits.Size = new System.Drawing.Size(516, 32);
             this.label_Load_Traits.TabIndex = 1;
@@ -8648,7 +8750,7 @@
             // 
             // button_Save_Traits
             // 
-            this.button_Save_Traits.Location = new System.Drawing.Point(866, 461);
+            this.button_Save_Traits.Location = new System.Drawing.Point(866, 564);
             this.button_Save_Traits.Name = "button_Save_Traits";
             this.button_Save_Traits.Size = new System.Drawing.Size(80, 25);
             this.button_Save_Traits.TabIndex = 3;
@@ -8835,6 +8937,8 @@
             // 
             // groupBox_Folders
             // 
+            this.groupBox_Folders.Controls.Add(this.label187);
+            this.groupBox_Folders.Controls.Add(this.textBox_Config_Folders_Items);
             this.groupBox_Folders.Controls.Add(this.richTextBox3);
             this.groupBox_Folders.Controls.Add(this.checkBox_Config_Folders_Backup_Saves);
             this.groupBox_Folders.Controls.Add(this.checkBox_Config_Folders_Prefer_Default);
@@ -8845,22 +8949,41 @@
             this.groupBox_Folders.Controls.Add(this.textBox_Config_Folders_Characters);
             this.groupBox_Folders.Controls.Add(this.textBox_Config_Folders_Savegames);
             this.groupBox_Folders.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.groupBox_Folders.Location = new System.Drawing.Point(6, 111);
+            this.groupBox_Folders.Location = new System.Drawing.Point(6, 98);
             this.groupBox_Folders.Name = "groupBox_Folders";
-            this.groupBox_Folders.Size = new System.Drawing.Size(484, 185);
+            this.groupBox_Folders.Size = new System.Drawing.Size(596, 222);
             this.groupBox_Folders.TabIndex = 2;
             this.groupBox_Folders.TabStop = false;
             this.groupBox_Folders.Text = "Folders";
+            // 
+            // label187
+            // 
+            this.label187.AutoSize = true;
+            this.label187.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.label187.Location = new System.Drawing.Point(6, 93);
+            this.label187.Name = "label187";
+            this.label187.Size = new System.Drawing.Size(32, 13);
+            this.label187.TabIndex = 8;
+            this.label187.Text = "Items";
+            // 
+            // textBox_Config_Folders_Items
+            // 
+            this.textBox_Config_Folders_Items.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.textBox_Config_Folders_Items.Location = new System.Drawing.Point(91, 89);
+            this.textBox_Config_Folders_Items.MaxLength = 30;
+            this.textBox_Config_Folders_Items.Name = "textBox_Config_Folders_Items";
+            this.textBox_Config_Folders_Items.Size = new System.Drawing.Size(499, 20);
+            this.textBox_Config_Folders_Items.TabIndex = 9;
             // 
             // richTextBox3
             // 
             this.richTextBox3.BackColor = System.Drawing.SystemColors.Window;
             this.richTextBox3.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.richTextBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.richTextBox3.Location = new System.Drawing.Point(9, 113);
+            this.richTextBox3.Location = new System.Drawing.Point(9, 134);
             this.richTextBox3.Name = "richTextBox3";
             this.richTextBox3.ReadOnly = true;
-            this.richTextBox3.Size = new System.Drawing.Size(469, 69);
+            this.richTextBox3.Size = new System.Drawing.Size(581, 81);
             this.richTextBox3.TabIndex = 7;
             this.richTextBox3.Text = resources.GetString("richTextBox3.Text");
             // 
@@ -8868,7 +8991,7 @@
             // 
             this.checkBox_Config_Folders_Backup_Saves.AutoSize = true;
             this.checkBox_Config_Folders_Backup_Saves.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.checkBox_Config_Folders_Backup_Saves.Location = new System.Drawing.Point(9, 90);
+            this.checkBox_Config_Folders_Backup_Saves.Location = new System.Drawing.Point(9, 115);
             this.checkBox_Config_Folders_Backup_Saves.Name = "checkBox_Config_Folders_Backup_Saves";
             this.checkBox_Config_Folders_Backup_Saves.Size = new System.Drawing.Size(96, 17);
             this.checkBox_Config_Folders_Backup_Saves.TabIndex = 6;
@@ -8879,7 +9002,7 @@
             // 
             this.checkBox_Config_Folders_Prefer_Default.AutoSize = true;
             this.checkBox_Config_Folders_Prefer_Default.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.checkBox_Config_Folders_Prefer_Default.Location = new System.Drawing.Point(124, 90);
+            this.checkBox_Config_Folders_Prefer_Default.Location = new System.Drawing.Point(124, 115);
             this.checkBox_Config_Folders_Prefer_Default.Name = "checkBox_Config_Folders_Prefer_Default";
             this.checkBox_Config_Folders_Prefer_Default.Size = new System.Drawing.Size(217, 17);
             this.checkBox_Config_Folders_Prefer_Default.TabIndex = 7;
@@ -8902,7 +9025,7 @@
             this.textBox_Config_Folders_Default_Images.Location = new System.Drawing.Point(91, 64);
             this.textBox_Config_Folders_Default_Images.MaxLength = 30;
             this.textBox_Config_Folders_Default_Images.Name = "textBox_Config_Folders_Default_Images";
-            this.textBox_Config_Folders_Default_Images.Size = new System.Drawing.Size(387, 20);
+            this.textBox_Config_Folders_Default_Images.Size = new System.Drawing.Size(499, 20);
             this.textBox_Config_Folders_Default_Images.TabIndex = 5;
             // 
             // label183
@@ -8931,7 +9054,7 @@
             this.textBox_Config_Folders_Characters.Location = new System.Drawing.Point(91, 14);
             this.textBox_Config_Folders_Characters.MaxLength = 30;
             this.textBox_Config_Folders_Characters.Name = "textBox_Config_Folders_Characters";
-            this.textBox_Config_Folders_Characters.Size = new System.Drawing.Size(387, 20);
+            this.textBox_Config_Folders_Characters.Size = new System.Drawing.Size(499, 20);
             this.textBox_Config_Folders_Characters.TabIndex = 1;
             // 
             // textBox_Config_Folders_Savegames
@@ -8940,7 +9063,7 @@
             this.textBox_Config_Folders_Savegames.Location = new System.Drawing.Point(91, 39);
             this.textBox_Config_Folders_Savegames.MaxLength = 30;
             this.textBox_Config_Folders_Savegames.Name = "textBox_Config_Folders_Savegames";
-            this.textBox_Config_Folders_Savegames.Size = new System.Drawing.Size(387, 20);
+            this.textBox_Config_Folders_Savegames.Size = new System.Drawing.Size(499, 20);
             this.textBox_Config_Folders_Savegames.TabIndex = 3;
             // 
             // dataGridView_Bad_Files
@@ -9108,17 +9231,6 @@
             this.checkBox_ToggleTraitTooltips.UseVisualStyleBackColor = true;
             this.checkBox_ToggleTraitTooltips.CheckedChanged += new System.EventHandler(this.checkBox_ToggleTraitTooltips_CheckedChanged);
             // 
-            // checkBox_config_LogShowNumbers
-            // 
-            this.checkBox_config_LogShowNumbers.AutoSize = true;
-            this.checkBox_config_LogShowNumbers.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.checkBox_config_LogShowNumbers.Location = new System.Drawing.Point(5, 123);
-            this.checkBox_config_LogShowNumbers.Name = "checkBox_config_LogShowNumbers";
-            this.checkBox_config_LogShowNumbers.Size = new System.Drawing.Size(98, 17);
-            this.checkBox_config_LogShowNumbers.TabIndex = 9;
-            this.checkBox_config_LogShowNumbers.Text = "Show Numbers";
-            this.checkBox_config_LogShowNumbers.UseVisualStyleBackColor = true;
-            // 
             // Form1
             // 
             this.AllowDrop = true;
@@ -9135,7 +9247,7 @@
             this.MaximumSize = new System.Drawing.Size(1000, 700);
             this.MinimumSize = new System.Drawing.Size(1000, 700);
             this.Name = "Form1";
-            this.Text = "Whore Master Editor 0.8.29";
+            this.Text = "Whore Master Editor 0.8.32";
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.App_FileDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.App_DragEnter);
             this.tabControl1.ResumeLayout(false);
@@ -9215,6 +9327,7 @@
             this.groupBox_C_Income_Multipliers.PerformLayout();
             this.tabPage5_Traits.ResumeLayout(false);
             this.tabPage5_Traits.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView_Trait_Types)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_Traits)).EndInit();
             this.tabPage6_Scripts.ResumeLayout(false);
             this.tabPage6_Scripts.PerformLayout();
@@ -9846,11 +9959,6 @@
         private System.Windows.Forms.TextBox TBox_G_FirstName;
         private System.Windows.Forms.Button button_G_Create_Real_Name;
         private System.Windows.Forms.Button button_G_Divide_Real_Name;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridView_Traits_Trait_Name;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridView_Traits_Trait_Desc;
-        private System.Windows.Forms.DataGridViewComboBoxColumn dataGridView_Traits_Trait_Type;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridView_Traits_Trait_InheritChance;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridView_Traits_Trait_RandomChance;
         private System.Windows.Forms.TabPage tabPage6_Scripts;
         private System.Windows.Forms.Button button_Script_Load;
         private System.Windows.Forms.Label label182;
@@ -9929,6 +10037,23 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Script_Var;
         private System.Windows.Forms.DataGridViewTextBoxColumn Script_Text;
         private System.Windows.Forms.CheckBox checkBox_config_LogShowNumbers;
+        private System.Windows.Forms.Label label187;
+        private System.Windows.Forms.TextBox textBox_Config_Folders_Items;
+        private System.Windows.Forms.DataGridView dataGridView_Trait_Types;
+        private System.Windows.Forms.RichTextBox TBox_Traits_Description;
+        private System.Windows.Forms.ListBox listBox_Traits_Names;
+        private System.Windows.Forms.Label label206;
+        private System.Windows.Forms.Label label191;
+        private System.Windows.Forms.TextBox textBox_Traits_Random_Chance;
+        private System.Windows.Forms.TextBox textBox_Traits_Inherit_Chance;
+        private System.Windows.Forms.ComboBox comboBox_Traits_Trait_Type;
+        private System.Windows.Forms.Button button_Traits_Update_Trait;
+        private System.Windows.Forms.TextBox textBox_Traits_Trait_Name;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridView_Traits_Trait_Name;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridView_Traits_Trait_Desc;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridView_Traits_Trait_Type;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridView_Traits_Trait_InheritChance;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridView_Traits_Trait_RandomChance;
     }
 }
 

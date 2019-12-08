@@ -32,18 +32,18 @@ extern	cGirls	g_Girls;
 int cTrainable::value()
 {
 	if(m_type == Stat) {
-		return g_Girls.GetStat(m_girl, m_index);
+		return m_girl->get_stat(m_index);
 	}
-	return g_Girls.GetSkill(m_girl, m_index);
+	return m_girl->get_skill(m_index);
 }
 
 void cTrainable::upd(int increment)
 {
 	m_gain += increment;
 	if(m_type == Stat) {
-		g_Girls.UpdateStat(m_girl, m_index, increment);
+		m_girl->upd_stat(m_index, increment);
 	}
-	g_Girls.UpdateSkill(m_girl, m_index, increment);
+	m_girl->upd_skill(m_index, increment);
 }
 
 TrainableGirl::TrainableGirl(sGirl *girl)

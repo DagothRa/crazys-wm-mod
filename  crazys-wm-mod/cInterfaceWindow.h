@@ -32,6 +32,7 @@
 #include "cSlider.h"
 #include "cXmlWidget.h"
 #include "DirPath.h"
+#include "cGirls.h"
 #include <vector>
 #include <map>
 
@@ -90,14 +91,16 @@ public:
 	void SetImage(int id, CSurface* image);
 	void SetImage(int id, cAnimatedSurface* image);
 	
-	void AddEditBox(int & ID, int x, int y, int width, int height, int BorderSize);
+	void PrepareImage(int girlimage_id, sGirl* selected_girl, int imagetype = IMGTYPE_PROFILE, bool rand = true, int ImageNum = -1, bool gallery = false, string ImageName = "");
+
+	void AddEditBox(int & ID, int x, int y, int width, int height, int BorderSize, int FontSize = 16);
 	void HideEditBox(int id, bool hide);
 
 	void EditTextItem(string text, int ID);
 	void HideText(int id, bool hide);
 	void HideText(int id) { HideText(id, true); }
 	void UnhideText(int id) { HideText(id, false); }
-	void AddTextItem(int & ID, int x, int y, int width, int height, string text, int size = 16, bool auto_scrollbar = true, bool force_scrollbar = false);
+	void AddTextItem(int & ID, int x, int y, int width, int height, string text, int size = 16, bool auto_scrollbar = true, bool force_scrollbar = false, bool leftorright = false , int red = 0, int green = 0, int blue = 0);
 	void AddTextItemScrollBar(int id);
 
 	void AddSlider(int & ID, int x, int y, int width, int min = 0, int max = 100, int increment = 5, int value = 0, bool live_update = true);
@@ -111,11 +114,11 @@ public:
 	void SliderMarkerDisable(int ID); // stop displaying marker
 
 	void DisableCheckBox(int ID, bool disable);
-	void AddCheckbox(int & ID, int x, int y, int width, int height, string text, int size = 16);
+	void AddCheckbox(int & ID, int x, int y, int width, int height, string text, int size = 16, bool leftorright = false);
 	bool IsCheckboxOn(int ID);
 	void SetCheckBox(int ID, bool on);
 
-	void AddListBox(int & ID, int x, int y, int width, int height, int BorderSize, bool enableEvents, bool MultiSelect = false, bool ShowHeaders = false, bool HeaderDiv = true, bool HeaderSort = true);
+	void AddListBox(int & ID, int x, int y, int width, int height, int BorderSize, bool enableEvents, bool MultiSelect = false, bool ShowHeaders = false, bool HeaderDiv = true, bool HeaderSort = true, int fontsize = 10, int rowheight = 20);
 	void ScrollListBoxDown(int ID);
 	int GetListBoxSize(int ID);
 	void ScrollListBoxUp(int ID);
@@ -221,12 +224,13 @@ virtual	void process()=0;
 	void place_widget(TiXmlElement *el, string suffix="");
 	void widget_text_item(TiXmlElement *el, cXmlWidget &vw);
 	void widget_button_item(TiXmlElement *el, cXmlWidget &vw);
+	void widget_editbox_item(TiXmlElement *el, cXmlWidget &vw);
 	void widget_listbox_item(TiXmlElement *el, cXmlWidget &vw);
 	void widget_checkbox_item(TiXmlElement *el, cXmlWidget &vw);
 	void widget_widget(TiXmlElement *el, cXmlWidget &vw);
 	void widget_image_item(TiXmlElement *el, cXmlWidget &vw);
 	void widget_slider_item(TiXmlElement *el, cXmlWidget &vw);
-	int get_id(string name, bool essential=false);
+	int get_id(string a, string b = "", string c = "", string d = "", string e = "");
 
 	cXmlWidget* new_widget(string name);
 	cXmlWidget* find_widget(string name);

@@ -1,0 +1,197 @@
+### Changes before 11/24/2017
+Fixed a few typeos
+Updated SO and FOE
+- Added adjustments for banned sex types
+
+
+
+### I stopped working on the game for 9-10 months but I'm back again.
+# Since I am starting again after a long break, I decided to up the version number from .06.02.57 to .06.03.00
+
+### Changes 11/24-26/2017
+
+Fixed the main menu
+- If there were no save games and the load button was turned off, you could still get to the load screen by pressing L.
+- Fixed it so autosave.gam by itself does not activate the load game button.
+Added g_BoysNameList to allow for male naming in the future
+Fixed a bug where the game would try running the job for runaways
+Removers a few "\t"s that render as squares in a few places
+
+Added new commands to scripts:
+- Script_EndIfNew,		added to fix a problem in the old script editor not shifting lines to the right for the newer If statements
+- Script_IfGirlStatus,
+- Script_SetGirlStatus,
+- Script_EndPregnancy,
+- Script_CreatePregnancy
+
+Started remaking the loading screen.
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.03.00
+
+### Changes 11/27-12/03/2017
+Updated J_1024x768 interface
+- Found and fixed a couple of bugs
+Added m_interest_rate (not used yet)
+Added several image types for DarkArk
+Started rewriting Objectives (not active yet)
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.03.01
+
+### Changes 12/04-10/2017
+Updated settings.xml in J_1024x768 interface
+Updated loading screen more
+- Fixed a bug in new game if starting a new game after quitting out of old game. (loading not setting to true on new game)
+- changed the load list from if statements to a switch set
+- split the loading info files into traits, items and names
+Removed legacy file types: .traits, .items
+Removed legacy interface files: GetString.txt, InterfaceColors.txt, LoadMenu.txt and ScreenMode.txt
+Changes by grishnak:
+- changed girl in dungeon image from profile to jail
+- Changed torturer in dungeon image from profile to dom
+- IMGTYPE_ESCORT,		// clothed with a client, should replace formal in escort job, because i used formal as clothed single profile
+- IMGTYPE_SPORT,		// for the free time job, doing sports
+- IMGTYPE_STUDY,		// reading a book or looking clever
+- IMGTYPE_TEACHER,		// dressed or acting as a teacher
+- Added in 2 new traits: Clipped Tendons and No Tongue
+
+Started updating transfer screen
+- moved the transfer screen to its own file
+- (It took a while to work out all the bugs so I didn't update anything yet, just transfered it. Updates will have to wait for the next version.)
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.03.02
+
+### Changes 12/11/2017
+
+Fixed a couple of bugs in gallery
+Found and fixed a bug in the studio if the interface does not have day job column
+Cleaned and updated the transfer code a bit
+- When you go to the transfer screen, it now starts the left column where you came from.
+- number keys 1-7 switch between the brothels (have not gotten the other buildings yet, not sure if I will/can)
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.03.03
+
+### Changes 12/12/2017
+
+Cleaned and updated the transfer code a bit more
+- When you go to the transfer screen, it now starts the selected girl in the left list who you came from.
+- Added keepjob to addgirl() so transferring to the same building will keep their job
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+
+Added in some more updates by grishnak
+- check items equipped and adjust profile pictures
+- changed image type used in some jobs
+Fixed transfer screen in J_1920x1080 interface
+
+### Changes 12/13-14/2017
+
+Added columns to transfer screen
+Fixed a couple of typeos
+Corrected the GetString.xml and getInput.xml in J_1024x768 to make the text above the box so length of the text will not matter.
+Fixed a bug in scripts and added some missing lookup/names
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.03.04
+
+### Changes 12/14/2017
+Changed all c*Screen.cpp/h files to cScreen*.cpp/h to put the in line with the other cScreen*.cpp/h files
+Checked interface files and tried to make all tags the same across various files.
+Updated J_1920x1080 main menu, load game and processing screens as well as a few other small changes.
+
+### Changes 12/15-21/2017
+Renamed 4 image filetypes for * correction
+- "birthmultiplehuman*." to "birthmultiplehuman*."
+- "pregbirthmultiplehuman*." to "pregbirthmultiplehuman*."
+- "rapebeast*." to "beastrape*."
+- "pregrapebeast*." to "pregbeastrape*."
+- - beastrape* will be found in beast*, that is more apt than beastrape being found in rape
+- - les picks up les69ing and sex picks up sexdoggy which should be fine
+shortened text output for unused preg types
+Updated is_pregnant output for list boxes
+Added SexAverage, NonSexAverage and SkillAverage as options for list boxes
+
+Updated all 3 interface that come with the game
+- rewrote the get_id() function to allow up to 5 choices for interface items to allow for old interfaces
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.03.05
+
+### Changes 12/22/2017-01/05/2018  -  Not doing much over the holidays
+Cleaned code a bit
+Rewrote .scriptx read/write code
+Fixed some typeos
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.03.06
+
+### Changes 01/06-14/2018
+Some code clean up
+Added buy interactions buttons to House Details screen
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.03.07
+
+
+
+
+
+
+
+
+$$$$ Changes by grishnak - not yet added in
+
+FETISH_OBEDIENCE,					// likes broken in obedient girls
+FETISH_REBELLIOUS,					// likes rebellious nonconsensual girls
+FETISH_DEGRADATION,					// likes degraded humiliated girls
+FETISH_MUTILATION,					// likes mutilated girls
+FETISH_BONDAGE,						// likes restrained helpless girls
+FETISH_UNIFORM,						// likes girls in uniform
+
+
+$$$$ Changes by grishnak - too large of a change to add in now
+Image varients (like preg): slave, livestock, pet
+
+
+
+
+
+$$$$ TO DO - SHORT TERM - (for this version) $$$$
+
+$$$$ NOTE TO SELF - When updating items to recalculate stats/skills when loading girls - don't modify temp stuff $$$$
+
+$$$$ TO DO - SHORT TERM - (Soon) $$$$
+
+$$$$ TO DO - MID TERM - (for the next few versions) $$$$
+Keep expanding on simple-save
+food and drink
+
+Make config in_fact and out_fact do something
+
+Change the way the game handles images
+ - Make cfg.folders.preferdefault() work
+
+
+New Script Stuff:
+ - Picture_Sequence -- needs image rework before it can be implemented
+ - Make_Movie_Scene -- needs movie and scene rework before it can be implemented
+ - And/Or
+New Default Interacts for each building
+ - DefaultInteractStudio.script
+ - DefaultInteractArena.script
+ - DefaultInteractCentre.script
+ - DefaultInteractClinic.script
+ - DefaultInteractFarm.script
+ - DefaultInteractHouse.script
+New Meet Try for the buildings that don't have them
+ - MeetCentreTry.script (homeless, addicts, psychpatients, etc.)
+ - MeetFarmTry.script (beast girls, farmers, craftsmen, etc.)
+ - MeetHouseTry.script (House party? - Costs money to do, adds lots of filthiness to the house, etc.)
+
+
+$$$$ TO DO - LONG TERM $$$$
+Update from SDL1.2 to SDL2.0 (or something else)
+Expand the map and allow multiples of all buildings

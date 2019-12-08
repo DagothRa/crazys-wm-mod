@@ -54,28 +54,29 @@ bool cJobManager::WorkCounselor(sGirl* girl, sBrothel* brothel, bool Day0Night1,
 	int roll_a = g_Dice.d100();
 	if (!SkipDisobey)	// `J` skip the disobey check because it has already been done in the building flow
 	{
-		if (roll_a <= 50 && g_Girls.DisobeyCheck(girl, actiontype, brothel))
+		if (roll_a <= 50 && girl->disobey_check(actiontype, brothel))
 		{
-			ss << "She refused to counsel anyone.";
+			ss << " refused to counsel anyone.";
 			girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
-			g_Girls.UpdateEnjoyment(girl, ACTION_WORKREHAB, -1);
+			girl->upd_Enjoyment(ACTION_WORKREHAB, -1);
 			return true;
 		}
 	}
-	ss << " counceled patients.\n\n";
+	ss << " counceled patients.\n \n";
 
-	
+
 
 	g_Girls.UnequipCombat(girl);	// not for doctor
 
 	int wages = 25;
+	int tips = 0;
 	int enjoy = 0;
 
 	/* */if (roll_a <= 10)	{ enjoy -= g_Dice % 3 + 1;	ss << "The addicts hasseled her."; }
 	else if (roll_a >= 90)	{ enjoy += g_Dice % 3 + 1;	ss << "She had a pleasant time working."; }
 	else /*             */	{ enjoy += g_Dice % 2;		ss << "Otherwise, the shift passed uneventfully."; }
 
-	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, Day0Night1);
+	girl->m_Events.AddMessage(ss.str(), IMGTYPE_TEACHER, Day0Night1);
 
 	int rehabers = g_Centre.GetNumGirlsOnJob(0, JOB_REHAB, Day0Night1);
 	// work out the pay between the house and the girl
@@ -83,20 +84,21 @@ bool cJobManager::WorkCounselor(sGirl* girl, sBrothel* brothel, bool Day0Night1,
 	roll_max /= 4;
 	wages += 10 + g_Dice%roll_max;
 	wages += 5 * rehabers;	// `J` pay her 5 for each patient you send to her
-	girl->m_Pay = wages;
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 
 	// Improve stats
 	int xp = 5 + (rehabers / 2), skill = 2 + (rehabers / 2), libido = 1;
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 3; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 3; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
+	if (girl->has_trait( "Quick Learner"))		{ skill += 1; xp += 3; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; xp -= 3; }
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
 
-	g_Girls.UpdateStat(girl, STAT_EXP, xp);
-	g_Girls.UpdateStat(girl, STAT_CHARISMA, (g_Dice%skill) + 1);
-	g_Girls.UpdateSkill(girl, SKILL_SERVICE, (g_Dice%skill) + 1);
+	girl->exp(xp);
+	girl->charisma((g_Dice%skill) + 1);
+	girl->service((g_Dice%skill) + 1);
 
-	g_Girls.UpdateEnjoyment(girl, actiontype, enjoy);
+	girl->upd_Enjoyment(actiontype, enjoy);
 	//gain traits
 	g_Girls.PossiblyGainNewTrait(girl, "Charismatic", 60, actiontype, "Dealing with patients and talking with them about their problems has made " + girl->m_Realname + " more Charismatic.", Day0Night1 == SHIFT_NIGHT);
 	//lose traits

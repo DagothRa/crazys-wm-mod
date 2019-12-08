@@ -1,18 +1,18 @@
 /*
  * Copyright 2009, 2010, The Pink Petal Development Team.
- * The Pink Petal Devloment Team are defined as the game's coders 
+ * The Pink Petal Devloment Team are defined as the game's coders
  * who meet on http://pinkpetal.org     // old site: http://pinkpetal .co.cc
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -55,21 +55,18 @@ const char *sEffect::girl_status_name(unsigned int id)
 	g_LogFile.os() << "[sEffect::girl_status_name] Error: girl status id " << id << " too large (max is " << sGirl::max_statuses << ")" << endl;
 	return "";
 }
-
 const char *sEffect::skill_name(unsigned int id)
 {
 	if (id < sGirl::max_skills) return sGirl::skill_names[id];
 	g_LogFile.os() << "[sEffect::skill_name] Error: skill id " << id << " too large (max is " << sGirl::max_skills << ")" << endl;
 	return "";
 }
-
 const char *sEffect::stat_name(unsigned int id)
 {
 	if (id < sGirl::max_stats) return sGirl::stat_names[id];
 	g_LogFile.os() << "[sEffect::stat_name] Error: stat id " << id << " too large (max is " << sGirl::max_stats << ")" << endl;
 	return "";
 }
-
 const char *sEffect::enjoy_name(unsigned int id)
 {
 	if (id < sGirl::max_stats) return sGirl::enjoy_names[id];
@@ -88,31 +85,28 @@ bool sEffect::set_skill(string s)
 	m_EffectID = nID;
 	return true;
 }
-
 bool sEffect::set_girl_status(string s)
 {
 	int nID = sGirl::lookup_status_code(s);
 	if (nID == -1)		// ERROR
 	{
-		g_LogFile.os() << "[sEffect::lookup_status_code] Error: unknown Status: " << s << ". Skill ID: " << nID << endl;
+		g_LogFile.os() << "[sEffect::lookup_status_code] Error: unknown Status: " << s << ". Status ID: " << nID << endl;
 		return false;
 	}
 	m_EffectID = nID;
 	return true;
 }
-
 bool sEffect::set_stat(string s)
 {
 	int nID = sGirl::lookup_stat_code(s);
 	if (nID == -1)		// ERROR
 	{
-		g_LogFile.os() << "[sEffect::set_stat] Error: unknown Stat: " << s << ". Skill ID: " << nID << endl;
+		g_LogFile.os() << "[sEffect::set_stat] Error: unknown Stat: " << s << ". Stat ID: " << nID << endl;
 		return false;
 	}
 	m_EffectID = nID;
 	return true;
 }
-
 bool sEffect::set_Enjoyment(string s)
 {
 	int nID = sGirl::lookup_enjoy_code(s);
@@ -201,14 +195,13 @@ static void do_effects(TiXmlElement *parent, sInventoryItem *item)
 			}
 		}
 		if (pt = el->Attribute("Amount", &ival)) ept->m_Amount = ival;
-		
+
 		if (pt = el->Attribute("Duration", &ival)) ept->m_Duration = ival;
-		else ept->m_Duration = 20;
+		else ept->m_Duration = (item->m_Special == 2 ? 20 : 0);
 
 		item->m_Effects.push_back(*ept);
 	}
 }
-
 static void do_tests(TiXmlElement *parent, sInventoryItem *item)	// `J` added
 {// `J` This is to be for xml item tests for if the girl can auto use the item
 	/*  `J` copied from do_effects as the base
@@ -256,14 +249,13 @@ void cInventory::AddItem(sInventoryItem* item)
 {
 	items.push_back(item);
 }
-
 void cInventory::remove_trait(sGirl* girl, int num, int index)
 {
 	u_int item_type = girl->m_Inventory[num]->m_Type;
 	string trait_name = girl->m_Inventory[num]->m_Effects[index].m_Trait;
 
 	/*
-	 *	WD:	New logic for remembering traits 
+	 *	WD:	New logic for remembering traits
 	 *		moved to AddTrait() RemoveTrait() fn's
 	 *
 	 *		Don't think this is called any more.
@@ -271,10 +263,9 @@ void cInventory::remove_trait(sGirl* girl, int num, int index)
 	 */
 	if (trait_name == "Virgin") girl->m_Virgin = 0;
 
-	g_Girls.RemoveTrait(girl, trait_name,					// Remove Traits
+	girl->remove_trait(trait_name,					// Remove Traits
 		item_type != INVFOOD && item_type != INVMAKEUP);	// Remember if not consumable
 }
-
 bool cInventory::GirlBuyItem(sGirl* girl, int ShopItem, int MaxItems, bool AutoEquip)
 {
 	// girl buys selected item if possible; returns true if bought
@@ -288,7 +279,7 @@ bool cInventory::GirlBuyItem(sGirl* girl, int ShopItem, int MaxItems, bool AutoE
 			// found a worse item of the same type in her inventory
 			g_Girls.SellInvItem(girl, nicerThan);
 			girl->m_Money -= item->m_Cost;
-			int temp = g_Girls.AddInv(girl, item);
+			int temp = girl->add_inv(item);
 			if (temp != -1 && AutoEquip) Equip(girl, temp, false); // MYR: Check temp value
 			return true;
 		}
@@ -296,13 +287,12 @@ bool cInventory::GirlBuyItem(sGirl* girl, int ShopItem, int MaxItems, bool AutoE
 	else
 	{
 		girl->m_Money -= item->m_Cost;
-		int temp = g_Girls.AddInv(girl, item);
+		int temp = girl->add_inv(item);
 		if (temp != -1 && AutoEquip) Equip(girl, temp, false);	// MYR: Check temp value
 		return true;
 	}
 	return false;
 }
-
 void cInventory::CalculateCost(sInventoryItem* newItem)
 {
 	for (u_int i = 0; i < newItem->m_Effects.size(); i++)
@@ -395,6 +385,13 @@ void cInventory::CalculateCost(sInventoryItem* newItem)
 	else if (newItem->m_Special == 2)		newItem->m_Cost += 100;
 	if (newItem->m_Cost <= 10)				newItem->m_Cost = 10;
 }
+int cInventory::HappinessFromItem(sInventoryItem* item)
+{
+	// decrease value by 5% for each point of badness
+	int Value = int((double)item->m_Cost * ((100 - ((double)item->m_Badness * 5)) / 100));
+	// then, 1 happiness per 300 gold value
+	return (Value > 300) ? (Value / 300) : 1;
+}
 
 ostream& operator << (ostream& os, sEffect::What &w)
 {
@@ -411,16 +408,7 @@ ostream& operator << (ostream& os, sEffect::What &w)
 	}
 }
 
-int cInventory::HappinessFromItem(sInventoryItem* item)
-{
-	// decrease value by 5% for each point of badness
-	int Value = int((double)item->m_Cost * ((100 - ((double)item->m_Badness * 5)) / 100));
-	// then, 1 happiness per 300 gold value
-	return (Value > 300) ? (Value / 300) : 1;
-}
-
 // ----- Shop
-
 sInventoryItem* cInventory::BuyShopItem(int num)
 {
 	if (num >= NUM_SHOPITEMS) return 0;
@@ -432,7 +420,6 @@ sInventoryItem* cInventory::BuyShopItem(int num)
 	}
 	return item;
 }
-
 int cInventory::CheckShopItem(string name)
 {
 	int num = -1;
@@ -445,7 +432,6 @@ int cInventory::CheckShopItem(string name)
 	}
 	return num;
 }
-
 void cInventory::UpdateShop()
 {
 	for (int i = 0; i < NUM_SHOPITEMS; i++)
@@ -458,7 +444,7 @@ void cInventory::UpdateShop()
 		if ((item->m_Rarity == RARITYCOMMON ||
 			(item->m_Rarity == RARITYSHOP50 && chance <= 50) ||
 			(item->m_Rarity == RARITYSHOP25 && chance <= 25) ||
-			(item->m_Rarity == RARITYSHOP05 && chance <= 5)) && 
+			(item->m_Rarity == RARITYSHOP05 && chance <= 5)) &&
 			(item->m_Infinite == 0 || (item->m_Infinite == 1 && CheckShopItem(item->m_Name) == -1)))
 		{
 			m_ShopItems[i] = item;
@@ -472,14 +458,12 @@ void cInventory::UpdateShop()
 		}
 	}
 }
-
 sInventoryItem* cInventory::GetShopItem(int num)
 {
 	if (m_NumShopItems == 0) UpdateShop();
 	if (num >= NUM_SHOPITEMS) return 0;
 	return m_ShopItems[num];
 }
-
 int cInventory::GetRandomShopItem()
 {
 	if (m_NumShopItems == 0) UpdateShop();
@@ -490,7 +474,6 @@ int cInventory::GetRandomShopItem()
 }
 
 // ----- Get
-
 sInventoryItem* cInventory::GetRandomItem()
 {
 	sInventoryItem *ipt;
@@ -504,20 +487,19 @@ sInventoryItem* cInventory::GetRandomItem()
 	if (items.size() == 1)
 	{
 		ipt = items[0];
-		if (log > 1) g_LogFile.os() << "	returning 0x" << hex << int(ipt) << endl;
+		if (log > 1) g_LogFile.os() << "	returning 0x" << hex << long(ipt) << endl;
 		return items[0];
 	}
 	int index = g_Dice % (items.size() - 1);	// fixed crash with going outside vector size - necro
 	if (log > 1) g_LogFile.os() << "	returning item at index " << index << endl;
 	ipt = items[index];
-	if (log > 1) g_LogFile.os() << "	returning 0x" << hex << int(ipt) << dec << endl;
+	if (log > 1) g_LogFile.os() << "	returning 0x" << hex << long(ipt) << dec << endl;
 	return ipt;
 }
-
 sInventoryItem* cInventory::GetRandomCatacombItem()
 {
 	if (items.size() == 0)	return 0;
-	sInventoryItem *temp;
+	sInventoryItem *temp = 0;
 	int index = g_Dice % (items.size() - 1);
 
 	int tries = items.size() / 3;	// try 1/3 of all items to get an item
@@ -532,18 +514,18 @@ sInventoryItem* cInventory::GetRandomCatacombItem()
 		case RARITYCATACOMB15:	if (g_Dice.percent(15))		return temp;	break;
 		case RARITYCATACOMB05:	if (g_Dice.percent(5))		return temp;	break;
 		case RARITYCATACOMB01:	if (g_Dice.percent(1))		return temp;	break;
-		case RARITYSCRIPTONLY:	
-		case RARITYSCRIPTORREWARD:	
+		case RARITYSCRIPTONLY:
+		case RARITYSCRIPTORREWARD:
 			temp = 0;
 			break;	// if at the end it is a script item, no item is returned
-		case RARITYCOMMON:	
-		case RARITYSHOP50: 
-		default: 
+		case RARITYCOMMON:
+		case RARITYSHOP50:
+		default:
 			break;	// if at the end it is a common item, that item is returned
 		}
 		tries--;
 		index++;
-	} 
+	}
 	if (!temp) return 0;
 	return temp;
 }
@@ -629,14 +611,14 @@ string cInventory::CraftItem(sGirl*girl, int job, int points)
 	}
 	if (total_made > 0)
 	{
-		ss << "\n\n" << girl->m_Realname << " made:\n";
+		ss << "\n \n" << girl->m_Realname << " made:\n";
 		for (int i = 0; i < nummade; i++)
 			ss << numItemsMade[i] << " " << ItemsMade[i] << "\n";
 	}
 
 	return ss.str();
 }
-#endif	
+#endif
 
 sInventoryItem* cInventory::GetItem(string name)
 {
@@ -654,8 +636,8 @@ sInventoryItem* cInventory::GetItem(string name)
 void cInventory::Equip(sGirl* girl, int num, bool force)
 {
 	if (num == -1) return;	// no item then ignore the call
-	// Allow certain Items to recover the dead
-	if (girl->health() <= 0 && (
+
+	if (girl->is_dead() && (	// Allow certain Items to recover the dead
 		stringtolowerj(girl->m_Inventory[num]->m_Name) == stringtolowerj("Better Zed than Dead") ||
 		stringtolowerj(girl->m_Inventory[num]->m_Name) == stringtolowerj("Elixir of Ultimate Regeneration")
 		)){}
@@ -668,9 +650,11 @@ void cInventory::Equip(sGirl* girl, int num, bool force)
 		for (int i = 0; i < NUM_STATS; i++)		girl->m_Stats[i] = 0;
 		girl->m_Stats[STAT_HEALTH]		= 100;
 		girl->m_Stats[STAT_HAPPINESS]	= 100;
-		girl->m_Stats[STAT_AGE] = (age == 100 ? 100 : 18);	// keep ageless girls ageless
+		girl->m_Stats[STAT_AGE] = (age == 100 ? 100 : 18);	// keep ageless girls ageless	// `J` Legal Note: 18 is the Legal Age of Majority for the USA where I live
 		girl->m_Stats[STAT_HOUSE] = girl->is_slave() ? cfg.initial.slave_house_perc() : cfg.initial.girls_house_perc();
 
+		g_MessageQue.AddToQue(girl->m_Realname + ": " + girl->m_Inventory[num]->m_Name +
+			": The use of this item has reset all her stats and skills to default.", COLOR_BLUE);
 		girl->m_Inventory[num] = 0;
 		girl->m_EquipedItems[num] = 0;
 		girl->m_NumInventory--;
@@ -680,14 +664,15 @@ void cInventory::Equip(sGirl* girl, int num, bool force)
 	else if (stringtolowerj(girl->m_Inventory[num]->m_Name) == stringtolowerj("Reset Potion MK ii"))
 	{
 		// remove all traits
+		girl->m_Stats[STAT_HEALTH] = 100;	// `J` revive dead girls
 		for (int i = 0; i < MAXNUM_TRAITS; i++)
 		{
-			if (girl->m_Traits[i]) g_Girls.RemoveTrait(girl, girl->m_Traits[i]->m_Name, false, true, false);
+			if (girl->m_Traits[i]) girl->remove_trait(girl->m_Traits[i]->name(), false, true, false);
 		}
 		g_Girls.RemoveAllRememberedTraits(girl);
-		g_MessageQue.AddToQue(girl->m_Realname + gettext(": ") +
-			girl->m_Inventory[num]->m_Name +
-			gettext(": The use of this item has removed all her traits."), COLOR_BLUE);
+
+		g_MessageQue.AddToQue(girl->m_Realname + ": " + girl->m_Inventory[num]->m_Name +
+			": The use of this item has removed all her traits.", COLOR_BLUE);
 		girl->m_Inventory[num] = 0;
 		girl->m_EquipedItems[num] = 0;
 		girl->m_NumInventory--;
@@ -695,11 +680,294 @@ void cInventory::Equip(sGirl* girl, int num, bool force)
 		g_Girls.CalculateGirlType(girl);
 		return;
 	}
-	else if (girl->health() <= 0 ||					// dead girls shouldn't be able to equip or use anything
+	else if (girl->is_dead() ||					// dead girls shouldn't be able to equip or use anything
 		girl->m_EquipedItems[num] == 1 ||		// if already equiped do nothing
 		girl->m_Inventory[num]->m_Special == sInventoryItem::AffectsAll || // no "AffectsAll" item should be equipable
 		ok_2_equip(girl, num, force) == false)	// of if it is not ok to equip it
 		return;
+
+	bool usenewpreg = false;
+#if 1		// `J` Pregnancy item fix
+	usenewpreg = true;
+	stringstream pregmsg;
+	bool pregbefore = girl->is_pregnant();
+	bool pregafter	= girl->is_pregnant();
+	int pregadd = 0;	int pregend = 0;
+	int pregbyC = 0;	int pregrmC = 0;
+	int pregbyP = 0;	int pregrmP = 0;
+	int pregbyB = 0;	int pregrmB = 0;
+
+	for (u_int i = 0; i < girl->m_Inventory[num]->m_Effects.size(); i++)
+	{
+		int affects = girl->m_Inventory[num]->m_Effects[i].m_Affects;
+		int eff_id = girl->m_Inventory[num]->m_Effects[i].m_EffectID;
+		int amount = girl->m_Inventory[num]->m_Effects[i].m_Amount;
+
+		if (affects == sEffect::GirlStatus && (eff_id == STATUS_PREGNANT || eff_id == STATUS_PREGNANT_BY_PLAYER || eff_id == STATUS_INSEMINATED))
+		{
+			if (amount >= 1)
+			{
+				pregadd++;
+				if (eff_id == STATUS_PREGNANT)				pregbyC++;
+				if (eff_id == STATUS_PREGNANT_BY_PLAYER)	pregbyP++;
+				if (eff_id == STATUS_INSEMINATED)			pregbyB++;
+			}
+			if (amount == 0)
+			{
+				pregend++;
+				if (eff_id == STATUS_PREGNANT)				pregrmC++;
+				if (eff_id == STATUS_PREGNANT_BY_PLAYER)	pregrmP++;
+				if (eff_id == STATUS_INSEMINATED)			pregrmB++;
+			}
+		}
+	}
+	if (pregadd + pregend > 0)	// if the item changes pregnancy
+	{
+		int badchance = 0;
+		int goodchance = 0;
+		bool endpreg = false;
+		bool startpreg = false;
+		int type = STATUS_PREGNANT;
+		pregmsg << girl->m_Realname << " has used her " << girl->m_Inventory[num]->m_Name << ".\n";
+
+		if (pregadd == 0)		// end only
+		{
+			if (pregbefore)		// can end normally
+			{
+				if (((girl->m_States&(1 << STATUS_PREGNANT) || girl->m_States&(1 << STATUS_PREGNANT_BY_PLAYER))	// abort human
+					&& pregrmC + pregrmP > 0) || (girl->m_States&(1 << STATUS_INSEMINATED) && pregrmB > 0))		// abort beast
+				{
+					endpreg = true;	// the item can do what is intended
+				}
+				else	// if made to abort human only but trying on beast or beast on human - can be bad
+				{
+					badchance += pregend * 5;
+					pregmsg << "It was not intended to end "
+						<< (girl->m_States&(1 << STATUS_INSEMINATED) ? "beast " : "human ") << "pregnancies ";
+					if (g_Dice.percent(min(80, pregend * 10)))	// may still abort
+					{
+						endpreg = true;
+						pregmsg << "but it still worked.";
+						badchance *= 4;
+					}
+					else pregmsg << "so it made her sick.";
+				}
+			}
+			else				// not pregnant so possible bad effects
+			{
+				pregmsg << "She was not pregnant before she used it so it made her really sick.";
+				badchance += pregend * 10;
+			}
+		}
+		else if (pregend == 0)	// add only
+		{
+			if (!pregbefore)	// can add normally
+			{
+				startpreg = true;
+				if (pregbyC == 0 && pregbyP == 0)					// add beast
+				{
+					type = STATUS_INSEMINATED;
+				}
+				else if (pregbyC == 0 && pregbyB == 0)				// add Player
+				{
+					type = STATUS_PREGNANT_BY_PLAYER;
+				}
+				else if (pregbyP == 0 && pregbyB == 0)				// add Customer
+				{
+					type = STATUS_PREGNANT;
+				}
+				else if (pregbyP > 0 && pregbyC > 0 && pregbyB > 0)	// tries to add all three
+				{
+					if (pregbyP == pregbyC && pregbyP == pregbyB)	// all are equal
+					{
+						int roll = g_Dice % 100;
+						/* */if (roll < 33)	type = STATUS_PREGNANT;
+						else if (roll < 66)	type = STATUS_PREGNANT_BY_PLAYER;
+						else/*           */	type = STATUS_INSEMINATED;			// slightly higher chance for beast
+					}
+					else if (pregbyP > pregbyC && pregbyP > pregbyB)	type = STATUS_PREGNANT_BY_PLAYER;	// Player is highest
+					else if (pregbyC > pregbyP && pregbyC > pregbyB)	type = STATUS_PREGNANT;				// Cust is highest
+					else if (pregbyB > pregbyC && pregbyB > pregbyP)	type = STATUS_INSEMINATED;			// Beast is highest
+					else
+					{
+						int roll = g_Dice % (pregbyP + pregbyC + pregbyB);
+						/* */if (roll < pregbyC)/*      */	type = STATUS_PREGNANT;
+						else if (roll < pregbyP + pregbyC)	type = STATUS_PREGNANT_BY_PLAYER;
+						else/*                          */	type = STATUS_INSEMINATED;
+					}
+				}
+
+			}
+			else				// already pregnant
+			{
+				if (girl->m_States&(1 << STATUS_PREGNANT) || girl->m_States&(1 << STATUS_PREGNANT_BY_PLAYER))
+				{
+					pregmsg << "She is already pregnant";
+					if (girl->m_States&(1 << STATUS_PREGNANT_BY_PLAYER))
+						pregmsg << " with your child";
+					if (pregbyB == 0)	// human only
+					{
+						pregmsg << " so the new pregnancy did not take hold.";
+					}
+					else				// possible beast insemination
+					{
+						double chance = 10.0;
+						if (pregbyC + pregbyP > 0) chance /= pregbyC + pregbyP;
+						if (chance < 1.0) chance = 1.0;
+						if (g_Dice.percent(pregbyB * chance))
+						{
+							pregmsg << " but the insemination fluid consumed the human baby and took over the pregnancy.";
+							girl->clear_pregnancy();
+							type = STATUS_INSEMINATED;
+							startpreg = true;
+							badchance += pregbyB * 5;
+						}
+						else pregmsg << " so the new pregnancy did not take hold.";
+					}
+
+				}
+				else			// already inseminated
+				{
+					pregmsg << "She is already carrying some type of beast in her";
+					if (girl->m_WeeksPreg > cfg.pregnancy.weeks_monster_p() / 2 && g_Dice.percent(50))	// more than halfway through pregnancy
+					{
+						pregmsg << " and it fed on what the item tried to implant.";
+						// zzzzzz - Add in the effects
+						pregmsg << " (not implemented yet).";
+
+					}
+					else if (girl->m_WeeksPreg < 3 && g_Dice.percent(cfg.pregnancy.multi_birth_chance()*pregadd * 2))	// fairly new pregnancy
+					{
+						pregmsg << " and the new implantation" << (pregadd > 1 ? "s" : "") << " seemed to cause it to multiply instead of create a new pregnancy.";
+						// zzzzzz - Add in the effects
+						pregmsg << " (not implemented yet).";
+					}
+					else
+					{
+						pregmsg << " so the new pregnancy did not take hold.";
+					}
+
+				}
+			}
+		}
+		else					// some combination of add and end
+		{
+#if 0
+			if (pregbefore)		// end old pregnancy to start a new one?
+			{
+				if (girl->m_States&(1 << STATUS_PREGNANT))
+				{
+
+				}
+				else if (girl->m_States&(1 << STATUS_PREGNANT_BY_PLAYER))
+				{
+
+				}
+				else	// girl->m_States&(1 << STATUS_INSEMINATED)
+				{
+
+				}
+
+//				pregbyC				pregbyP				pregbyB
+//				pregrmC				pregrmP				pregrmB
+
+
+
+			}
+			else				// or just start a new one
+			{
+
+			}
+#else
+			pregmsg << "(Add AND Remove pregnancy. Details not implemented yet)\n";
+			endpreg = true;
+			startpreg = true;
+			int roll = g_Dice % (pregbyP + pregbyC + pregbyB);
+			/* */if (roll < pregbyC)/*      */	type = STATUS_PREGNANT;
+			else if (roll < pregbyP + pregbyC)	type = STATUS_PREGNANT_BY_PLAYER;
+			else/*                          */	type = STATUS_INSEMINATED;
+#endif
+
+
+		}
+
+		if (endpreg)
+		{
+			girl->m_ChildrenCount[CHILD09_ABORTIONS]++;
+			pregmsg << "\nShe is no longer ";
+			if (girl->m_States&(1 << STATUS_PREGNANT_BY_PLAYER))
+			{
+				pregmsg << "pregnant with your child.";
+			}
+			else if (girl->m_States&(1 << STATUS_INSEMINATED))
+			{
+				pregmsg << "inseminated.";
+			}
+			else
+			{
+				pregmsg << "pregnant.";
+			}
+			girl->clear_pregnancy();
+		}
+		if (startpreg)
+		{
+			int numchildren = 1 + g_Dice % pregbyP;
+			if (type == STATUS_PREGNANT_BY_PLAYER)
+			{
+				g_Girls.CreatePregnancy(girl, numchildren, type, The_Player->m_Stats, The_Player->m_Skills);
+				pregmsg << "\nThe item has gotten her pregnant with your child.";
+			}
+			else
+			{
+				if (type == STATUS_INSEMINATED)
+				{
+					numchildren = pregbyB;
+					pregmsg << "\nThe item has gotten her inseminated.";
+				}
+				else
+				{
+					numchildren = 1 + g_Dice % pregbyC;
+					pregmsg << "\nThe item has gotten her pregnant.";
+				}
+				sCustomer Cust{};
+				g_Girls.CreatePregnancy(girl, numchildren, type, Cust.m_Stats, Cust.m_Skills);
+			}
+		}
+
+
+		if (stringtolowerj(girl->m_Inventory[num]->m_Name) == stringtolowerj("Better Zed than Dead"))
+		{
+			// `J` a few specific items don't need the rest of the code
+		}
+		else
+		{
+			pregafter = girl->is_pregnant();
+			if (badchance > 0 && goodchance > 0)
+			{
+				pregmsg << "\n(not implemented yet: badchance = " << badchance << " : goodchance = " << goodchance << ")";
+			}
+			else if (badchance > 0)
+			{
+				pregmsg << "\n(not implemented yet: badchance = " << badchance << ")";
+			}
+			else if (goodchance > 0)
+			{
+				pregmsg << "\n(not implemented yet: goodchance = " << goodchance << ")";
+			}
+
+
+			if (pregmsg.str().length() > 0)
+			{
+				g_MessageQue.AddToQue(pregmsg.str(), COLOR_RED);
+			}
+
+		}
+	}
+
+
+
+
+#endif
 
 	// apply the effects
 	for (u_int i = 0; i < girl->m_Inventory[num]->m_Effects.size(); i++)
@@ -708,25 +976,29 @@ void cInventory::Equip(sGirl* girl, int num, bool force)
 		int eff_id = girl->m_Inventory[num]->m_Effects[i].m_EffectID;
 		int amount = girl->m_Inventory[num]->m_Effects[i].m_Amount;
 		int duration = girl->m_Inventory[num]->m_Effects[i].m_Duration;
+		bool tempeff = girl->m_Inventory[num]->m_Special == sInventoryItem::Temporary;
 
-		if (girl->m_Inventory[num]->m_Special == sInventoryItem::Temporary)
+		if (tempeff)
 		{
 			switch (affects)
 			{
 			case sEffect::Nothing:
 				break;
 			case sEffect::GirlStatus:
+
+				if (usenewpreg && (eff_id == STATUS_PREGNANT || eff_id == STATUS_PREGNANT_BY_PLAYER || eff_id == STATUS_INSEMINATED))
+				{
+					break;	// `J` handled at the start
+				}
+
 				/*
 				 *				I can understand ignoring "Nothing"
 				 *				Ought "GirlStatus" to have an effect?
 				 *				Seem to remember this cropping up on the forum
-	"None",		"Poisoned",		"Badly Poisoned",	"Pregnant",		"Pregnant By Player",
-	"Slave",		"Has Daughter",	"Has Son",		"Inseminated",		"Controlled",
+	"None",		"Poisoned",		"Badly Poisoned",
+	"Slave",		"Has Daughter",	"Has Son", "Controlled",
 	"Catacombs",	"Arena",		"Your Daughter"
 				 */
-
-
-
 				break;
 
 			case sEffect::Skill:			// affects skill
@@ -748,11 +1020,11 @@ void cInventory::Equip(sGirl* girl, int num, bool force)
 				 *
 				 *		EQUIP Temporary Item
 				 */
-				if (amount == 0)						// remove trait temporarily from equiping an item	
-					g_Girls.RemoveTrait(girl, girl->m_Inventory[num]->m_Effects[i].m_Trait, true);		// addrememberlist = true Temporary Item trait removal
+				if (amount == 0)						// remove trait temporarily from equiping an item
+					girl->remove_trait(girl->m_Inventory[num]->m_Effects[i].m_Trait, true);		// addrememberlist = true Temporary Item trait removal
 
 				else if (amount == 1)		// add temporary trait
-					g_Girls.AddTrait(girl, girl->m_Inventory[num]->m_Effects[i].m_Trait, duration, true);	// Temp = true Temporary Item, removeitem = true for Temporary Item trait addition
+					girl->add_trait(girl->m_Inventory[num]->m_Effects[i].m_Trait, duration, true);	// Temp = true Temporary Item, removeitem = true for Temporary Item trait addition
 
 				if (girl->m_Inventory[num]->m_Effects[i].m_Trait == "Virgin")
 				{
@@ -766,7 +1038,7 @@ void cInventory::Equip(sGirl* girl, int num, bool force)
 			{
 				// `J` food and makeup are single use items, so if permanent, make them affect the base skill
 				if (girl->m_Inventory[num]->m_Type == INVFOOD || girl->m_Inventory[num]->m_Type == INVMAKEUP)
-					g_Girls.UpdateSkill(girl, eff_id, amount);
+					girl->upd_skill(eff_id, amount);
 				// `J` all other items can be removed so use skill mod
 				else g_Girls.UpdateSkillMod(girl, eff_id, amount);
 			}
@@ -774,7 +1046,7 @@ void cInventory::Equip(sGirl* girl, int num, bool force)
 			{
 				// `J` food and makeup are single use items, so if permanent, make them affect the base skill
 				if (girl->m_Inventory[num]->m_Type == INVFOOD || girl->m_Inventory[num]->m_Type == INVMAKEUP)
-					g_Girls.UpdateStat(girl, eff_id, amount);
+					girl->upd_stat(eff_id, amount);
 				// `J` all other items can be removed so use skill mod
 				else g_Girls.UpdateStatMod(girl, eff_id, amount);
 			}
@@ -782,99 +1054,22 @@ void cInventory::Equip(sGirl* girl, int num, bool force)
 			{
 				// `J` food and makeup are single use items, so if permanent, make them affect the base skill
 				if (girl->m_Inventory[num]->m_Type == INVFOOD || girl->m_Inventory[num]->m_Type == INVMAKEUP)
-					g_Girls.UpdateEnjoyment(girl, eff_id, amount);
+					girl->upd_Enjoyment(eff_id, amount);
 				// `J` all other items can be removed so use skill mod
 				else g_Girls.UpdateEnjoymentMod(girl, eff_id, amount);
 			}
 			else if (affects == sEffect::GirlStatus)	// adds/removes status
 			{
-				if (amount >= 1)	// add status
+				if (usenewpreg && (eff_id == STATUS_PREGNANT || eff_id == STATUS_PREGNANT_BY_PLAYER || eff_id == STATUS_INSEMINATED))
 				{
-					if (eff_id == STATUS_PREGNANT || eff_id == STATUS_PREGNANT_BY_PLAYER || eff_id == STATUS_INSEMINATED)
-					{
-						/* does this item impregnate/inseminate?
-						 * If so, m_Amount is used to determine chance...
-						 * 1 is normal (8% default),
-						 * 10 would give 80% chance (default config)
-						 */
-						if (!g_Girls.HasTrait(girl, "Sterile") && !girl->is_pregnant())
-						{
-							bool AntiPreg = girl->m_UseAntiPreg;
-							girl->m_UseAntiPreg = false;  // we don't want contraceptives automatically used, eh?
-							if (eff_id == STATUS_PREGNANT_BY_PLAYER)
-							{
-								bool preg = !girl->calc_pregnancy(The_Player, false, (double)amount);
-								if (preg)
-									g_MessageQue.AddToQue(girl->m_Realname + gettext(": ") +
-									girl->m_Inventory[num]->m_Name +
-									gettext(": The use of this item has impregnated her with your seed."), COLOR_BLUE);
-								else
-									g_MessageQue.AddToQue(girl->m_Realname + gettext(": ") +
-									girl->m_Inventory[num]->m_Name +
-									gettext(": The use of this item has failed to impregnate her with your seed. Better luck next time."), COLOR_BLUE);
-							}
-							if (eff_id == STATUS_PREGNANT)
-							{
-								sBrothel* brothel = g_Brothels.GetBrothel(0);
-								sCustomer Cust;
-								g_Customers.GetCustomer(Cust, brothel);
-								bool preg = !girl->calc_pregnancy(&Cust, false, (double)amount);
-								if (preg)
-									g_MessageQue.AddToQue(girl->m_Realname + gettext(": ") +
-									girl->m_Inventory[num]->m_Name +
-									gettext(": The use of this item has impregnated her."), COLOR_BLUE);
-								else
-									g_MessageQue.AddToQue(girl->m_Realname + gettext(": ") +
-									girl->m_Inventory[num]->m_Name +
-									gettext(": The use of this item has failed to impregnate her. Better luck next time."), COLOR_BLUE);
-							}
-							if (eff_id == STATUS_INSEMINATED)
-							{
-								bool preg = !girl->calc_insemination(The_Player, false, (double)amount);
-								if (preg)
-									g_MessageQue.AddToQue(girl->m_Realname + gettext(": ") +
-									girl->m_Inventory[num]->m_Name +
-									gettext(": The use of this item has inseminated her with the seed of a beast."), COLOR_BLUE);
-								else
-									g_MessageQue.AddToQue(girl->m_Realname + gettext(": ") +
-									girl->m_Inventory[num]->m_Name +
-									gettext(": The use of this item has failed to inseminate her. Better luck next time."), COLOR_BLUE);
-							}
-							girl->m_UseAntiPreg = AntiPreg;
-						}
-					}
-					else girl->m_States |= (1 << eff_id);
+					continue;	// `J` handled at the start
 				}
-				else if (amount == 0)	// remove status
+				else	// all other GirlStatus
 				{
-					bool preg = girl->is_pregnant();
-					if (girl->m_States&(1 << eff_id))
+					if (amount >= 1)	// add status
+						girl->m_States |= (1 << eff_id);
+					else if (amount == 0)	// remove status
 						girl->m_States &= ~(1 << eff_id);
-					if (eff_id == STATUS_PREGNANT ||
-						eff_id == STATUS_PREGNANT_BY_PLAYER ||
-						eff_id == STATUS_INSEMINATED)
-					{
-						if (preg)
-						{
-							girl->m_ChildrenCount[CHILD09_ABORTIONS]++;
-							g_MessageQue.AddToQue(girl->m_Realname + gettext(": ") + girl->m_Inventory[num]->m_Name +
-								gettext(": The use of this item has ended her pregnancy."), COLOR_RED);
-						}
-						else
-						{
-							g_MessageQue.AddToQue(girl->m_Realname + gettext(": ") + girl->m_Inventory[num]->m_Name +
-								gettext(": She was not pregnant before the use of this item."), COLOR_RED);
-						}
-						if (!g_Girls.HasTrait(girl, "Sterile"))
-						{
-							if (g_Dice.percent(preg ? 1 : 3))
-							{
-								g_MessageQue.AddToQue(girl->m_Realname + gettext(": ") + girl->m_Inventory[num]->m_Name +
-									gettext(": The use of this item has made her sterile, she can no longer have children."), COLOR_RED);
-								g_Girls.AddTrait(girl, "Sterile");
-							}
-						}
-					}
 				}
 			}
 			else if (affects == sEffect::Trait)	// trait
@@ -909,11 +1104,12 @@ void cInventory::Equip(sGirl* girl, int num, bool force)
 							if (trait == "Chlamydia") The_Player->evil(-2);
 						}
 					}
-					g_Girls.RemoveTrait(girl, trait, girl->m_Inventory[num]->m_Type != INVFOOD && girl->m_Inventory[num]->m_Type != INVMAKEUP);		// addrememberlist = true only if not consumable
+					girl->remove_trait(trait, girl->m_Inventory[num]->m_Type != INVFOOD && girl->m_Inventory[num]->m_Type != INVMAKEUP);		// addrememberlist = true only if not consumable
 				}
 				else if (amount == 1)			// add normal trait	from equiping an item
 				{
-					g_Girls.AddTrait(girl, trait, false, girl->m_Inventory[num]->m_Type != INVFOOD && girl->m_Inventory[num]->m_Type != INVMAKEUP);		// Temp = false Normal Item, removeitem = true only if not consumable
+					int d =	(duration > 0 && (girl->m_Inventory[num]->m_Type == INVFOOD || girl->m_Inventory[num]->m_Type == INVMAKEUP)) ? duration : 0;
+					girl->add_trait(trait, d, girl->m_Inventory[num]->m_Type != INVFOOD && girl->m_Inventory[num]->m_Type != INVMAKEUP);		// Temp = false Normal Item, removeitem = true only if not consumable
 				}
 				if (trait == "Virgin")
 				{
@@ -967,10 +1163,10 @@ void cInventory::Unequip(sGirl* girl, int num)
 				girl->m_Virgin = 0; // `J` unequiping an item will not make her a virgin again
 			}
 			else if (amount == 0)					// possibly add remembered trait from unequiping an item
-				g_Girls.AddTrait(girl, girl->m_Inventory[num]->m_Effects[i].m_Trait, false, false, true);	// inrememberlist = true Add trait only if it is in the rememebered list
+				girl->add_trait(girl->m_Inventory[num]->m_Effects[i].m_Trait, false, false, true);	// inrememberlist = true Add trait only if it is in the rememebered list
 
 			else if (amount == 1)				// remove item trait from unequiping an item
-				g_Girls.RemoveTrait(girl, girl->m_Inventory[num]->m_Effects[i].m_Trait);
+				girl->remove_trait(girl->m_Inventory[num]->m_Effects[i].m_Trait);
 		}
 	}
 	// set it as unequiped
@@ -995,11 +1191,11 @@ void cInventory::Equip(sGirl* girl, sInventoryItem* item, bool force)
 
 		else if (affects == sEffect::Trait)	// trait
 		{
-			if (amount == 0)			// remove trait temporarily from equiping an item							
-				g_Girls.RemoveTrait(girl, item->m_Effects[i].m_Trait, true);	// addrememberlist = true AffectAll trait removal
+			if (amount == 0)			// remove trait temporarily from equiping an item
+				girl->remove_trait(item->m_Effects[i].m_Trait, true);	// addrememberlist = true AffectAll trait removal
 
-			else if (amount == 1)		// add temporary trait 					
-				g_Girls.AddTrait(girl, item->m_Effects[i].m_Trait, 20, true); // Temp = true AffectAll Item, removeitem = true for AffectAll trait
+			else if (amount == 1)		// add temporary trait
+				girl->add_trait(item->m_Effects[i].m_Trait, 20, true); // Temp = true AffectAll Item, removeitem = true for AffectAll trait
 
 			if (item->m_Effects[i].m_Trait == "Virgin")
 			{
@@ -1114,7 +1310,7 @@ static sInventoryItem* handle_element(TiXmlElement *el)
 	if (pt = el->Attribute("Rarity"))					item->set_rarity(pt);
 	if (pt = el->Attribute("Infinite"))					item->m_Infinite = ((string(pt) == "true") || (string(pt) == "True"));
 	else												item->m_Infinite = false;
-	
+
 
 	// `J` Incomplete Craftable code - commenting out
 #if 0
@@ -1124,7 +1320,7 @@ static sInventoryItem* handle_element(TiXmlElement *el)
 	if (pt = el->Attribute("CraftStren", &ival))		item->m_CraftStrength	 = ival;	else item->m_CraftStrength	 = 0;
 	if (pt = el->Attribute("CraftMagic", &ival))		item->m_CraftMagic		 = ival;	else item->m_CraftMagic		 = 0;
 	if (pt = el->Attribute("CraftIntel", &ival))		item->m_CraftIntel		 = ival;	else item->m_CraftIntel		 = 0;
-	if (pt = el->Attribute("CraftPoint", &ival))		item->m_CraftPoints		 = ival;	else item->m_CraftPoints	 = 0;	
+	if (pt = el->Attribute("CraftPoint", &ival))		item->m_CraftPoints		 = ival;	else item->m_CraftPoints	 = 0;
 #endif
 
 	do_effects(el, item);
@@ -1161,7 +1357,7 @@ void cInventory::LoadItems(string filename)
 	g_LogFile.os() << "loading items from '" << filename << "'" << endl;
 	ifstream in;
 	in.open(filename.c_str());
-	if(!in.good()) 
+	if(!in.good())
 		g_LogFile.os() << "LoadItems: stream not good after open" << endl;
 
 	char buffer[1000];
@@ -1175,9 +1371,9 @@ void cInventory::LoadItems(string filename)
 		if (in.peek()=='\n') in.ignore(1,'\n');
 		in.getline(buffer, sizeof(buffer), '\n');		// get the name
 		g_LogFile.os() << "LoadItems: " << buffer << endl;
-		if(buffer[0] == 0) 
+		if(buffer[0] == 0)
 			break;
-		
+
 		newItem->m_Name = buffer;
 
 		if (in.peek()=='\n') in.ignore(1,'\n');

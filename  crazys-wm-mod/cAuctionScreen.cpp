@@ -39,9 +39,10 @@ extern cWindowManager			g_WinManager;
 extern cInterfaceEventManager	g_InterfaceEvents;
 extern bool						g_Cheats;
 extern bool						eventrunning;
-extern string					g_ReturnText;
 extern cGangManager				g_Gangs;
 extern bool						g_AllTogle;
+
+extern	bool	g_CTRLDown;
 
 bool cAuctionScreen::ids_set = false;
 
@@ -92,7 +93,7 @@ void cAuctionScreen::process()
 	else if (g_InterfaceEvents.CheckButton(turns_id))
 	{
 		g_InitWin = true;
-		g_WinManager.Push(Turnsummary, &g_Turnsummary);
+		g_WinManager.push("Turn Summary");
 		return;
 	}
 	else if (g_InterfaceEvents.CheckButton(dungeon_id))
@@ -104,9 +105,9 @@ void cAuctionScreen::process()
 	else if (g_InterfaceEvents.CheckButton(weeks_id))
 	{
 		g_InitWin = true;
-		AutoSaveGame();
+		if (!g_CTRLDown) { g_CTRLDown = false; AutoSaveGame(); }
 		NextWeek();
-		g_WinManager.Push(Turnsummary, &g_Turnsummary);
+		g_WinManager.push("Turn Summary");
 		return;
 	}
 }

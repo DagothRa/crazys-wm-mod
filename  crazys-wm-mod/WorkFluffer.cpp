@@ -63,34 +63,34 @@ bool cJobManager::WorkFluffer(sGirl* girl, sBrothel* brothel, bool Day0Night1, s
 		return false;	// not refusing
 	}
 	int roll = g_Dice.d100();
-	if (roll <= 10 && g_Girls.DisobeyCheck(girl, ACTION_WORKMOVIE, brothel))
+	if (roll <= 10 && girl->disobey_check(ACTION_WORKMOVIE, brothel))
 	{
 		ss << " refused to work as a fluffer today";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
 		return true;
 	}
-	ss << " worked as a fluffer.\n\n";
+	ss << " worked as a fluffer.\n \n";
 
-	
+
 	g_Girls.UnequipCombat(girl);	// not for studio crew
 
-	int wages = 50;
+	int wages = 50, tips = 0;
 	int enjoy = 0;
 
 	if (roll <= 10)
 	{
 		enjoy -= g_Dice % 3 + 1;
-		ss << "She didn't like having so many dicks in her mouth today.\n\n";
+		ss << "She didn't like having so many dicks in her mouth today.\n \n";
 	}
 	else if (roll >= 90)
 	{
 		enjoy += g_Dice % 3 + 1;
-		ss << "She loved sucking cock today.\n\n";
+		ss << "She loved sucking cock today.\n \n";
 	}
 	else
 	{
 		enjoy += g_Dice % 2;
-		ss << "She had a pleasant day keeping the actors ready to work.\n\n";
+		ss << "She had a pleasant day keeping the actors ready to work.\n \n";
 	}
 	double jobperformance = JP_Fluffer(girl, false);
 	jobperformance += enjoy * 2;
@@ -112,18 +112,19 @@ bool cJobManager::WorkFluffer(sGirl* girl, sBrothel* brothel, bool Day0Night1, s
 
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_ORAL, Day0Night1);
 	g_Studios.m_FlufferQuality += (int)jobperformance;
-	girl->m_Pay = wages;
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 
 	// Improve girl
 	int xp = 10, libido = 1, skill = 1;
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 3; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 3; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
+	if (girl->has_trait( "Quick Learner"))		{ skill += 1; xp += 3; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; xp -= 3; }
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
 
-	g_Girls.UpdateStat(girl, STAT_EXP, xp);
-	g_Girls.UpdateSkill(girl, SKILL_SERVICE, skill);
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
+	girl->exp(xp);
+	girl->service(skill);
+	girl->upd_temp_stat(STAT_LIBIDO, libido);
 
 	return false;
 }
@@ -143,9 +144,12 @@ double cJobManager::JP_Fluffer(sGirl* girl, bool estimate)// not used
 	}
 	else// for the actual check
 	{
-		jobperformance += (g_Girls.GetSkill(girl, SKILL_ORALSEX) + g_Girls.GetStat(girl, STAT_BEAUTY) + g_Girls.GetStat(girl, STAT_SPIRIT)) / 30;
-		jobperformance += g_Girls.GetSkill(girl, SKILL_SERVICE) / 10;
-		jobperformance += g_Girls.GetStat(girl, STAT_LEVEL);
+		int t = girl->tiredness() - 80;
+		if (t > 0)
+			jobperformance -= t / 4;
+		jobperformance += (girl->oralsex() + girl->beauty() + girl->spirit()) / 30;
+		jobperformance += girl->service() / 10;
+		jobperformance += girl->level();
 		jobperformance += g_Dice % 4 - 1;       // should add a -1 to +3 random element --PP
 	}
 	return jobperformance;

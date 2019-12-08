@@ -23,7 +23,6 @@
 #include "InterfaceGlobals.h"
 #include "InterfaceProcesses.h"
 #include "sConfig.h"
-#include "libintl.h"
 #include "cGirls.h"
 #include "main.h"
 
@@ -39,7 +38,11 @@ extern cHouseManager g_House;
 extern cInventory g_InvManager;
 extern cWindowManager g_WinManager;
 extern bool g_AllTogle;
-extern string g_ReturnText;
+extern cConfig cfg;
+extern bool playershopinventory;
+extern sGirl *selected_girl;
+extern int g_CurrentScreen;
+extern cTariff tariff;
 
 extern	bool	g_AltKeys;	// New hotkeys --PP
 extern	bool	g_R_Key;
@@ -54,11 +57,14 @@ extern	bool	g_I_Key;
 extern	bool	g_K_Key;
 
 static int selection = -1;
-
-extern bool playershopinventory;
-extern sGirl *selected_girl;
-
-extern	int		g_CurrentScreen;
+cScreenItemManagement::cScreenItemManagement()
+{
+	DirPath dp = DirPath() << "Resources" << "Interface" << cfg.resolution.resolution() << "itemmanagement_screen.xml";
+	m_filename = dp.c_str();
+	sel_pos_l = -2;
+	sel_pos_r = -2;
+}
+cScreenItemManagement::~cScreenItemManagement() {}
 
 bool cScreenItemManagement::ids_set = false;
 
@@ -119,29 +125,33 @@ static bool AutoUseItems = false;
 
 void cScreenItemManagement::set_ids()
 {
-	ids_set = true;
-	curbrothel_id	= get_id("CurrentBrothel");
-	back_id			= get_id("BackButton");
-	sell10_l_id		= get_id("Sell10LeftButton");
-	sell10_r_id		= get_id("Sell10RightButton");
-	sellall_l_id	= get_id("SellAllLeftButton");
-	sellall_r_id	= get_id("SellAllRightButton");
-	buy10_l_id		= get_id("Buy10LeftButton");
-	buy10_r_id		= get_id("Buy10RightButton");
-	shift_l_id		= get_id("ShiftLeftButton");
-	shift_r_id		= get_id("ShiftRightButton");
-	gold_id			= get_id("PlayerGold");
-	desc_id			= get_id("ItemDesc");
-	owners_l_id		= get_id("OwnersLeftList");
-	items_l_id		= get_id("ItemsLeftList");
-	owners_r_id		= get_id("OwnersRightList");
-	items_r_id		= get_id("ItemsRightList");
-	filter_id		= get_id("FilterList");
-	autouse_id		= get_id("AutoUseItems");
-	equip_l_id		= get_id("EquipLeftButton");
-	unequip_l_id	= get_id("UnequipLeftButton");
-	equip_r_id		= get_id("EquipRightButton");
-	unequip_r_id	= get_id("UnequipRightButton");
+	ids_set			/**/ = true;
+	g_LogFile.write("set_ids in cScreenItemManagement");
+
+	curbrothel_id	/**/ = get_id("CurrentBrothel");
+	back_id			/**/ = get_id("BackButton","Back");
+	sell10_l_id		/**/ = get_id("Sell10LeftButton");
+	sell10_r_id		/**/ = get_id("Sell10RightButton");
+	sellall_l_id	/**/ = get_id("SellAllLeftButton");
+	sellall_r_id	/**/ = get_id("SellAllRightButton");
+	buy10_l_id		/**/ = get_id("Buy10LeftButton");
+	buy10_r_id		/**/ = get_id("Buy10RightButton");
+	shift_l_id		/**/ = get_id("ShiftLeftButton");
+	shift_r_id		/**/ = get_id("ShiftRightButton");
+	gold_id			/**/ = get_id("PlayerGold");
+	desc_id			/**/ = get_id("ItemDesc");
+	owners_l_id		/**/ = get_id("OwnersLeftList");
+	items_l_id		/**/ = get_id("ItemsLeftList");
+	owners_r_id		/**/ = get_id("OwnersRightList");
+	items_r_id		/**/ = get_id("ItemsRightList");
+	filter_id		/**/ = get_id("FilterList");
+	autouse_id		/**/ = get_id("AutoUseItems");
+	equip_l_id		/**/ = get_id("EquipLeftButton");
+	unequip_l_id	/**/ = get_id("UnequipLeftButton");
+	equip_r_id		/**/ = get_id("EquipRightButton");
+	unequip_r_id	/**/ = get_id("UnequipRightButton");
+	detail_l_id		/**/ = get_id("OwnersLeftDetails", "*Optional*");
+	detail_r_id		/**/ = get_id("OwnersRightDetails", "*Optional*");
 
 	string ORColumns[] = { "ORLName", "ORLNumber", "ORLCatNum" };
 	SortColumns(owners_r_id, ORColumns, 3);
@@ -174,7 +184,6 @@ string* ownerdata(sDungeonGirl* girl)
 	stringstream ss;
 	sGirl* dg = girl->m_Girl;
 
-
 	data[0] = dg->m_Realname;
 
 	if (dg->m_NumInventory > 0)  ss << dg->m_NumInventory;
@@ -195,15 +204,13 @@ void cScreenItemManagement::init()	// `J` bookmark
 	Focused();
 	g_InitWin = false;
 
-	////////////////////
-
-	string brothel = gettext("Current Brothel: ");
+	string brothel = "Current Brothel: ";
 	brothel += g_Brothels.GetName(g_CurrBrothel);
 	EditTextItem(brothel, curbrothel_id);
 
 	NumBrothelGirls = NumBrothelGirls0 = NumBrothelGirls1 = NumBrothelGirls2 = NumBrothelGirls3 = NumBrothelGirls4 = NumBrothelGirls5 = NumBrothelGirls6 = 0;
 	NumStudioGirls = NumArenaGirls = NumCentreGirls = NumClinicGirls = NumFarmGirls = NumHouseGirls = NumDungeonGirls = 0;
-	
+
 	if (playershopinventory)	// `J` to set player and shop when pressing ctrl-I to get to inventory
 	{
 		if (leftOwner != 0)									leftItem = -1;
@@ -225,31 +232,31 @@ void cScreenItemManagement::init()	// `J` bookmark
 	ClearListBox(filter_id);
 
 	// setup the filter
-	AddToListBox(filter_id, 0,				gettext("All"));
-	AddToListBox(filter_id, INVFOOD,		gettext("Consumables"));
-	AddToListBox(filter_id, INVMISC,		gettext("Misc"));
-	AddToListBox(filter_id, INVHAT,			gettext("Hats"));
-	AddToListBox(filter_id, INVGLASSES,		gettext("Glasses"));
-	AddToListBox(filter_id, INVNECKLACE,	gettext("Necklaces"));
-	AddToListBox(filter_id, INVARMBAND,		gettext("Armbands"));
-	AddToListBox(filter_id, INVRING,		gettext("Rings"));
-	AddToListBox(filter_id, INVDRESS,		gettext("Dress"));
-	AddToListBox(filter_id, INVUNDERWEAR,	gettext("Underwear"));
-	AddToListBox(filter_id, INVSWIMSUIT,	gettext("Swimsuits"));
-	AddToListBox(filter_id, INVSHOES,		gettext("Shoes"));
-	AddToListBox(filter_id, INVSMWEAPON,	gettext("Small Weapons"));
-	AddToListBox(filter_id, INVWEAPON,		gettext("Large Weapons"));
-	AddToListBox(filter_id, INVHELMET,		gettext("Helmets"));
-	AddToListBox(filter_id, INVARMOR,		gettext("Armor"));
-	AddToListBox(filter_id, INVSHIELD,		gettext("Shields"));
-	AddToListBox(filter_id, INVCOMBATSHOES, gettext("Combat Shoes"));
-	
+	AddToListBox(filter_id, 0, "All");
+	AddToListBox(filter_id, INVFOOD, "Consumables");
+	AddToListBox(filter_id, INVMISC, "Misc");
+	AddToListBox(filter_id, INVHAT, "Hats");
+	AddToListBox(filter_id, INVGLASSES, "Glasses");
+	AddToListBox(filter_id, INVNECKLACE, "Necklaces");
+	AddToListBox(filter_id, INVARMBAND, "Armbands");
+	AddToListBox(filter_id, INVRING, "Rings");
+	AddToListBox(filter_id, INVDRESS, "Dress");
+	AddToListBox(filter_id, INVUNDERWEAR, "Underwear");
+	AddToListBox(filter_id, INVSWIMSUIT, "Swimsuits");
+	AddToListBox(filter_id, INVSHOES, "Shoes");
+	AddToListBox(filter_id, INVSMWEAPON, "Small Weapons");
+	AddToListBox(filter_id, INVWEAPON, "Large Weapons");
+	AddToListBox(filter_id, INVHELMET, "Helmets");
+	AddToListBox(filter_id, INVARMOR, "Armor");
+	AddToListBox(filter_id, INVSHIELD, "Shields");
+	AddToListBox(filter_id, INVCOMBATSHOES, "Combat Shoes");
+
 	if (filter < 0) filter = 0;
 	SetSelectedItemInList(filter_id, filter, false);
 	SetListTopPos(filter_id, filterpos);
 
-	// create owner lists
-#if 1
+
+#if 1	// create owner lists
 	if (true)	// add shop and player to list
 	{
 		stringstream ss, ss2;
@@ -453,8 +460,8 @@ void cScreenItemManagement::init()	// `J` bookmark
 	{
 		if (temp2 == 0) break;
 		if (g_AllTogle && selected_girl == temp2->m_Girl) rightOwner = i;
-		AddToListBox(owners_l_id, i, ownerdata(temp2), 3 , COLOR_RED);
-		AddToListBox(owners_r_id, i, ownerdata(temp2), 3 , COLOR_RED);
+		AddToListBox(owners_l_id, i, ownerdata(temp2), 3, COLOR_RED);
+		AddToListBox(owners_r_id, i, ownerdata(temp2), 3, COLOR_RED);
 		NumDungeonGirls++;
 		temp2 = temp2->m_Next;
 		i++;
@@ -475,15 +482,26 @@ void cScreenItemManagement::init()	// `J` bookmark
 	HouseIndex = NumBrothelGirls + NumStudioGirls + NumArenaGirls + NumCentreGirls + NumClinicGirls + NumFarmGirls;
 	DungeonIndex = NumBrothelGirls + NumStudioGirls + NumArenaGirls + NumCentreGirls + NumClinicGirls + NumFarmGirls + NumHouseGirls;
 
-	g_ReturnText = "";
 	g_AllTogle = false;
 #endif	// create owner lists
 
-	SetSelectedItemInList(owners_l_id, leftOwner);
-	SetSelectedItemInList(owners_r_id, rightOwner);
-
+	if (m_ListBoxes[owners_l_id]->GetSelected() != leftOwner)		SetSelectedItemInList(owners_l_id, leftOwner);
+	if (m_ListBoxes[owners_r_id]->GetSelected() != rightOwner)		SetSelectedItemInList(owners_r_id, rightOwner);
 	SetSelectedItemInList(items_l_id, leftItem);
 	SetSelectedItemInList(items_r_id, rightItem);
+
+	if (detail_l_id > -1)
+	{
+		if (GetSelectedItemFromList(owners_l_id) > 1)
+			EditTextItem(g_Girls.GetSimpleDetails(GirlSelectedFromList(GetSelectedItemFromList(owners_l_id), -100), m_TextItems[detail_l_id]->m_FontHeight), detail_l_id);
+		else EditTextItem("-", detail_l_id);
+	}
+	if (detail_r_id > -1)
+	{
+		if (GetSelectedItemFromList(owners_r_id) > 1)
+			EditTextItem(g_Girls.GetSimpleDetails(GirlSelectedFromList(GetSelectedItemFromList(owners_r_id), -100), m_TextItems[detail_r_id]->m_FontHeight), detail_r_id);
+		else EditTextItem("-", detail_r_id);
+	}
 
 	check_buttons();
 
@@ -520,10 +538,42 @@ bool cScreenItemManagement::check_keys()
 	return false;
 }
 
+void cScreenItemManagement::write_item_text(sInventoryItem * item, int owner, int target)
+{
+	stringstream ss;
+	stringstream iName;
+	stringstream iCost;
+	stringstream iSell;
+	stringstream iType;
+	stringstream iDesc;
+
+	if (item == NULL || item == 0 || owner < 0) {}
+	else
+	{
+		iName << item->m_Name;
+		iCost << item->m_Cost << " gold";
+		iSell << int(((float)item->m_Cost) * cfg.in_fact.item_sales()) << " gold";
+		iType << item->m_Type;
+		iDesc << item->m_Desc;
+	}
+	if (owner != 1 && owner >= 0 && target == 1)
+	{
+		cFont check; int w, h, size = int(m_TextItems[desc_id]->GetWidth()*0.25);
+		check.LoadFont(cfg.fonts.normal(), cfg.fonts.detailfontsize());
+		check.GetSize(iCost.str(), w, h); while (w < size) { iCost << " "; check.GetSize(iCost.str(), w, h); }
+	}
+	ss << "Item Name:      " << iName.str();
+	ss << "\nCost:  " << iCost.str();
+	if (owner != 1 && owner >= 0 && target == 1) ss << "Sell for:  " << iSell.str();
+	ss << "\nType:  " << iType.str();
+	ss << "\n \n" << iDesc.str();
+
+	EditTextItem(ss.str(), desc_id);
+};
+
 void cScreenItemManagement::check_events()
 {
 	if (g_InterfaceEvents.GetNumEvents() == 0) return;	// no events means we can go home
-
 	if (g_InterfaceEvents.CheckButton(back_id))			// if it's the back button, pop the window off the stack and we're done
 	{
 		sel_pos_l = sel_pos_r = leftOwner = rightOwner = -2;
@@ -542,13 +592,12 @@ void cScreenItemManagement::check_events()
 	if (g_InterfaceEvents.CheckButton(shift_l_id))		{ attempt_transfer(Right);			g_InitWin = true; }
 	if (g_InterfaceEvents.CheckListbox(owners_l_id))	{ refresh_item_list(Left); }
 	if (g_InterfaceEvents.CheckListbox(owners_r_id))	{ refresh_item_list(Right); }
-
 	if (g_InterfaceEvents.CheckCheckbox(autouse_id))	AutoUseItems = IsCheckboxOn(autouse_id);
-
 
 	if (g_InterfaceEvents.CheckListbox(items_l_id))
 	{
 		leftItem = GetLastSelectedItemFromList(items_l_id);
+
 		DisableButton(shift_r_id, (leftItem < 0) || (leftOwner == 1 && !g_Gold.afford(g_InvManager.GetShopItem(leftItem)->m_Cost)));
 
 		bool disablebuy10R = true;
@@ -563,41 +612,25 @@ void cScreenItemManagement::check_events()
 
 		if (leftItem != -1)
 		{
-			stringstream ss;
-			ss << gettext("Cost: ");
-			if (leftOwner == 0)	//Shop
+			sInventoryItem * item;
+			if (leftOwner == 0)			// Player
 			{
-				ss << gettext("Value: ") << g_Brothels.m_Inventory[leftItem]->m_Cost << gettext(" gold    ");
-				ss << gettext("Sell for: ") << int((float)g_Brothels.m_Inventory[leftItem]->m_Cost*0.5f) << gettext(" gold\n");
-				ss << gettext("Item Name: ") << g_Brothels.m_Inventory[leftItem]->m_Name;
-				ss << gettext("\n") << g_Brothels.m_Inventory[leftItem]->m_Desc;
-
+				item = g_Brothels.m_Inventory[leftItem];
 				DisableButton(equip_l_id, true);
 				DisableButton(unequip_l_id, true);
-
 			}
-			else if (leftOwner == 1)	//Player
+			else if (leftOwner == 1)	// Shop
 			{
-				ss << g_InvManager.GetShopItem(leftItem)->m_Cost << gettext(" gold\n");
-				ss << gettext("Item Name: ") << g_InvManager.GetShopItem(leftItem)->m_Name;
-				ss << "\n" << g_InvManager.GetShopItem(leftItem)->m_Desc;
-
+				item = g_InvManager.GetShopItem(leftItem);
 				DisableButton(equip_l_id, true);
 				DisableButton(unequip_l_id, true);
-
-
 			}
-			else
+			else						// Girl
 			{
 				sGirl* targetGirl = 0;
 				targetGirl = GirlSelectedFromList(leftOwner);
-
-				HateLove = g_Girls.GetStat(targetGirl, STAT_PCLOVE) - g_Girls.GetStat(targetGirl, STAT_PCHATE);
-
-				ss << gettext("Value: ") << targetGirl->m_Inventory[leftItem]->m_Cost << gettext(" gold    ");
-				ss << gettext("Sell for: ") << int((float)targetGirl->m_Inventory[leftItem]->m_Cost*0.5f) << gettext(" gold\n");
-				ss << gettext("Item Name: ") << targetGirl->m_Inventory[leftItem]->m_Name;
-				ss << gettext("\n") << targetGirl->m_Inventory[leftItem]->m_Desc;
+				item = targetGirl->m_Inventory[leftItem];
+				HateLove = targetGirl->pclove() - targetGirl->pchate();
 
 				if (g_InvManager.IsItemEquipable(targetGirl->m_Inventory[leftItem]))
 				{
@@ -610,7 +643,7 @@ void cScreenItemManagement::check_events()
 					DisableButton(unequip_l_id, true);
 				}
 			}
-			EditTextItem(ss.str(), desc_id);
+			write_item_text(item, leftOwner, rightOwner);
 		}
 		else
 		{
@@ -632,42 +665,27 @@ void cScreenItemManagement::check_events()
 		}
 		DisableButton(buy10_l_id, disablebuy10L);
 
-
 		if (rightItem != -1)
 		{
-			stringstream ss;
-			ss << gettext("Cost: ");
-			if (rightOwner == 0)
+			sInventoryItem * item;
+			if (rightOwner == 0) // Shop
 			{
-				ss << gettext("Value: ") << g_Brothels.m_Inventory[rightItem]->m_Cost << gettext(" gold    ");
-				ss << gettext("Sell for: ") << int((float)g_Brothels.m_Inventory[rightItem]->m_Cost*0.5f) << gettext(" gold\n");
-				ss << gettext("Item Name: ") << g_Brothels.m_Inventory[rightItem]->m_Name;
-				ss << gettext("\n") << g_Brothels.m_Inventory[rightItem]->m_Desc;
-
+				item = g_Brothels.m_Inventory[rightItem];
 				DisableButton(equip_r_id, true);
 				DisableButton(unequip_r_id, true);
 			}
-			else if (rightOwner == 1)
+			else if (rightOwner == 1) // Player
 			{
-				ss << g_InvManager.GetShopItem(rightItem)->m_Cost << gettext(" gold\n");
-				ss << gettext("Item Name: ") << g_InvManager.GetShopItem(rightItem)->m_Name;
-				ss << "\n" << g_InvManager.GetShopItem(rightItem)->m_Desc;
-
+				item = g_InvManager.GetShopItem(rightItem);
 				DisableButton(equip_r_id, true);
 				DisableButton(unequip_r_id, true);
-
 			}
-			else
+			else // Girl
 			{
 				sGirl* targetGirl = 0;
 				targetGirl = GirlSelectedFromList(rightOwner);
-
-				HateLove = g_Girls.GetStat(targetGirl, STAT_PCLOVE) - g_Girls.GetStat(targetGirl, STAT_PCHATE);
-
-				ss << gettext("Value: ") << targetGirl->m_Inventory[rightItem]->m_Cost << gettext(" gold    ");
-				ss << gettext("Sell for: ") << int((float)targetGirl->m_Inventory[rightItem]->m_Cost*0.5f) << gettext(" gold\n");
-				ss << gettext("Item Name: ") << targetGirl->m_Inventory[rightItem]->m_Name;
-				ss << gettext("\n") << targetGirl->m_Inventory[rightItem]->m_Desc;
+				item = targetGirl->m_Inventory[rightItem];
+				HateLove = targetGirl->pclove() - targetGirl->pchate();
 
 				if (g_InvManager.IsItemEquipable(targetGirl->m_Inventory[rightItem]))
 				{
@@ -680,7 +698,7 @@ void cScreenItemManagement::check_events()
 					DisableButton(unequip_r_id, true);
 				}
 			}
-			EditTextItem(ss.str(), desc_id);
+			write_item_text(item, rightOwner, leftOwner);
 		}
 		else
 		{
@@ -692,8 +710,10 @@ void cScreenItemManagement::check_events()
 	{
 		filter = GetLastSelectedItemFromList(filter_id);
 		filterpos = m_ListBoxes[filter_id]->m_Position;
-		SetSelectedItemInList(owners_l_id, leftOwner);
-		SetSelectedItemInList(owners_r_id, rightOwner);
+		if (m_ListBoxes[owners_l_id]->GetSelected() != leftOwner)
+			SetSelectedItemInList(owners_l_id, leftOwner);
+		if (m_ListBoxes[owners_r_id]->GetSelected() != rightOwner)
+			SetSelectedItemInList(owners_r_id, rightOwner);
 		g_InitWin = true;
 	}
 	if (g_InterfaceEvents.CheckButton(equip_l_id))
@@ -701,7 +721,7 @@ void cScreenItemManagement::check_events()
 		sGirl* targetGirl = 0;
 		targetGirl = GirlSelectedFromList(leftOwner);
 
-		HateLove = g_Girls.GetStat(targetGirl, STAT_PCLOVE) - g_Girls.GetStat(targetGirl, STAT_PCHATE);
+		HateLove = targetGirl->pclove() - targetGirl->pchate();
 
 		leftItem = GetLastSelectedItemFromList(items_l_id);
 		if (leftItem != -1)
@@ -709,25 +729,30 @@ void cScreenItemManagement::check_events()
 			g_InvManager.Equip(targetGirl, leftItem, true);
 			DisableButton(equip_l_id, true);
 			DisableButton(unequip_l_id, false);
-			SetSelectedItemInList(owners_l_id, leftOwner);
-			SetSelectedItemInList(owners_r_id, rightOwner);
+			if (m_ListBoxes[owners_l_id]->GetSelected() != leftOwner)
+				SetSelectedItemInList(owners_l_id, leftOwner);
+			if (m_ListBoxes[owners_r_id]->GetSelected() != rightOwner)
+				SetSelectedItemInList(owners_r_id, rightOwner);
 		}
+		refresh_item_list(Left);
 	}
 	if (g_InterfaceEvents.CheckButton(unequip_l_id))
 	{
 		sGirl* targetGirl = 0;
 		targetGirl = GirlSelectedFromList(leftOwner);
 
-		HateLove = g_Girls.GetStat(targetGirl, STAT_PCLOVE) - g_Girls.GetStat(targetGirl, STAT_PCHATE);
+		HateLove = targetGirl->pclove() - targetGirl->pchate();
 
-		int leftItem = GetLastSelectedItemFromList(items_l_id);
+		leftItem = GetLastSelectedItemFromList(items_l_id);
 		if (leftItem != -1)
 		{
 			g_InvManager.Unequip(targetGirl, leftItem);
 			DisableButton(equip_l_id, false);
 			DisableButton(unequip_l_id, true);
-			SetSelectedItemInList(owners_l_id, leftOwner);
-			SetSelectedItemInList(owners_r_id, rightOwner);
+			if (m_ListBoxes[owners_l_id]->GetSelected() != leftOwner)
+				SetSelectedItemInList(owners_l_id, leftOwner);
+			if (m_ListBoxes[owners_r_id]->GetSelected() != rightOwner)
+				SetSelectedItemInList(owners_r_id, rightOwner);
 		}
 	}
 	if (g_InterfaceEvents.CheckButton(equip_r_id))
@@ -735,7 +760,7 @@ void cScreenItemManagement::check_events()
 		sGirl* targetGirl = 0;
 		targetGirl = GirlSelectedFromList(rightOwner);
 
-		HateLove = g_Girls.GetStat(targetGirl, STAT_PCLOVE) - g_Girls.GetStat(targetGirl, STAT_PCHATE);
+		HateLove = targetGirl->pclove() - targetGirl->pchate();
 
 		rightItem = GetLastSelectedItemFromList(items_r_id);
 		if (rightItem != -1)
@@ -743,25 +768,30 @@ void cScreenItemManagement::check_events()
 			g_InvManager.Equip(targetGirl, rightItem, true);
 			DisableButton(equip_r_id, true);
 			DisableButton(unequip_r_id, false);
-			SetSelectedItemInList(owners_l_id, leftOwner);
-			SetSelectedItemInList(owners_r_id, rightOwner);
+			if (m_ListBoxes[owners_l_id]->GetSelected() != leftOwner)
+				SetSelectedItemInList(owners_l_id, leftOwner);
+			if (m_ListBoxes[owners_r_id]->GetSelected() != rightOwner)
+				SetSelectedItemInList(owners_r_id, rightOwner);
 		}
+		refresh_item_list(Right);
 	}
 	if (g_InterfaceEvents.CheckButton(unequip_r_id))
 	{
 		sGirl* targetGirl = 0;
 		targetGirl = GirlSelectedFromList(rightOwner);
 
-		HateLove = g_Girls.GetStat(targetGirl, STAT_PCLOVE) - g_Girls.GetStat(targetGirl, STAT_PCHATE);
+		HateLove = targetGirl->pclove() - targetGirl->pchate();
 
-		int rightItem = GetLastSelectedItemFromList(items_r_id);
+		rightItem = GetLastSelectedItemFromList(items_r_id);
 		if (rightItem != -1)
 		{
 			g_InvManager.Unequip(targetGirl, rightItem);
 			DisableButton(equip_r_id, false);
 			DisableButton(unequip_r_id, true);
-			SetSelectedItemInList(owners_l_id, leftOwner);
-			SetSelectedItemInList(owners_r_id, rightOwner);
+			if (m_ListBoxes[owners_l_id]->GetSelected() != leftOwner)
+				SetSelectedItemInList(owners_l_id, leftOwner);
+			if (m_ListBoxes[owners_r_id]->GetSelected() != rightOwner)
+				SetSelectedItemInList(owners_r_id, rightOwner);
 		}
 	}
 	check_buttons();
@@ -773,7 +803,7 @@ void cScreenItemManagement::check_buttons()
 	int disableshiftL = 0;		int disableshiftR = 0;	// 0 = hidden
 	int disablebuy10L = 0;		int disablebuy10R = 0;	// 1 = off
 	int	disablesell10L = 0;		int	disablesell10R = 0;	// 2 = on
-	int	disablesellallL = 0;	int	disablesellallR = 0;	// 
+	int	disablesellallL = 0;	int	disablesellallR = 0;	//
 
 	disableshiftR = (leftItem > -1 ? 2 : 1);
 	disableshiftL = (rightItem > -1 ? 2 : 1);
@@ -813,7 +843,7 @@ void cScreenItemManagement::check_buttons()
 void cScreenItemManagement::refresh_item_list(Side which_list)
 {
 	// good enough place as any to update the cost shown on the screen
-	string temp = gettext("PLAYER GOLD: ");
+	string temp = "PLAYER GOLD: ";
 	temp += g_Gold.sval();
 	EditTextItem(temp, gold_id);
 
@@ -838,6 +868,21 @@ void cScreenItemManagement::refresh_item_list(Side which_list)
 		sel_name = &sel_name_r;
 	}
 
+	if (detail_l_id > -1)
+	{
+		if (GetSelectedItemFromList(owners_l_id) > 1)
+			EditTextItem(g_Girls.GetSimpleDetails(GirlSelectedFromList(GetSelectedItemFromList(owners_l_id), -100), m_TextItems[detail_l_id]->m_FontHeight), detail_l_id);
+		else EditTextItem("-", detail_l_id);
+	}
+	if (detail_r_id > -1)
+	{
+		if (GetSelectedItemFromList(owners_r_id) > 1)
+			EditTextItem(g_Girls.GetSimpleDetails(GirlSelectedFromList(GetSelectedItemFromList(owners_r_id), -100), m_TextItems[detail_r_id]->m_FontHeight), detail_r_id);
+		else EditTextItem("-", detail_r_id);
+	}
+
+
+
 	ClearListBox(item_list);
 	int selection = GetSelectedItemFromList(owner_list);
 	if (selection == *other_owner) SetSelectedItemInList(owner_list, *owner);
@@ -854,7 +899,7 @@ void cScreenItemManagement::refresh_item_list(Side which_list)
 					stringstream it;
 					it << g_Brothels.m_Inventory[i]->m_Name;
 					if (*sel_name == it.str()) *sel_pos = i;  // if we just transferred this item here, might want to select it
-					it << gettext(" (") << g_Brothels.m_NumItem[i] << gettext(")");
+					it << " (" << g_Brothels.m_NumItem[i] << ")";
 					int item_type = g_Brothels.m_Inventory[i]->m_Type;
 					if ((filter == 0)  // unfiltered?
 						|| (item_type == filter)  // matches filter exactly?
@@ -935,7 +980,7 @@ void cScreenItemManagement::refresh_item_list(Side which_list)
 
 	if (GetLastSelectedItemFromList(item_list) < 0)
 	{
-		EditTextItem("", desc_id);
+		write_item_text(NULL, -1, -1);
 		DisableButton((which_list == Left) ? shift_r_id : shift_l_id, true);
 	}
 
@@ -964,21 +1009,21 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 	string *item_name;
 	if (transfer_from == Left)
 	{
-		source_list			= items_l_id;
-		source_owner_list	= owners_l_id;
-		source_owner		= leftOwner;
-		target_owner_list	= owners_r_id;
-		target_owner		= rightOwner;
-		item_name			= &sel_name_r;
+		source_list = items_l_id;
+		source_owner_list = owners_l_id;
+		source_owner = leftOwner;
+		target_owner_list = owners_r_id;
+		target_owner = rightOwner;
+		item_name = &sel_name_r;
 	}
 	else
 	{
-		source_list			= items_r_id;
-		source_owner_list	= owners_r_id;
-		source_owner		= rightOwner;
-		target_owner_list	= owners_l_id;
-		target_owner		= leftOwner;
-		item_name			= &sel_name_l;
+		source_list = items_r_id;
+		source_owner_list = owners_r_id;
+		source_owner = rightOwner;
+		target_owner_list = owners_l_id;
+		target_owner = leftOwner;
+		item_name = &sel_name_l;
 	}
 
 	leftItem = GetLastSelectedItemFromList(items_l_id);
@@ -991,7 +1036,7 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 			int selectedfromlist = GetSelectedItemFromList(source_owner_list);
 			targetGirl = GirlSelectedFromList(source_owner, selectedfromlist);
 
-			HateLove = g_Girls.GetStat(targetGirl, STAT_PCLOVE) - g_Girls.GetStat(targetGirl, STAT_PCHATE);
+			HateLove = targetGirl->pclove() - targetGirl->pchate();
 
 			// take items and transfer to shop, giving money to player
 			int pos = 0;
@@ -1001,16 +1046,15 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 				if (targetGirl->m_EquipedItems[selection] == 1)	// unequip item if it is equiped
 					g_InvManager.Unequip(targetGirl, selection);
 				if (targetGirl->m_Inventory[selection]->m_Badness >= 20)	// happy to get rid of bad items
-					g_Girls.UpdateStat(targetGirl, STAT_HAPPINESS, 5);
+					targetGirl->happiness(5);
 				else	// sad to see good items go
 				{
 					int happiness = g_InvManager.HappinessFromItem(targetGirl->m_Inventory[selection]);
-					g_Girls.UpdateStat(targetGirl, STAT_HAPPINESS, -happiness);
+					targetGirl->happiness(-happiness);
 				}
 
 				// add the gold
-				long gold = (int)(targetGirl->m_Inventory[selection]->m_Cost*0.5f);
-				g_Gold.item_sales(gold);
+				g_Gold.item_sales(targetGirl->m_Inventory[selection]->m_Cost);
 
 				// since items sold to shop are simply destroyed, no selection to track here
 				//				*item_name = targetGirl->m_Inventory[selection]->m_Name;  // note name of item, for selection tracking in target list
@@ -1036,8 +1080,7 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 				while (trysellnum > 0 && g_Brothels.m_NumItem[selection] > 0)
 				{
 					trysellnum--;
-					long gold = (int)((float)g_Brothels.m_Inventory[selection]->m_Cost*0.5f);
-					g_Gold.item_sales(gold);
+					g_Gold.item_sales(g_Brothels.m_Inventory[selection]->m_Cost);
 					g_Brothels.m_NumItem[selection]--;
 					if (g_Brothels.m_NumItem[selection] == 0)
 					{
@@ -1086,7 +1129,7 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 				}
 				else
 				{
-					g_MessageQue.AddToQue(gettext("You don't have enough gold."), 1);
+					g_MessageQue.AddToQue("You don't have enough gold.", 1);
 					break;
 				}
 
@@ -1100,7 +1143,7 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 			int selectedfromlist = GetSelectedItemFromList(source_owner_list);
 			targetGirl = GirlSelectedFromList(source_owner, selectedfromlist);
 
-			HateLove = g_Girls.GetStat(targetGirl, STAT_PCLOVE) - g_Girls.GetStat(targetGirl, STAT_PCHATE);
+			HateLove = targetGirl->pclove() - targetGirl->pchate();
 
 			int pos = 0;
 			int selection = GetNextSelectedItemFromList(source_list, 0, pos);
@@ -1109,18 +1152,18 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 				// Add the item to players inventory
 				if (g_Brothels.AddItemToInventory(targetGirl->m_Inventory[selection]) == false)
 				{
-					g_MessageQue.AddToQue(gettext("Your inventory is full."), 1);
+					g_MessageQue.AddToQue("Your inventory is full.", 1);
 					break;
 				}
 
 				if (targetGirl->m_EquipedItems[selection] == 1)	// unequip item if it is equiped
 					g_InvManager.Unequip(targetGirl, selection);
 				if (targetGirl->m_Inventory[selection]->m_Badness >= 20)	// happy to get rid of bad items
-					g_Girls.UpdateStat(targetGirl, STAT_HAPPINESS, 5);
+					targetGirl->happiness(5);
 				else	// sad to see good items go
 				{
 					int happiness = g_InvManager.HappinessFromItem(targetGirl->m_Inventory[selection]);
-					g_Girls.UpdateStat(targetGirl, STAT_HAPPINESS, -happiness);
+					targetGirl->happiness(-happiness);
 				}
 
 				*item_name = targetGirl->m_Inventory[selection]->m_Name;  // note name of item, for selection tracking in target list
@@ -1140,7 +1183,7 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 		int selectedfromlist = GetSelectedItemFromList(target_owner_list);
 		targetGirl = GirlSelectedFromList(target_owner, selectedfromlist);
 
-		HateLove = g_Girls.GetStat(targetGirl, STAT_PCLOVE) - g_Girls.GetStat(targetGirl, STAT_PCHATE);
+		HateLove = targetGirl->pclove() - targetGirl->pchate();
 
 		if (source_owner == 0)	// player giving gift to the girl
 		{
@@ -1150,7 +1193,7 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 			{
 				if (g_Girls.IsInvFull(targetGirl))
 				{
-					g_MessageQue.AddToQue(gettext("Her inventory is full"), 0);
+					g_MessageQue.AddToQue("Her inventory is full", 0);
 					break;
 				}
 
@@ -1163,17 +1206,17 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 				{
 					int happiness = g_InvManager.HappinessFromItem(g_Brothels.m_Inventory[selection]);
 
-					g_Girls.UpdateStat(targetGirl, STAT_OBEDIENCE, 1);
-					g_Girls.UpdateStat(targetGirl, STAT_HAPPINESS, happiness);
-					g_Girls.UpdateStat(targetGirl, STAT_PCHATE, -2);
-					g_Girls.UpdateStat(targetGirl, STAT_PCLOVE, happiness - 1);
-					g_Girls.UpdateStat(targetGirl, STAT_PCFEAR, -1);
+					targetGirl->obedience(1);
+					targetGirl->happiness(happiness);
+					targetGirl->pchate(-2);
+					targetGirl->pclove(happiness - 1);
+					targetGirl->pcfear(-1);
 				}
 
-				if (!AutoUseItems && (type == INVFOOD || type == INVMAKEUP)) 
-					g_Girls.AddInv(targetGirl, g_Brothels.m_Inventory[selection]);
-				else 
-					g_InvManager.Equip(targetGirl, g_Girls.AddInv(targetGirl, g_Brothels.m_Inventory[selection]), false);
+				if (!AutoUseItems && (type == INVFOOD || type == INVMAKEUP))
+					targetGirl->add_inv(g_Brothels.m_Inventory[selection]);
+				else
+					g_InvManager.Equip(targetGirl, targetGirl->add_inv(g_Brothels.m_Inventory[selection]), false);
 
 				g_Brothels.m_NumItem[selection]--;
 				if (g_Brothels.m_NumItem[selection] == 0)
@@ -1194,7 +1237,7 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 			{
 				if (g_Girls.IsInvFull(targetGirl))
 				{
-					g_MessageQue.AddToQue(gettext("Her inventory is full"), 0);
+					g_MessageQue.AddToQue("Her inventory is full", 0);
 					break;
 				}
 
@@ -1203,7 +1246,7 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 
 				// can player afford the item
 				if (!g_Gold.item_cost(cost)) {
-					g_MessageQue.AddToQue(gettext("You don't have enough money."), 0);
+					g_MessageQue.AddToQue("You don't have enough money.", 0);
 					break;
 				}
 
@@ -1215,15 +1258,15 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 				if (ShopItem->m_Badness < 20)
 				{
 					int happiness = g_InvManager.HappinessFromItem(ShopItem);
-					g_Girls.UpdateStat(targetGirl, STAT_OBEDIENCE, 1);
-					g_Girls.UpdateStat(targetGirl, STAT_HAPPINESS, happiness);
-					g_Girls.UpdateStat(targetGirl, STAT_PCHATE, -2);
-					g_Girls.UpdateStat(targetGirl, STAT_PCLOVE, happiness - 1);
-					g_Girls.UpdateStat(targetGirl, STAT_PCFEAR, -1);
+					targetGirl->obedience(1);
+					targetGirl->happiness(happiness);
+					targetGirl->pchate(-2);
+					targetGirl->pclove(happiness - 1);
+					targetGirl->pcfear(-1);
 				}
 
-				if (!AutoUseItems && (type == INVFOOD || type == INVMAKEUP)) g_Girls.AddInv(targetGirl, ShopItem);
-				else g_InvManager.Equip(targetGirl, g_Girls.AddInv(targetGirl, ShopItem), false);
+				if (!AutoUseItems && (type == INVFOOD || type == INVMAKEUP)) targetGirl->add_inv(ShopItem);
+				else g_InvManager.Equip(targetGirl, targetGirl->add_inv(ShopItem), false);
 				g_InvManager.BuyShopItem(selection);
 
 				selection = GetNextSelectedItemFromList(source_list, pos + 1, pos);
@@ -1235,7 +1278,7 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 			int selectedfromlist = GetSelectedItemFromList(source_owner_list);
 			fromGirl = GirlSelectedFromList(source_owner, selectedfromlist);
 
-			int HateLove = g_Girls.GetStat(targetGirl, STAT_PCLOVE) - g_Girls.GetStat(targetGirl, STAT_PCHATE);
+			int HateLove = targetGirl->pclove() - targetGirl->pchate();
 
 			int pos = 0;
 			int selection = GetNextSelectedItemFromList(source_list, 0, pos);
@@ -1243,7 +1286,7 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 			{
 				if (g_Girls.IsInvFull(targetGirl))
 				{
-					g_MessageQue.AddToQue(gettext("Her inventory is full"), 0);
+					g_MessageQue.AddToQue("Her inventory is full", 0);
 					break;
 				}
 
@@ -1258,21 +1301,21 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 				// add to target Girls inventory
 				if (goodbad < 20)
 				{
-					g_Girls.UpdateStat(fromGirl, STAT_HAPPINESS, -happiness);  // previous owner sad to lose it
+                    fromGirl->happiness(-happiness); // previous owner sad to lose it
 
-					g_Girls.UpdateStat(targetGirl, STAT_OBEDIENCE, 1);
-					g_Girls.UpdateStat(targetGirl, STAT_HAPPINESS, happiness);
-					g_Girls.UpdateStat(targetGirl, STAT_PCHATE, -2);
-					g_Girls.UpdateStat(targetGirl, STAT_PCLOVE, happiness - 1);
-					g_Girls.UpdateStat(targetGirl, STAT_PCFEAR, -1);
+                    targetGirl->obedience(1);
+                    targetGirl->happiness(happiness);
+                    targetGirl->pchate(-2);
+                    targetGirl->pclove(happiness-1);
+                    targetGirl->pcfear(-1);
 				}
 				else
 				{
-					g_Girls.UpdateStat(fromGirl, STAT_HAPPINESS, 5);  // previous owner happy to see it go
+					fromGirl->happiness(5);  // previous owner happy to see it go
 				}
 
-				if (!AutoUseItems && (type == INVFOOD || type == INVMAKEUP)) g_Girls.AddInv(targetGirl, fromGirl->m_Inventory[selection]);
-				else g_InvManager.Equip(targetGirl, g_Girls.AddInv(targetGirl, fromGirl->m_Inventory[selection]), false);
+				if (!AutoUseItems && (type == INVFOOD || type == INVMAKEUP)) targetGirl->add_inv(fromGirl->m_Inventory[selection]);
+				else g_InvManager.Equip(targetGirl, targetGirl->add_inv(fromGirl->m_Inventory[selection]), false);
 
 				// remove the item from the girl
 				fromGirl->m_Inventory[selection] = 0;
@@ -1288,14 +1331,22 @@ void cScreenItemManagement::attempt_transfer(Side transfer_from, int num)
 	int pos = 0;
 	sel_pos_l = GetNextSelectedItemFromList(items_l_id, 0, pos);
 	sel_pos_r = GetNextSelectedItemFromList(items_r_id, 0, pos);
-	leftOwner = GetNextSelectedItemFromList(owners_l_id, 0, pos);
-	rightOwner = GetNextSelectedItemFromList(owners_r_id, 0, pos);
-	sel_next_l = GetAfterSelectedItemFromList(items_l_id);
-	sel_next_r = GetAfterSelectedItemFromList(items_r_id);
+	if (transfer_from == Left)
+	{
+		leftOwner = source_owner;
+		rightOwner = target_owner;
+	}
+	else
+	{
+		rightOwner = source_owner;
+		leftOwner = target_owner;
+	}
+	sel_next_l = GetAfterSelectedItemFromList(items_l_id);	if (sel_next_l < 0) sel_next_l = 0;
+	sel_next_r = GetAfterSelectedItemFromList(items_r_id);	if (sel_next_r < 0) sel_next_r = 0;
 
 	// update the item lists
-	SetSelectedItemInList(source_owner_list, source_owner);
-	SetSelectedItemInList(target_owner_list, target_owner);
+	if (m_ListBoxes[source_owner_list]->GetSelected() != source_owner)	SetSelectedItemInList(source_owner_list, source_owner);
+	if (m_ListBoxes[target_owner_list]->GetSelected() != target_owner)	SetSelectedItemInList(target_owner_list, target_owner);
 }
 
 string cScreenItemManagement::GiveItemText(int goodbad, int HateLove, sGirl* targetgirl, string ItemName)
@@ -1304,58 +1355,51 @@ string cScreenItemManagement::GiveItemText(int goodbad, int HateLove, sGirl* tar
 	string message = "";
 	if (goodbad < 20)
 	{
-		/* */if (HateLove < -80)	message = gettext("She grudgingly accepts the gift, but makes it clear that she still thinks that you rate slightly below a toad in her worldview.");
-		else if (HateLove < -60)	message = gettext("She takes your gift in hand, looks at it, looks at you, than walks away without a word.");
+		/* */if (HateLove < -80)	message = "She grudgingly accepts the gift, but makes it clear that she still thinks that you rate slightly below a toad in her worldview.";
+		else if (HateLove < -60)	message = "She takes your gift in hand, looks at it, looks at you, than walks away without a word.";
 		else if (HateLove < -40)
 		{
-			if (g_Girls.HasTrait(girl, "Your Daughter"))
+			if (girl->has_trait( "Your Daughter"))
 			{
-				message = gettext("Are you trying to make up for being an ass dad?"); //hopefully this works.. will add more
+				message = "Are you trying to make up for being an ass dad?"; //hopefully this works.. will add more
 			}
-			else message = gettext("You know, if you wanted to fuck, you shoulda just said.  So that way I'd have had more fun saying no.");
+			else message = "You know, if you wanted to fuck, you shoulda just said so.  That way I'd have had more fun saying no.";
 		}
 		else if (HateLove < -20)
 		{
-			if (g_Girls.HasTrait(girl, "Your Daughter"))
+			if (girl->has_trait( "Your Daughter"))
 			{
-				message = gettext("You still have a long way to go if you want me to like you dad."); //hopefully this works.. will add more CRAZY
+				message = "You still have a long way to go if you want me to like you dad."; //hopefully this works.. will add more CRAZY
 			}
-			else message = gettext("If you think giving me pretty things will get you between my legs, you're wrong!");
+			else message = "If you think giving me pretty things will get you between my legs, you're wrong!";
 		}
-		else if (HateLove < 0)		message = gettext("She is shocked you would give her anything nice.");
-		else if (HateLove < 20)		message = gettext("She is happy with the gift.");
-		else if (HateLove < 40)		message = gettext("She is happy with the gift and thanks you.");
-		else if (HateLove < 60)		message = gettext("She is happy with the gift and gives you a big hug.");
-		else if (HateLove < 80)		message = gettext("She is happy with the gift and gives you a big hug and a kiss on the cheek.");
+		else if (HateLove < 0)		message = "She is shocked you would give her anything nice.";
+		else if (HateLove < 20)		message = "She is happy with the gift.";
+		else if (HateLove < 40)		message = "She is happy with the gift and thanks you.";
+		else if (HateLove < 60)		message = "She is happy with the gift and gives you a big hug.";
+		else if (HateLove < 80)		message = "She is happy with the gift and gives you a big hug and a kiss on the cheek.";
 		else
 		{
-			if (g_Girls.HasTrait(girl, "Your Daughter"))
-			{
-				message = gettext("She is happy with the gift and gives you a big hug and a kiss on the cheek saying she loves her daddy."); //hopefully this works.. will add more
-			}
-			else if (g_Girls.HasTrait(girl, "Lesbian"))
-			{ message = gettext("She is happy with the gift and gives you a big hug and a kiss on the cheek and says that if you weren't a \"man\" she might have to show you how much she loved that gift."); }
-			else message = gettext("She is happy with the gift and gives you a big hug and kisses you hard.  After the kiss she whispers to you to see her later so she can thank you \"properly\".");
+			if (girl->has_trait( "Your Daughter"))	message = "She is happy with the gift and gives you a big hug and a kiss on the cheek saying she loves her daddy."; //hopefully this works.. will add more
+			else if (girl->has_trait( "Lesbian"))		message = "She is happy with the gift and gives you a big hug and a kiss on the cheek and says that if you weren't a \"man\" she might have to show you how much she loved that gift.";
+			else /*                                   */	message = "She is happy with the gift and gives you a big hug and kisses you hard.  After the kiss she whispers to you to see her later so she can thank you \"properly\".";
 		}
 	}
 	else
 	{
-		/* */if (HateLove < -80)	message = gettext("'Wow, what's next?  A dead rat?  Your shit sucks almost as bad as your technique!");
-		else if (HateLove < -60)	message = gettext("She takes your gift in hand, looks at it, looks at you, than walks away without a word.");
-		else if (HateLove < -40)	message = gettext("Hey, present for you!' 'Fuck off and die!");
-		else if (HateLove < -20)	message = gettext("'Fuck off, and take your cheap garbage with you!");
-		else if (HateLove < 0)		message = gettext("She doesn't seem happy with the gift.  But has come to expect this kinda thing from you.");
-		else if (HateLove < 20)		message = gettext("She doesn't seem happy with the gift.");
-		else if (HateLove < 40)		message = gettext("She doesn't seem happy with the gift and looks a little sad.");
-		else if (HateLove < 60)		message = gettext("She doesn't seem happy with the gift and looks sad.");
-		else if (HateLove < 80)		message = gettext("She doesn't seem happy with the gift and tears can be seen in her eyes.");
+		/* */if (HateLove < -80)	message = "'Wow, what's next?  A dead rat?  Your shit sucks almost as bad as your technique!";
+		else if (HateLove < -60)	message = "She takes your gift in hand, looks at it, looks at you, than walks away without a word.";
+		else if (HateLove < -40)	message = "Hey, present for you!' 'Fuck off and die!";
+		else if (HateLove < -20)	message = "'Fuck off, and take your cheap garbage with you!";
+		else if (HateLove < 0)		message = "She doesn't seem happy with the gift.  But has come to expect this kinda thing from you.";
+		else if (HateLove < 20)		message = "She doesn't seem happy with the gift.";
+		else if (HateLove < 40)		message = "She doesn't seem happy with the gift and looks a little sad.";
+		else if (HateLove < 60)		message = "She doesn't seem happy with the gift and looks sad.";
+		else if (HateLove < 80)		message = "She doesn't seem happy with the gift and tears can be seen in her eyes.";
 		else
 		{
-			if (g_Girls.HasTrait(girl, "Your Daughter"))
-			{
-				message = gettext("She looks at you and says \"Why would you buy me such a thing daddy?\"."); //hopefully this works.. will add more
-			}
-			else message = gettext("She can't belive you would give her such a gift and runs off crying.");
+			if (girl->has_trait( "Your Daughter"))	message = "She looks at you and says \"Why would you give me such a thing daddy?\"."; //hopefully this works.. will add more
+			else /*                                   */	message = "She can't belive you would give her such a gift and runs off crying.";
 		}
 	}
 	return message;

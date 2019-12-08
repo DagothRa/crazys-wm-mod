@@ -16,6 +16,7 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma region //	Includes and Externs			//
 #include "cJobManager.h"
 #include "cBrothel.h"
 #include "cCentre.h"
@@ -42,76 +43,77 @@ extern cCentreManager g_Centre;
 extern cGangManager g_Gangs;
 extern cMessageQue g_MessageQue;
 
+#pragma endregion
+
 // `J` Job Centre - Therapy - Full_Time_Job
 bool cJobManager::WorkRehab(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary)
 {
+#pragma region //	Job setup				//
 	stringstream ss; string girlName = girl->m_Realname; ss << girlName;
 	int actiontype = ACTION_WORKREHAB;
 	// if she was not in rehab yesterday, reset working days to 0 before proceding
 	if (girl->m_YesterDayJob != JOB_REHAB) girl->m_PrevWorkingDay = girl->m_WorkingDay = 0;
 	girl->m_DayJob = girl->m_NightJob = JOB_REHAB;	// it is a full time job
 
-	// `J` this will be taken care of in the centre reflow - leaving it in anyway
-	if (!g_Girls.HasTrait(girl, "Fairy Dust Addict") &&		// `J` if the girl is not an addict
-		!g_Girls.HasTrait(girl, "Shroud Addict") &&
-		!g_Girls.HasTrait(girl, "Cum Addict") &&
-		!g_Girls.HasTrait(girl, "Alcoholic") &&
-		!g_Girls.HasTrait(girl, "Smoker") &&
-		!g_Girls.HasTrait(girl, "Viras Blood Addict"))
+	if (!girl->has_trait( "Fairy Dust Addict")	&&	!girl->has_trait( "Alcoholic") &&
+		!girl->has_trait( "Shroud Addict")		&&	!girl->has_trait( "Cum Addict") &&
+		!girl->has_trait( "Viras Blood Addict")	&&	!girl->has_trait( "Smoker"))
 	{
 		ss << " is not addicted to anything so she was sent to the waiting room.";
 		if (Day0Night1 == SHIFT_DAY)	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_WARNING);
-		girl->m_YesterDayJob = girl->m_YesterNightJob = JOB_CENTREREST;
-		girl->m_DayJob = girl->m_NightJob = JOB_CENTREREST;
+		girl->m_PrevDayJob = girl->m_PrevNightJob = girl->m_YesterDayJob = girl->m_YesterNightJob = girl->m_DayJob = girl->m_NightJob = JOB_CENTREREST;
 		girl->m_PrevWorkingDay = girl->m_WorkingDay = 0;
 		return false;	// not refusing
 	}
-	ss << " underwent rehab for her addiction.\n\n";
-
-	
-	g_Girls.UnequipCombat(girl);	// not for patient
-
-	if (g_Centre.GetNumGirlsOnJob(brothel->m_id, JOB_COUNSELOR, true) < 1 || g_Centre.GetNumGirlsOnJob(brothel->m_id, JOB_COUNSELOR, false) < 1)
+	bool hasCounselor = g_Centre.GetNumGirlsOnJob(0, JOB_COUNSELOR, Day0Night1) > 0;
+	if (!hasCounselor)
 	{
-		ss << "She sits in rehab doing nothing. You must assign a counselor to treat her.";
+		ss << " sits in rehab doing nothing. You must assign a counselor to treat her.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
 		return false;	// not refusing
 	}
 
-	if (g_Dice.percent(50) && g_Girls.DisobeyCheck(girl, actiontype, brothel))
+	if (g_Dice.percent(50) && girl->disobey_check(actiontype, brothel))
 	{
-		ss << "She fought with her counselor and did not make any progress this week.";
+		ss << " fought with her counselor and did not make any progress this week.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
-		g_Girls.UpdateEnjoyment(girl, actiontype, -1);
+		girl->upd_Enjoyment(actiontype, -1);
 		if (Day0Night1) girl->m_WorkingDay--;
 		return true;
 	}
+	ss << " underwent rehab for her addiction.\n \n";
+
+	g_Girls.UnequipCombat(girl);	// not for patient
 
 	int enjoy = 0;
 	int msgtype = Day0Night1, imagetype = IMGTYPE_PROFILE;
+
+#pragma endregion
+#pragma region //	Count the Days				//
+
 	if (!Day0Night1) girl->m_WorkingDay++;
 
-	g_Girls.UpdateStat(girl, STAT_HAPPINESS, g_Dice % 30 - 20);
-	g_Girls.UpdateStat(girl, STAT_SPIRIT, g_Dice % 5 - 10);
-	g_Girls.UpdateStat(girl, STAT_MANA, g_Dice % 5 - 10);
+	girl->happiness(g_Dice % 30 - 20);
+	girl->spirit(g_Dice % 5 - 10);
+	girl->mana(g_Dice % 5 - 10);
 
 	int healthmod = (g_Dice % 10) - 15;
 	// `J` % chance a counselor will save her if she almost dies
-	if (girl->health() + healthmod < 1 && g_Dice.percent(95 + (girl->health() + healthmod)) && 
+	if (girl->health() + healthmod < 1 && g_Dice.percent(95 + (girl->health() + healthmod)) &&
 		(g_Centre.GetNumGirlsOnJob(brothel->m_id, JOB_COUNSELOR, true) > 0 || g_Centre.GetNumGirlsOnJob(brothel->m_id, JOB_COUNSELOR, false) > 0))
 	{	// Don't kill the girl from rehab if a Counselor is on duty
 		g_Girls.SetStat(girl, STAT_HEALTH, 1);
-		g_Girls.UpdateStat(girl, STAT_PCFEAR, 5);
-		g_Girls.UpdateStat(girl, STAT_PCLOVE, -10);
-		g_Girls.UpdateStat(girl, STAT_PCHATE, 10);
+		girl->pcfear(5);
+		girl->pclove(-10);
+		girl->pchate(10);
 		ss << "She almost died in rehab but the Counselor saved her.\n";
-		ss << "She hates you a little more for forcing this on her.\n\n";
+		ss << "She hates you a little more for forcing this on her.\n \n";
 		msgtype = EVENT_DANGER;
 		enjoy -= 2;
 	}
 	else
 	{
-		g_Girls.UpdateStat(girl, STAT_HEALTH, healthmod);
+		girl->health(healthmod);
 		enjoy += (healthmod / 5) + 1;
 	}
 
@@ -124,57 +126,79 @@ bool cJobManager::WorkRehab(sGirl* girl, sBrothel* brothel, bool Day0Night1, str
 
 	if (girl->m_WorkingDay >= 3 && Day0Night1)
 	{
+		girl->m_PrevWorkingDay = girl->m_WorkingDay = 0;
 		enjoy += g_Dice % 10;
-		g_Girls.UpdateEnjoyment(girl, ACTION_WORKCOUNSELOR, g_Dice % 6 - 2);	// `J` She may want to help others with their problems
-		g_Girls.UpdateStat(girl, STAT_HAPPINESS, g_Dice % 10);
+		girl->upd_Enjoyment(ACTION_WORKCOUNSELOR, g_Dice.bell(-1, 4));	// `J` She may want to help others with their problems
+		girl->happiness(g_Dice % 10);
 
 		ss << "The rehab is a success.\n";
 		msgtype = EVENT_GOODNEWS;
-		if (g_Girls.HasTrait(girl, "Fairy Dust Addict"))
+
+		bool cured = false;
+		int tries = 10;
+		while (!cured && tries > -2)
 		{
-			g_Girls.RemoveTrait(girl, "Fairy Dust Addict", true);
-			ss << "She is no longer a fairy dust addict.\n";
-		}
-		else if (g_Girls.HasTrait(girl, "Shroud Addict"))
-		{
-			g_Girls.RemoveTrait(girl, "Shroud Addict", true);
-			ss << "She is no longer a shroud addict.\n";
-		}
-		else if (g_Girls.HasTrait(girl, "Viras Blood Addict"))
-		{
-			g_Girls.RemoveTrait(girl, "Viras Blood Addict", true);
-			ss << "She is no longer a viras blood addict.\n";
-		}
-		else if (g_Girls.HasTrait(girl, "Alcoholic"))
-		{
-			g_Girls.RemoveTrait(girl, "Alcoholic", true);
-			ss << "She is no longer an alcoholic.\n";
-		}
-		else if (g_Girls.HasTrait(girl, "Smoker"))
-		{
-			g_Girls.RemoveTrait(girl, "Smoker", true);
-			ss << "She is no longer a smoker.\n";
-		}
-		else if (g_Girls.HasTrait(girl, "Cum Addict"))
-		{
-			g_Girls.RemoveTrait(girl, "Cum Addict", true);
-			ss << "She is no longer a cum addict.\n";
+			tries--;
+			int t = max(0, g_Dice % tries);
+			switch (t)
+			{
+			case 0:
+				if (girl->has_trait( "Viras Blood Addict"))
+				{
+					girl->remove_trait("Viras Blood Addict", true);
+					ss << "She is no longer a viras blood addict.\n";
+					cured = true; break;
+				}
+			case 1:
+				if (girl->has_trait( "Shroud Addict"))
+				{
+					girl->remove_trait("Shroud Addict", true);
+					ss << "She is no longer a shroud addict.\n";
+					cured = true; break;
+				}
+			case 2:
+				if (girl->has_trait( "Fairy Dust Addict"))
+				{
+					girl->remove_trait("Fairy Dust Addict", true);
+					ss << "She is no longer a fairy dust addict.\n";
+					cured = true; break;
+				}
+			case 3:
+				if (girl->has_trait( "Alcoholic"))
+				{
+					girl->remove_trait("Alcoholic", true);
+					ss << "She is no longer an alcoholic.\n";
+					cured = true; break;
+				}
+			case 4:
+				if (girl->has_trait( "Cum Addict"))
+				{
+					girl->remove_trait("Cum Addict", true);
+					ss << "She is no longer a cum addict.\n";
+					cured = true; break;
+				}
+			case 5:
+			default:
+				if (girl->has_trait( "Smoker"))
+				{
+					girl->remove_trait("Smoker", true);
+					ss << "She is no longer a smoker.\n";
+					cured = true; break;
+				}
+			}
 		}
 
-		girl->m_PrevWorkingDay = girl->m_WorkingDay = 0;
-		g_Girls.AddTrait(girl, "Former Addict", 40);
+		girl->add_trait("Former Addict", 40);
 
-		if (g_Girls.HasTrait(girl, "Fairy Dust Addict") || g_Girls.HasTrait(girl, "Shroud Addict") || g_Girls.HasTrait(girl, "Cum Addict") ||
-			g_Girls.HasTrait(girl, "Viras Blood Addict") || g_Girls.HasTrait(girl, "Alcoholic") || g_Girls.HasTrait(girl, "Smoker"))
+		if (girl->has_trait( "Fairy Dust Addict") || girl->has_trait( "Shroud Addict") || girl->has_trait( "Cum Addict") ||
+			girl->has_trait( "Viras Blood Addict") || girl->has_trait( "Alcoholic") || girl->has_trait( "Smoker"))
 		{
 			ss << "\nShe should stay in rehab to treat her other addictions.";
 		}
 		else // get out of rehab
 		{
 			ss << "\nShe has been released from rehab.";
-			girl->m_YesterDayJob = girl->m_YesterNightJob = girl->m_DayJob = girl->m_NightJob = JOB_CENTREREST;
-			girl->m_PrevWorkingDay = girl->m_WorkingDay = 0;
-			girl->m_PrevDayJob = girl->m_PrevNightJob = 255;
+			girl->m_PrevDayJob = girl->m_PrevNightJob = girl->m_YesterDayJob = girl->m_YesterNightJob = girl->m_DayJob = girl->m_NightJob = JOB_CENTREREST;
 		}
 	}
 	else
@@ -182,36 +206,32 @@ bool cJobManager::WorkRehab(sGirl* girl, sBrothel* brothel, bool Day0Night1, str
 		ss << "The rehab is in progress (" << (3 - girl->m_WorkingDay) << " day remaining).";
 	}
 
+#pragma endregion
+#pragma region	//	Finish the shift			//
+
 	girl->m_Events.AddMessage(ss.str(), imagetype, msgtype);
 
 	// Improve girl
 	int libido = 1;
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
-	g_Girls.UpdateEnjoyment(girl, actiontype, enjoy);
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
+	girl->upd_temp_stat(STAT_LIBIDO, libido);
+	girl->upd_Enjoyment(actiontype, enjoy);
 
+#pragma endregion
 	return false;
 }
 
 double cJobManager::JP_Rehab(sGirl* girl, bool estimate)// not used
 {
-	double jobperformance = 0.0;
-	if (estimate)	// for third detail string - how much do they need this?
-	{
-		if (!g_Girls.HasTrait(girl, "Fairy Dust Addict") &&
-			!g_Girls.HasTrait(girl, "Shroud Addict") &&
-			!g_Girls.HasTrait(girl, "Cum Addict") &&
-			!g_Girls.HasTrait(girl, "Alcoholic") &&
-			!g_Girls.HasTrait(girl, "Smoker") &&
-			!g_Girls.HasTrait(girl, "Viras Blood Addict"))	return -1000;			// X - does not need it
-		jobperformance += 110;
-		if (g_Girls.HasTrait(girl, "Smoker"))				jobperformance += 40;	// if she has 1 = C
-		if (g_Girls.HasTrait(girl, "Cum Addict"))			jobperformance += 40;	// if she has 2 = B
-		if (g_Girls.HasTrait(girl, "Fairy Dust Addict"))	jobperformance += 40;	// if she has 3 = A
-		if (g_Girls.HasTrait(girl, "Shroud Addict"))		jobperformance += 40;	// if she has 4 = S
-		if (g_Girls.HasTrait(girl, "Alcoholic"))			jobperformance += 40;	// if she has 5 = S
-		if (g_Girls.HasTrait(girl, "Viras Blood Addict"))	jobperformance += 40;	// if she has 6 = I
+	double jobperformance = 110;
+	if (girl->has_trait( "Smoker"))				jobperformance += 40;	// if she has 1 = C
+	if (girl->has_trait( "Cum Addict"))			jobperformance += 40;	// if she has 2 = B
+	if (girl->has_trait( "Fairy Dust Addict"))	jobperformance += 40;	// if she has 3 = A
+	if (girl->has_trait( "Shroud Addict"))		jobperformance += 40;	// if she has 4 = S
+	if (girl->has_trait( "Alcoholic"))			jobperformance += 40;	// if she has 5 = S
+	if (girl->has_trait( "Viras Blood Addict"))	jobperformance += 40;	// if she has 6 = I
 
-	}
+	if (jobperformance == 110)	return -1000;			// X - does not need it
+
 	return jobperformance;
 }

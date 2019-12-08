@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include "cGirls.h"
+#include "InterfaceGlobals.h"
 using namespace std;
 
 //I need a better place for this
@@ -63,11 +64,12 @@ public:
 	bool	(*JobFunc[NUM_JOBS])(sGirl*, sBrothel*, bool, string&);
 	double	(*JobPerf[NUM_JOBS])(sGirl*, bool estimate);			// `J` a replacement for job performance - work in progress
 
-	string JobName[NUM_JOBS];  // short descriptive name of job
-	string JobDesc[NUM_JOBS];  // longer description of job
-	string JobFilterName[NUMJOBTYPES];  // short descriptive name of job filter
-	string JobFilterDesc[NUMJOBTYPES];  // longer description of job filter
-	unsigned int JobFilterIndex[NUMJOBTYPES+1];  // starting job index # for job filter
+	string JobName[NUM_JOBS];				// short descriptive name of job
+	string JobQkNm[NUM_JOBS];				// a shorter name of job
+	string JobDesc[NUM_JOBS];				// longer description of job
+	string JobFilterName[NUMJOBTYPES];		// short descriptive name of job filter
+	string JobFilterDesc[NUMJOBTYPES];		// longer description of job filter
+	int JobFilterIndex[NUMJOBTYPES + 1];	// starting job index # for job filter
 	string JobDescriptionCount(int job_id, int brothel_id, int day = SHIFT_DAY, bool isClinic = false, bool isStudio = false, bool isArena = false, bool isCentre = false, bool isHouse = false, bool isFarm = false);  // return a job description along with a count of how many girls are on it
     bool HandleSpecialJobs( int TargetBrothel, sGirl* Girl, int JobID, int OldJobID, bool Day0Night1, bool fulltime = false );  // check for and handle special job assignments
 
@@ -111,6 +113,8 @@ public:
 	static double JP_BarPiano(sGirl* girl, bool estimate);
 	static bool WorkEscort(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_Escort(sGirl* girl, bool estimate);
+	static bool WorkBarCook(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_Barcook(sGirl* girl, bool estimate);
 	// - Gambling Hall
 	static bool WorkHallDealer(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_HallDealer(sGirl* girl, bool estimate);
@@ -141,16 +145,29 @@ public:
 	static double JP_WhoreStreets(sGirl* girl, bool estimate);
 
 	// - Movie Studio - Actress
+	//BSIN
+	//Xxtreme
 	static bool WorkFilmBeast(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_FilmBeast(sGirl* girl, bool estimate);
+	static bool WorkFilmBuk(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FilmBuk(sGirl* girl, bool estimate);
+	static bool WorkFilmThroat(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FilmThroat(sGirl* girl, bool estimate);
+	static bool WorkFilmBondage(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FilmBondage(sGirl* girl, bool estimate);
+	static bool WorkFilmPublicBDSM(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FilmPublicBDSM(sGirl* girl, bool estimate);
+
+	/*static bool WorkFilmDominatrix(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FilmDom(sGirl* girl, bool estimate);*/
+
+	//Adult
 	static bool WorkFilmSex(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_FilmSex(sGirl* girl, bool estimate);
 	static bool WorkFilmAnal(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_FilmAnal(sGirl* girl, bool estimate);
 	static bool WorkFilmLesbian(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_FilmLesbian(sGirl* girl, bool estimate);
-	static bool WorkFilmBondage(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
-	static double JP_FilmBondage(sGirl* girl, bool estimate);
 	static bool WorkFilmGroup(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_FilmGroup(sGirl* girl, bool estimate);
 	static bool WorkFilmOral(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
@@ -159,14 +176,29 @@ public:
 	static double JP_FilmMast(sGirl* girl, bool estimate);
 	static bool WorkFilmTitty(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_FilmTitty(sGirl* girl, bool estimate);
-	static bool WorkFilmStrip(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
-	static double JP_FilmStrip(sGirl* girl, bool estimate);
 	static bool WorkFilmHandJob(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_FilmHandJob(sGirl* girl, bool estimate);
 	static bool WorkFilmFootJob(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_FilmFootJob(sGirl* girl, bool estimate);
+	
+	//Actress
+	//static bool WorkFilmIdol(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	//static double JP_FilmIdol(sGirl* girl, bool estimate);
+	static bool WorkFilmAction(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FilmAction(sGirl* girl, bool estimate);
+	static bool WorkFilmMusic(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FilmMusic(sGirl* girl, bool estimate);
+	static bool WorkFilmChef(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FilmChef(sGirl* girl, bool estimate);
+	static bool WorkFilmTease(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FilmTease(sGirl* girl, bool estimate);
+	static bool WorkFilmStrip(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FilmStrip(sGirl* girl, bool estimate);
+	
+	//Rand
 	static bool WorkFilmRandom(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_FilmRandom(sGirl* girl, bool estimate);
+
 	// - Movie Studio - Crew
 	static bool WorkFilmDirector(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_FilmDirector(sGirl* girl, bool estimate);
@@ -232,10 +264,12 @@ public:
 	static double JP_Healing(sGirl* girl, bool estimate);
 	static bool WorkRepairShop(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_RepairShop(sGirl* girl, bool estimate);
+	static bool WorkCureDiseases(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_CureDiseases(sGirl* girl, bool estimate);
 	static bool WorkGetAbort(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_GetAbort(sGirl* girl, bool estimate);
-	static bool WorkPhysicalSurgery(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
-	static double JP_PhysicalSurgery(sGirl* girl, bool estimate);
+	static bool WorkCosmeticSurgery(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_CosmeticSurgery(sGirl* girl, bool estimate);
 	static bool WorkLiposuction(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_Liposuction(sGirl* girl, bool estimate);
 	static bool WorkBreastReduction(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
@@ -316,11 +350,25 @@ public:
 	static bool WorkPersonalTraining(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_PersonalTraining(sGirl* girl, bool estimate);
 	static bool WorkPersonalBedWarmer(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static bool WorkPersonalBedWarmers(sBrothel* brothel);
 	static double JP_PersonalBedWarmer(sGirl* girl, bool estimate);
 	static bool WorkCleanHouse(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_CleanHouse(sGirl* girl, bool estimate);
 	static bool WorkHouseVacation(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
 	static double JP_HouseVacation(sGirl* girl, bool estimate);
+	static bool WorkHouseCook(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_HouseCook(sGirl* girl, bool estimate);
+	static bool WorkHousePet(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_HousePet(sGirl* girl, bool estimate);
+	static bool WorkFarmPonyGirl(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static bool WorkSOStraight(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_SOStraight(sGirl* girl, bool estimate);
+	static bool WorkSOBisexual(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_SOBisexual(sGirl* girl, bool estimate);
+	static bool WorkSOLesbian(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_SOLesbian(sGirl* girl, bool estimate);
+	static bool WorkFakeOrgasm(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary);
+	static double JP_FakeOrgasm(sGirl* girl, bool estimate);
 
 
 
@@ -340,16 +388,17 @@ public:
 
 
 	static bool Preprocessing(int action, sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary, string& message);
-	static void GetMiscCustomer(sBrothel* brothel, sCustomer& cust);
+	static sCustomer GetMiscCustomer(sBrothel& brothel);
 
-	bool work_show(sGirl * girl,sBrothel * brothel,string& summary,bool Day0Night1);
+	bool work_show(sGirl* girl,sBrothel* brothel,string& summary,bool Day0Night1);
 	void update_film(sBrothel *);
 	long make_money_films();
 	void save_films(ofstream &ofs);
 	void load_films(ifstream &ifs);
-	bool apply_job(sGirl * girl, int job, int brothel_id, bool Day0Night1, string & message);
-	int get_num_on_job(int job, int brothel_id, bool Day0Night1);
+	bool apply_job(sGirl* girl, int job, int brothel_id, bool Day0Night1, string & message);
+	int get_num_on_job(sBrothel* brothel, int job_wanted, bool Day0Night1);
 	static bool is_sex_type_allowed(unsigned int sex_type, sBrothel* brothel);
+	static bool nothing_banned(sBrothel* brothel);
 	#ifndef _DEBUG
 		static void free();
 	#else
@@ -358,7 +407,7 @@ public:
 	
 	//helpers
 	static vector<sGirl*> girls_on_job(sBrothel *brothel, u_int job_wanted, bool Day0Night1);
-	//need a function for seeing if there is a girl working on a job
+	// need a function for seeing if there is a girl working on a job
 	bool is_job_employed(sBrothel * brothel, u_int job_wanted, bool Day0Night1);
 	static void get_training_set(vector<sGirl*> &v, vector<sGirl*> &set);
 	static void do_training(sBrothel* brothel, bool Day0Night1);
@@ -372,4 +421,7 @@ public:
 	bool is_job_Paid_Player(u_int Job);		//	WD:	Test for all jobs paid by player
 	bool FullTimeJob(u_int Job);			//	`J`	Test if job is takes both shifts
 	string GirlPaymentText(sBrothel* brothel, sGirl* girl, int totalTips, int totalPay, int totalGold, bool Day0Night1);
+	void FreeSlaves(sGirl* girl, bool multi = false);
+	void ffsd_choice(int ffsd, vector<int> girl_array, string buildingtype, int buildingnum);
+	void ffsd_outcome(vector<int> girl_array, string sub, int num);
 };

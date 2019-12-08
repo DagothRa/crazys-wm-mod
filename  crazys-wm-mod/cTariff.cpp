@@ -36,7 +36,7 @@ double cTariff::slave_base_price(sGirl *girl)
 	{
 		cost += (unsigned int)girl->m_Skills[i];
 	}
-	if (g_Girls.CheckVirginity(girl))	cost *= 1.5;	// virgins fetch a premium
+	if (girl->check_virginity())	cost *= 1.5;	// virgins fetch a premium
 	lf.ss() << "CTariff: base price for slave '" << girl->m_Name << "' = " << int(cost);	lf.ssend();
 	return cost;
 }
@@ -95,6 +95,7 @@ int cTariff::goon_mission_cost(int mission)
 	case MISS_CATACOMBS:	cost = factor * 300;	break;
 	case MISS_TRAINING:		cost = factor * 90;		break;
 	case MISS_RECRUIT:		cost = factor * 80;		break;
+	case MISS_SERVICE:		cost = factor * 100;	break;
 		//	case MISS_SAIGON:		just kidding
 	case MISS_GUARDING:
 	default:
@@ -105,7 +106,7 @@ int cTariff::goon_mission_cost(int mission)
 		break;
 	}
 
-	if (cost > 0.0)
+	if (cost >= 0.0)
 	{
 		return int(cost);
 	}

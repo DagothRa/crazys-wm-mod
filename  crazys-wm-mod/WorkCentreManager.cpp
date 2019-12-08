@@ -50,10 +50,11 @@ bool cJobManager::WorkCentreManager(sGirl* girl, sBrothel* brothel, bool Day0Nig
 	// DisobeyCheck is done in the building flow.
 	girl->m_DayJob = girl->m_NightJob = JOB_CENTREMANAGER;	// it is a full time job
 
-	stringstream ss; string girlName = girl->m_Realname; ss <<"Centre Manager "<< girlName;
+	stringstream ss; string girlName = girl->m_Realname; ss <<"Centre Manager  "<< girlName << "  ";
 	
-
 	int numgirls = brothel->m_NumGirls;
+	int wages = 0;
+	int tips = 0;
 	int enjoy = 0;
 	int conf = 0;
 	int happy = 0;
@@ -64,24 +65,24 @@ bool cJobManager::WorkCentreManager(sGirl* girl, sBrothel* brothel, bool Day0Nig
 	{
 		enjoy -= (g_Dice % 6 + 5);
 		conf -= 5; happy -= 10;
-		ss << " was overwhelmed by the number of girls she was required to manage and broke down crying.";
+		ss << "was overwhelmed by the number of girls she was required to manage and broke down crying.";
 	}
 	else if (check < 10)
 	{
 		enjoy -= (g_Dice % 3 + 1);
 		conf -= -1; happy -= -3;
-		ss << " had trouble dealing with some of the girls.";
+		ss << "had trouble dealing with some of the girls.";
 	}
 	else if (check > 90)
 	{
 		enjoy += (g_Dice % 3 + 1);
-		conf -= 1; happy -= 3;
-		ss << " enjoyed helping the girls with their lives.";
+		conf += 1; happy += 3;
+		ss << "enjoyed helping the girls with their lives.";
 	}
 	else
 	{
 		enjoy += (g_Dice % 3 - 1);
-		ss << " went about her day as usual.";
+		ss << "went about her day as usual.";
 	}
 
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, Day0Night1);
@@ -89,23 +90,25 @@ bool cJobManager::WorkCentreManager(sGirl* girl, sBrothel* brothel, bool Day0Nig
 	// Improve girl
 	int xp = numgirls / 10, libido = 1, skill = 3;
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 5; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 5; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			libido += 2;
-	if (g_Girls.HasTrait(girl, "Lesbian"))				libido += numgirls / 20;
+	if (girl->has_trait( "Quick Learner"))		{ skill += 1; xp += 5; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; xp -= 5; }
+	if (girl->has_trait( "Nymphomaniac"))			libido += 2;
+	if (girl->has_trait( "Lesbian"))				libido += numgirls / 20;
 
-	girl->m_Pay = int(float(100.0 + (((girl->get_skill(SKILL_SERVICE) + girl->get_stat(STAT_CHARISMA) + girl->get_stat(STAT_INTELLIGENCE) + girl->get_stat(STAT_CONFIDENCE) + girl->get_skill(SKILL_MEDICINE) + 50) / 50)*numgirls) * cfg.out_fact.matron_wages()));
+	wages = int(float(100.0 + (((girl->get_skill(SKILL_SERVICE) + girl->get_stat(STAT_CHARISMA) + girl->get_stat(STAT_INTELLIGENCE) + girl->get_stat(STAT_CONFIDENCE) + girl->get_skill(SKILL_MEDICINE) + 50) / 50)*numgirls) * cfg.out_fact.matron_wages()));
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 
 	if (conf>-1) conf += g_Dice%skill;
-	g_Girls.UpdateStat(girl, STAT_CONFIDENCE, conf);
-	g_Girls.UpdateStat(girl, STAT_HAPPINESS, happy);
+	girl->confidence(conf);
+	girl->happiness(happy);
 
-	g_Girls.UpdateStat(girl, STAT_EXP, g_Dice%xp + 5);
-	g_Girls.UpdateSkill(girl, SKILL_MEDICINE, g_Dice%skill);
-	g_Girls.UpdateSkill(girl, SKILL_SERVICE, g_Dice%skill + 2);
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, g_Dice%libido);
+	girl->exp(g_Dice%xp + 5);
+	girl->medicine(g_Dice%skill);
+	girl->service(g_Dice%skill + 2);
+	girl->upd_temp_stat(STAT_LIBIDO, g_Dice%libido);
 
-	g_Girls.UpdateEnjoyment(girl, actiontype, enjoy);
+	girl->upd_Enjoyment(actiontype, enjoy);
 	g_Girls.PossiblyGainNewTrait(girl, "Charismatic", 30, actiontype, "She has worked as a matron long enough that she has learned to be more Charismatic.", Day0Night1);
 	g_Girls.PossiblyGainNewTrait(girl, "Psychic", 60, actiontype, "She has learned to handle the girls so well that you'd almost think she was Psychic.", Day0Night1);
 

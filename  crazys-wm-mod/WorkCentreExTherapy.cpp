@@ -16,6 +16,7 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma region //	Includes and Externs			//
 #include "cJobManager.h"
 #include "cBrothel.h"
 #include "cCentre.h"
@@ -42,49 +43,57 @@ extern cCentreManager g_Centre;
 extern cGangManager g_Gangs;
 extern cMessageQue g_MessageQue;
 
+#pragma endregion
+
 // `J` Job Centre - Therapy
 bool cJobManager::WorkCentreExTherapy(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary)
 {
+#pragma region //	Job setup				//
 	stringstream ss; string girlName = girl->m_Realname; ss << girlName;
 	int actiontype = ACTION_WORKTHERAPY;
 	// if she was not in thearpy yesterday, reset working days to 0 before proceding
 	if (girl->m_YesterDayJob != JOB_EXTHERAPY) { girl->m_WorkingDay = girl->m_PrevWorkingDay = 0; }
 	girl->m_DayJob = girl->m_NightJob = JOB_EXTHERAPY;	// it is a full time job
 
-	if (!g_Girls.HasTrait(girl, "Mind Fucked") &&		// if the girl dosent need this
-		!g_Girls.HasTrait(girl, "Broken Will"))
+	if (!girl->has_trait( "Mind Fucked") &&		// if the girl dosent need this
+		!girl->has_trait( "Broken Will"))
 	{
 		ss << " doesn't need extreme therapy for anything so she was sent to the waiting room.";
 		if (Day0Night1 == 0)	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_WARNING);
-		girl->m_YesterDayJob = girl->m_YesterNightJob = girl->m_DayJob = girl->m_NightJob = JOB_CENTREREST;
+		girl->m_PrevDayJob = girl->m_PrevNightJob = girl->m_YesterDayJob = girl->m_YesterNightJob = girl->m_DayJob = girl->m_NightJob = JOB_CENTREREST;
 		girl->m_PrevWorkingDay = girl->m_WorkingDay = 0;
 		return false; // not refusing
 	}
-	if (g_Centre.GetNumGirlsOnJob(brothel->m_id, JOB_COUNSELOR, true) < 1 || g_Centre.GetNumGirlsOnJob(brothel->m_id, JOB_COUNSELOR, false) < 1)
+	bool hasCounselor = g_Centre.GetNumGirlsOnJob(0, JOB_COUNSELOR, Day0Night1) > 0;
+	if (!hasCounselor)
 	{
 		ss << " has no counselor to help her on the " << (Day0Night1 ? "night" : "day") << " Shift.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_WARNING);
 		return false; // not refusing
 	}
-	if (g_Dice.percent(5) && g_Girls.DisobeyCheck(girl, actiontype, brothel))
+	if (g_Dice.percent(5) && girl->disobey_check(actiontype, brothel))
 	{
-		ss << "She fought with her counselor and did not make any progress this week.";
+		ss << " fought with her counselor and did not make any progress this week.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
-		g_Girls.UpdateEnjoyment(girl, actiontype, -1);
+		girl->upd_Enjoyment(actiontype, -1);
 		if (Day0Night1) girl->m_WorkingDay--;
 		return true;
 	}
-	ss << " underwent therapy for mental issues.\n\n";
+	ss << " underwent therapy for mental issues.\n \n";
 
 	g_Girls.UnequipCombat(girl);	// not for patient
 
 	int enjoy = 0;
 	int msgtype = Day0Night1;
+
+#pragma endregion
+#pragma region //	Count the Days				//
+
 	if (!Day0Night1) girl->m_WorkingDay++;
 
-	g_Girls.UpdateStat(girl, STAT_HAPPINESS, g_Dice % 30 - 20);
-	g_Girls.UpdateStat(girl, STAT_SPIRIT, g_Dice % 5 - 10);
-	g_Girls.UpdateStat(girl, STAT_MANA, g_Dice % 5 - 10);
+	girl->happiness(g_Dice % 30 - 20);
+	girl->spirit(g_Dice % 5 - 10);
+	girl->mana(g_Dice % 5 - 10);
 
 	// `J` % chance a counselor will save her if she almost dies
 	int healthmod = (g_Dice % 3) - 1;
@@ -92,17 +101,17 @@ bool cJobManager::WorkCentreExTherapy(sGirl* girl, sBrothel* brothel, bool Day0N
 		(g_Centre.GetNumGirlsOnJob(brothel->m_id, JOB_COUNSELOR, true) > 0 || g_Centre.GetNumGirlsOnJob(brothel->m_id, JOB_COUNSELOR, false) > 0))
 	{	// Don't kill the girl from therapy if a Counselor is on duty
 		g_Girls.SetStat(girl, STAT_HEALTH, 1);
-		g_Girls.UpdateStat(girl, STAT_PCFEAR, 5);
-		g_Girls.UpdateStat(girl, STAT_PCLOVE, -10);
-		g_Girls.UpdateStat(girl, STAT_PCHATE, 10);
+		girl->pcfear(5);
+		girl->pclove(-10);
+		girl->pchate(10);
 		ss << "She almost died in rehab but the Counselor saved her.\n";
-		ss << "She hates you a little more for forcing this on her.\n\n";
+		ss << "She hates you a little more for forcing this on her.\n \n";
 		msgtype = EVENT_DANGER;
 		enjoy -= 2;
 	}
 	else
 	{
-		g_Girls.UpdateStat(girl, STAT_HEALTH, healthmod);
+		girl->health(healthmod);
 		enjoy += (healthmod / 5) + 1;
 	}
 
@@ -114,35 +123,49 @@ bool cJobManager::WorkCentreExTherapy(sGirl* girl, sBrothel* brothel, bool Day0N
 
 	if (girl->m_WorkingDay >= 3 && Day0Night1)
 	{
+		girl->m_PrevWorkingDay = girl->m_WorkingDay = 0;
 		enjoy += g_Dice % 5;
-		g_Girls.UpdateEnjoyment(girl, ACTION_WORKCOUNSELOR, g_Dice % 6 - 2);	// `J` She may want to help others with their problems
-		g_Girls.UpdateStat(girl, STAT_HAPPINESS, g_Dice % 5);
-		
+		girl->upd_Enjoyment(ACTION_WORKCOUNSELOR, g_Dice % 6 - 2);	// `J` She may want to help others with their problems
+		girl->happiness(g_Dice % 5);
+
 		ss << "The therapy is a success.\n";
 		msgtype = EVENT_GOODNEWS;
-		if (g_Girls.HasTrait(girl, "Mind Fucked"))
+
+		bool cured = false;
+		int tries = 5;
+		while (!cured && tries > -2)
 		{
-			g_Girls.RemoveTrait(girl, "Mind Fucked");
-			ss << "She is no longer mind fucked.\n";
-		}
-		else if (g_Girls.HasTrait(girl, "Broken Will"))
-		{
-			g_Girls.RemoveTrait(girl, "Broken Will");
-			ss << "She is no longer has a broken will.\n";
+			tries--;
+			int t = max(0, g_Dice % tries);
+			switch (t)
+			{
+			case 0:
+				if (girl->has_trait( "Mind Fucked"))
+				{
+					girl->remove_trait("Mind Fucked");
+					ss << "She is no longer mind fucked.\n";
+					cured = true; break;
+				}
+			case 1:
+			default:
+				if (girl->has_trait( "Broken Will"))
+				{
+					girl->remove_trait("Broken Will");
+					ss << "She is no longer has a broken will.\n";
+					cured = true; break;
+				}
+			}
 		}
 
-		girl->m_PrevWorkingDay = girl->m_WorkingDay = 0;
-
-		if (g_Girls.HasTrait(girl, "Mind Fucked") || g_Girls.HasTrait(girl, "Broken Will"))
+		if (girl->has_trait( "Mind Fucked") || girl->has_trait( "Broken Will"))
 		{
 			ss << "\nShe should stay in extreme therapy to treat her other disorders.";
 		}
 		else // get out of therapy
 		{
 			ss << "\nShe has been released from therapy.";
-			girl->m_YesterDayJob = girl->m_YesterNightJob = girl->m_DayJob = girl->m_NightJob = JOB_CENTREREST;
+			girl->m_PrevDayJob = girl->m_PrevNightJob = girl->m_YesterDayJob = girl->m_YesterNightJob = girl->m_DayJob = girl->m_NightJob = JOB_CENTREREST;
 			girl->m_PrevWorkingDay = girl->m_WorkingDay = 0;
-			girl->m_PrevDayJob = girl->m_PrevNightJob = 255;
 		}
 	}
 	else
@@ -150,28 +173,29 @@ bool cJobManager::WorkCentreExTherapy(sGirl* girl, sBrothel* brothel, bool Day0N
 		ss << "The therapy is in progress (" << (3 - girl->m_WorkingDay) << " day remaining).";
 	}
 
+#pragma endregion
+#pragma region	//	Finish the shift			//
+
 	// Improve girl
 	int libido = 1;
 
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
 
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
+	girl->upd_temp_stat(STAT_LIBIDO, libido);
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, msgtype);
-	g_Girls.UpdateEnjoyment(girl, actiontype, enjoy);
+	girl->upd_Enjoyment(actiontype, enjoy);
 
+#pragma endregion
 	return false;
 }
 
 double cJobManager::JP_CentreExTherapy(sGirl* girl, bool estimate)
 {
-	double jobperformance = 0.0;
-	if (estimate)	// for third detail string - how much do they need this?
-	{
-		if (!g_Girls.HasTrait(girl, "Mind Fucked") &&		// if the girl dosent need this
-			!g_Girls.HasTrait(girl, "Broken Will"))		return -1000;			// X - does not need it
-		jobperformance += 200;
-		if (g_Girls.HasTrait(girl, "Mind Fucked"))		jobperformance +=100;	// if she has 1 = S
-		if (g_Girls.HasTrait(girl, "Broken Will"))		jobperformance +=100;	// if she has 2 = I
-	}
+	double jobperformance = 200;
+	if (girl->has_trait( "Mind Fucked"))		jobperformance += 100;	// if she has 1 = S
+	if (girl->has_trait( "Broken Will"))		jobperformance += 100;	// if she has 2 = I
+
+	if (jobperformance == 200)	return -1000;			// X - does not need it
+
 	return jobperformance;
 }

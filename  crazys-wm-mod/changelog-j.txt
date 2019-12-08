@@ -73,10 +73,10 @@ Sidestep fix for the "Send to dungeon" bug
  - - (for a proper fix that allows sending girls to the dungeon from any building, much more coding will be required)
 Fixed movies to store their own runweeks - this fixes the 35 week crash bug
 Added more movie storage options:
-	<Movies>
-		<Movie Init_Qual="940" Qual="799" Promo_Qual="1412" Money_Made="1412" RunWeeks="1" />
-		<Movie Init_Qual="839" Qual="839" Promo_Qual="0" Money_Made="0" RunWeeks="0" />
-	</Movies>
+    <Movies>
+        <Movie Init_Qual="940" Qual="799" Promo_Qual="1412" Money_Made="1412" RunWeeks="1" />
+        <Movie Init_Qual="839" Qual="839" Promo_Qual="0" Money_Made="0" RunWeeks="0" />
+    </Movies>
 !!!!!!!!!!!!!!!!!!!! pushed version .05i.3
 (20minutes after I pushed version .05i.3 Crazy sent a bug fix to the SVN)
 The girl deatils screens now show the correct buildings jobs.
@@ -342,7 +342,7 @@ New Skill - Hand Job
 New Jobs - WorkFilmHandJob, GetFertility, GetTubesTied, Intern
 Modified Jobs - Cleaning, BarPiano, BarSinger, BarStripper, BarWhore, Milk, PeepShow,
                 BrothelMassusse, BrothelStripper, BrothelWhore, HallEntertainer, HallWhore
-New Actions - ACTION_WORKMUSIC, ACTION_WORKSTRIP, ACTION_WORKMILK, ACTION_WORKMASSUSSE	
+New Actions - ACTION_WORKMUSIC, ACTION_WORKSTRIP, ACTION_WORKMILK, ACTION_WORKMASSUSSE
 New Script Targets - HandJob, Ecchi, Bunny, Card, Milk, Wait, Sing
 
 'J'
@@ -2145,60 +2145,255 @@ Added cGameScript::Script_GetRandomGirl to allow scripts to randomly choose a gi
 !!!!!!!!!!!!!!!!!!!! pushed to GitHub
 !!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.01.21
 
+###  Changes 6/3
+Did a little cleaning to FarmHand and StageHand.
+Added previous job the girl was on before a matron sent her to free time
+ - Added JobQkNm[NUM_JOBS]; to be 3-4 character name for each job
+Added a few more places where the building that is active is set.
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
 
+###  Changes 6/4-14
+Fixed bug - Girl Details Clinic surgery/Centre threapy throwing requires doctor error when there is one
+Updated WorkBarPiano.cpp
+Changed several sets of constants from individual to enum - by belroshir
+Fixed a couple of bugs in whore jobs.
+Added Image type "Dom" for Dominatrix
+Added bypass for autosave - hold ctrl when pressing next week will not autosave the game for faster play
+Jobs now save with JobQkNm codes so adding new jobs in the future will not shift jobs.
 
+Moved all image handling from cGirls.(h/cpp) to cImageItem.(h/cpp)
+ - Images load when needed instead of when the game is loaded.
+ - Removed all the old Image code.
+Moved TurnSummary to its own file cScreenTurnSummary.(h/cpp)
+ - Major cleanup and consolidating
+Moved Gallery to its own file cScreenGallery.(h/cpp)
+ - Changed the Gallery to use a list instead of buttons for how many images the girl has.
 
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+Fixed backwards compatibility for JobQkNm codes savegames
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.00
 
+###  Changes 6/15
+Rewrite turn summary goto button to fix problems if nothing is selected
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.01
+Fixed more Turn Summary bugs and hopefully finally fixed the previous bug.
+Fixed a bug making default images not work.
+Added Yellow as a color choice and used it for Level Up turn summary messages.
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.02
 
+###  Changes 6/16-18
+Fixed a bug where girls with no traits crashes the game.
+Gifs load and animate now
+ - I still need to do some code cleaning and plug some memory leaks
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+Finished gif animation.
+ - Gifs load, animate and clear from memory
+Fixed resize images to take both image and display fram into account when resizing images.
+Fixed a few other image handling issues
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.03
+
+###  Changes 6/19-25
+Removed unneeded gif conversion code that was just wasting memory.
+Fixed a bug in pregnant image selection where the nonpreg version was not checked.
+ - Also fixed a problem with pregprofile not working.
+Updated a few items
+Started adding 16:9 interface J_1366x768
+Added Items folder location to config.xml
+Fixed NightToggle button image size
+
+WME - Fixed a bug with items not working with Girl Status effects
+WME - Added custom Items folder to config.xml
+WME - Updated Folder text to explain relative and absolute folder paths a little.
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master Editor version 0.8.30
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.04
+
+###  Changes 6/26-27
+
+Added more sex texts by GonDra
+Added Items by ChancellorPalpatine with a few changes
+Updated WorkRancher, WorkShepherd
+Fixed a bug in whore jobs that occasionally duplicates turn messages.
+Merged two of the whore customer number messages into one.
+Changed "fuckMessage" in whore jobs from string to stringstream and did some cleanup of it.
+Added special inheritance checks for Queen, Princess and Noble traits.
+Added  // `J` Legal Note: 18 is the Legal Age of Majority for the USA where I live 
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.05
+
+###  Changes 6/28
+Removed an unneeded log error message caused by missing button disabled images.
+Fixed a bug - added job quick codes for Dungeon and Runaways.
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.06
+
+###  Changes 6/29-7/1           Not much time for the game, work taking its toll.
+Added some WorkPeepShow updates by Hanzo
+Updated WorkBeastCare
+
+###  Changes 7/2
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub before starting brothel rewrite
+Moved some Rival stuff from cBrothel to cRival
+Updated Brothel stats to include numbers if cfg.debug.log_show_numbers() is true
+Added traits to Girl Fights Back check
+Updated WorkAdvertising
+Started blocking out Brothel turn flow - No real changes yet
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+Added more job updates by Hanzo
+Updated more of Constants.h stuff to enum
+Added enum Goals for what the customers want to do.
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+
+###  Changes 7/3
+Added a few more options for Customer Goals
+Updated Customer Constructor
+Changed all existing stand-alone Customer calls to pointers
+Made stand-alone Customer calls use new/delete for better memory management.
+Added more job updates by Hanzo
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.07
+
+Fixed a bug in whore tiredness limiter.
+Added a few more things to customers.
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.08
+
+###  Changes 7/4-6 - no time for the game.
+
+###  Changes 7/7
+Hopefully fixed a bug causing a crah - the number of events was not getting cleared for some reason.
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.09
+
+###  Changes 7/8-9
+Added more job updates by Hanzo
+Updating more jobs.
+ - WorkBarmaid.cpp got a major update
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+
+###  Changes 7/10-12
+Fixed a problem with fame in some jobs.
+Fixed a bug again - set jobs for Dungeon and Runaways when loading and saving.
+Removed autosave.gam from load game list - you can still load it using Continue from the main menu.
+Added space key goes to girl details in dungeon
+Updated WorkBarmaid.cpp more.
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.10
+
+###  Changes 7/13
+Added AdjustGirlFlag to scripts.
+
+###  Changes 7/14-18 - no time to work on the game
+
+###  Changes 7/19
+Added job performance reduction due to tiredness to many jobs
+Made most cleaning jobs use JP_Cleaning instead of each having its own jobperformance calc so it only needs to be edited once.
+
+###  Changes 7/20
+Added a bypass for the default walkabout script intro.
+Added more items and updated others by Hanzo.
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.11
+
+###  Changes 7/21
+Fixed a bug in sRandomGirl constructor - fixed bad initializers
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.12
+
+###  Changes 7/22-25 no time for the game
+
+###  Changes 7/26
+Fixed a bug in sGirl constructor - fixed bad CHILD_COUNT_TYPES initializer
+Fixed a bug in Fertility Treatment and Get Tubes Tied jobs so they work fully.
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.13
+
+###  Changes 7/27
+Fixed a bug in Slave Market trait list that would sometimes crash if a girl had no traits.
+Cleaned up PrepareImage a little and added cfg.debug.log_extradetails() to log what image is loaded
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.14
+
+###  Changes 7/28-29
+Cleaned up and expanded Brothel Constructor.
+Fixed a bug in test_child_name().
+
+###  Changes 7/30-31
+Fixed a bug in WorkGetFertility.cpp that skipped Fertility in line going to Broodmother instead.
+Updated many of the surgery and therapy jobs
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+
+###  Changes 8/1
+Finished updating the surgery and therapy jobs
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.15
+
+###  Changes 8/2-3
+Fixed a bug in therapy jobs.
+Added AdjustTraitTemp to scripts.
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.16
+
+###  Changes 8/4-9
+Slowly updating crafting jobs when I get time.
+ - WorkMakeItem.cpp has a full item tree now and should work as intended
+ - WorkBlacksmith.cpp has a partial tree but not full checks
+ - WorkCobbler.cpp will only make FlipFlops
+ - WorkJeweler.cpp will only make Bauble Necklace
+ - WorkTailor.cpp will only make Eye patch
  
-$$$$ TO DO - SHORT TERM - (for this version) $$$$
-Config.xml: 
- > Debug > ShowNumbers
- > Folders > PreferDefaults
+Added more to gamelog.txt for better bug checking
+Cleaned up cGirlTorture.cpp
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.17
+
+###  Changes 8/10-21 - Nothing
+
+###  Changes 8/22-24
+Added Boy children can go to gangs when the grow up.
+
+WME - Added Trait Type customization to Traits page
+
+###  Changes 8/25-9/4 - Nothing much
+
+###  Changes 9/5-9/13
+Fixed a bug in Barmaid giving too much tiredness.
+Fixed a bug in Script_AdjustTargetGirlStat to compensate for the new STAT_NPCLOVE so older scripts will work properly
+ - Added AdjustTargetGirlSkill for new scripts
+Fixed a bug where beast pregnancies used human pregnancy time from config.xml
+Fixed a bug in sGirl::clear_pregnancy() that left the unborn child in the girl's code even after ending the pregnancy.
+Made cGirls::CreatePregnancy function to allow for creating pregnancies outside of pregnancy check.
+Rewrite of how pregnancy items work.
+ - Entirely new section in cInventory::Equip to handle pregnancy items
+ - Good and bad effects still need to be added.
+Adjusted a few numbers in create random girls.
+ - Kidnapped girls spirit, confidence, obedience and pchate are now random instead of a fixed amount
+Fixed a bug in cDungeon::AddGirl where location changes for the girl were made after she was already converted to m_Girl thus doing nothing.
+Minor rewrite of cGameScript::Script_AddRandomGirlToDungeon
+ - AddRandomGirlToDungeon ["Kidnaped" or "Captured"] [min age] [max age] [slave] [nonhuman] [arena] [daughter]
+ - Added your daughter option to the code
+ - Added arena and daughter to the old script editor
+ - Rewrite of the age calculation to work better
+Added ReadTextFile(DirPath path, string file) to allow for easy text file input
+ - Updated Walk/Tryout to use ReadTextFile for .intro files.
+Made Walk/Tryouts run directly off their main area page instead of opening its own page.
+ - Studio Tryouts, Arean Tryouts and Clinic Walk around ER
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.18
+
+###  Changes 9/14
+Fixed a bug in Boy children can go to gangs when they grow up.
+A little more work on pregnancy items.
+
+!!!!!!!!!!!!!!!!!!!! pushed to GitHub
+!!!!!!!!!!!!!!!!!!!! pushed Whore Master version .06.02.19
 
 
-
-
-
-
-$$$$ NOTE TO SELF - When updating items to recalculate stats/skills when loading girls - don't modify temp stuff $$$$
-
-$$$$ TO DO - SHORT TERM - (Soon) $$$$
-Make jobs load and save by name instead of number so adding new jobs will not break save games.
-
-
-$$$$ TO DO - MID TERM - (for the next few versions) $$$$
-Keep expanding on simple-save
-food and drink
-
-Make config in_fact and out_fact do something
-
-Change the way the game handles images
- - Instead of loading them all when the game loads, load them when they are needed.
- - Make cfg.folders.preferdefault() work
-
-
-New Script Stuff:
- - Picture_Sequence     -- needs image rework before it can be implemented
- - Make_Movie_Scene     -- needs movie and scene rework before it can be implemented
- - And/Or
-New Default Interacts for each building
- - DefaultInteractStudio.script
- - DefaultInteractArena.script
- - DefaultInteractCentre.script
- - DefaultInteractClinic.script
- - DefaultInteractFarm.script
- - DefaultInteractHouse.script
-New Meet Try for the buildings that don't have them
- - MeetCentreTry.script (homeless, addicts, psychpatients, etc.)
- - MeetFarmTry.script (beast girls, farmers, craftsmen, etc.)
- - MeetHouseTry.script (House party? - Costs money to do, adds lots of filthiness to the house, etc.)
-
-
-
-
-
-
-$$$$ TO DO - LONG TERM $$$$
-Update from SDL1.2 to SDL2.0 (or something else)
-Expand the map and allow multiples of all buildings
+******  End of changelog-j.txt - continued in changelog-j2.txt ******

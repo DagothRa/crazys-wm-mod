@@ -102,6 +102,9 @@ public:
 	void AddRival(cRival* rival);
 	void RemoveRival(cRival* rival);
 	void CreateRandomRival();
+	void check_rivals();		// `J` moved from cBrothel
+	string new_rival_text();	// `J` moved from cBrothel
+	void peace_breaks_out();	// `J` moved from cBrothel
 
 
 	// `J` New - rival inventory
@@ -114,15 +117,10 @@ public:
 
 
 	int GetNumBusinesses();
-	int GetNumRivals()
-	{
-		return m_NumRivals;
-	}
+	int GetNumRivals()				{ return m_NumRivals; }
+	int GetNumRivalGangs();
 	bool NameExists(string name);
-	bool player_safe()
-	{
-		return m_PlayerSafe;
-	}
+	bool player_safe()				{ return m_PlayerSafe; }
 	cRival* get_influential_rival();
 	string rivals_plunder_pc_gold(cRival* rival);
 private:

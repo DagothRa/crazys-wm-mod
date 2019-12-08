@@ -4,8 +4,12 @@
 	Characters     = The location of the Characters folder
 	Saves          = The location of the Saves folder
 	DefaultImages  = The location of the DefaultImages folder
-			Currently the folders are relative to the EXE file so to put the folder in the
-				parent folder of the game, use  '..\Characters'  and the like.
+	Items          = The location of the Items folder
+			The folders can be relative to the EXE file or an exact folder path.
+				Relative folders refers to its location to the parent folder of the game
+					Use  '..\Characters'  and the like.
+				Absolute folders is the full path name as defined by the operating system.
+					Use  'c:\WM\Characters'  and the like.
 	BackupSaves    = 'true' or 'false'
 			If set to true, the game will save in both the game's default
 				save folder as well as the folder set here.
@@ -17,14 +21,15 @@
         Characters="..\Characters"
         Saves="..\Saves"
         DefaultImages="..\DefaultImages"
-        BackupSaves="true"
+        Items="..\Items"
+        BackupSaves="false"
         PreferDefault="false" />
     <!--
 	Resolution     = the name of your interface folder
-	Width          = screen width
-	Height         = screen height
-	ScaleWidth     = screen scale width
-	ScaleHeight    = screen scale height
+	Width          = Your screen width
+	Height         = Your screen height
+	ScaleWidth     = The width  that the interface was made for
+	ScaleHeight    = The height that the interface was made for
 			The old code of the game scaled all windows down to 800x600
 			This has been fixed but any old interfaces will not display correctly
 				if the scale width and height are not set to 800x600.
@@ -32,15 +37,42 @@
 	ListScrollAmount = The number of lines to scroll in List boxes.
 	TextScrollAmount = The number of lines to scroll in Text boxes.
 	-->
+<!-- 16:9
+    <Resolution
+        Resolution="J_1920x1080"
+        Width="1920"
+        Height="1080"
+        ScaleWidth="1920"
+        ScaleHeight="1080"
+        FixedScale="true"
+        FullScreen="false"
+        ListScrollAmount="3"
+        TextScrollAmount="3" />
+ -->
+<!-- 16:9 -->
+    <Resolution
+        Resolution="J_1366x768"
+        Width="1366"
+        Height="768"
+        ScaleWidth="1366"
+        ScaleHeight="768"
+        FixedScale="true"
+        FullScreen="false"
+        ListScrollAmount="3"
+        TextScrollAmount="3" />
+ -->
+<!-- 4:3
     <Resolution
         Resolution="J_1024x768"
         Width="1024"
         Height="768"
-        ScaleWidth="800"
-        ScaleHeight="600"
+        ScaleWidth="1024"
+        ScaleHeight="768"
+        FixedScale="false"
         FullScreen="false"
         ListScrollAmount="3"
         TextScrollAmount="3" />
+-->
     <!--
 	Gold is how much gold you start the game with.
 	GirlMeet is the %chance you'll meet a girl when walking around town.
@@ -90,7 +122,7 @@
         StripperIncome="1.0"
         BarmaidIncome="1.0"
         SlaveSales="1.0"
-        ItemSales="1.0"
+        ItemSales="0.5"
         ClinicIncome="1.0"
         ArenaIncome="1.0"
         FarmIncome="1.0" />
@@ -121,7 +153,7 @@
         StaffWages="1.0"
         GirlSupport="1.0"
         Consumables="1.0"
-        Items="0.5"
+        Items="1.0"
         SlavesBought="1.0"
         BuyBrothel="1.0"
         BrothelSupport="1.0"
@@ -186,7 +218,7 @@
         MonsterChance="8%"
         GoodSexFactor="2.0"
         ChanceOfGirl="50%"
-        WeeksPregnant="40"
+        WeeksPregnant="38"
         WeeksMonsterP="20"
         MiscarriageChance="0.1%"
         MiscarriageMonster="1.0%"

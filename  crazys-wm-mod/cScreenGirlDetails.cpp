@@ -33,7 +33,6 @@
 #include "cGetStringScreenManager.h"
 #include "cGangs.h"
 #include "cScriptManager.h"
-#include "libintl.h"
 
 extern bool g_InitWin;
 extern int g_CurrBrothel;
@@ -47,20 +46,24 @@ extern cHouseManager g_House;
 extern cFarmManager g_Farm;
 extern cWindowManager g_WinManager;
 extern long g_IntReturn;
+extern bool g_Cheats;
 extern	int	g_TalkCount;
 extern bool g_AllTogle;
 extern cGangManager g_Gangs;
-extern bool g_Cheats;
-extern string g_ReturnText;
 extern	bool	eventrunning;
 extern cTraits g_Traits;
+extern sGirl *selected_girl;
+extern vector<int> cycle_girls;
+extern int cycle_pos;
+extern cConfig cfg;
+extern	int		g_CurrentScreen;
 
+extern	bool	g_AltKeys;	// New hotkeys --PP
 extern	bool	g_LeftArrow;
 extern	bool	g_RightArrow;
 extern	bool	g_UpArrow;
 extern	bool	g_DownArrow;
-extern	int		g_CurrentScreen;
-extern	bool	g_AltKeys;	// New hotkeys --PP
+extern	bool	g_EnterKey;
 extern	bool	g_SpaceKey;
 extern	bool	g_ShiftDown;
 extern	bool	g_CTRLDown;
@@ -84,59 +87,61 @@ static int DetailLevel = 0;
 static bool Day0Night1 = SHIFT_DAY;
 static bool SetJob = true;
 
-extern sGirl *selected_girl;
-extern vector<int> cycle_girls;
-extern int cycle_pos;
-
-extern cConfig cfg;
-
 bool cScreenGirlDetails::ids_set = false;
+cScreenGirlDetails::cScreenGirlDetails()
+{
+
+	DirPath dp = DirPath() << "Resources" << "Interface" << cfg.resolution.resolution() << "girl_details_screen.xml";
+	m_filename = dp.c_str();
+}
+cScreenGirlDetails::~cScreenGirlDetails() {}
 
 void cScreenGirlDetails::set_ids()
 {
-	ids_set = true;
-	back_id = get_id("BackButton");
-	girlname_id = get_id("GirlName");
-	girldesc_id = get_id("GirlDescription");
-	girlimage_id = get_id("GirlImage");
-	more_id = get_id("MoreButton");
-	antipreg_id = get_id("UseAntiPregToggle");
-	prev_id = get_id("PrevButton");
-	next_id = get_id("NextButton");
-	inventory_id = get_id("InventoryButton");
-	senddungeon_id = get_id("SendDungeonButton");
-	reldungeon_id = get_id("ReleaseDungeonButton");
-	interact_id = get_id("InteractButton");
-	takegold_id = get_id("TakeGoldButton");
-	accomup_id = get_id("AccomUpButton");
-	accomdown_id = get_id("AccomDownButton");
-	accom_id = get_id("AccomSlider");
-	accomval_id = get_id("AccomValue");
-	houseperc_id = get_id("HousePercSlider");
-	housepercval_id = get_id("HousePercValue");
-	gallery_id = get_id("GalleryButton");
-	jobtypehead_id = get_id("JobTypeHeader");
-	jobtypelist_id = get_id("JobTypeList");
-	jobhead_id = get_id("JobHeader");
-	joblist_id = get_id("JobList");
-	day_id = get_id("DayButton");
-	night_id = get_id("NightButton");
-	traithead_id = get_id("TraitHeader");
-	traitlist_id = get_id("TraitList");
-	traitdesc_id = get_id("TraitDescription");
+	ids_set			/**/ = true;
+	g_LogFile.write("set_ids in cScreenGirlDetails");
+
+	back_id			/**/ = get_id("BackButton", "Back");
+	girlname_id		/**/ = get_id("GirlName");
+	girldesc_id		/**/ = get_id("GirlDescription");
+	girlimage_id	/**/ = get_id("GirlImage");
+	more_id			/**/ = get_id("MoreButton");
+	antipreg_id		/**/ = get_id("UseAntiPregToggle");
+	prev_id			/**/ = get_id("PrevButton","Prev");
+	next_id			/**/ = get_id("NextButton","Next");
+	inventory_id	/**/ = get_id("InventoryButton");
+	senddungeon_id	/**/ = get_id("SendDungeonButton");
+	reldungeon_id	/**/ = get_id("ReleaseDungeonButton");
+	interact_id		/**/ = get_id("InteractButton");
+	interactc_id	/**/ = get_id("InteractCount");
+	takegold_id		/**/ = get_id("TakeGoldButton");
+	accomup_id		/**/ = get_id("AccomUpButton");//
+	accomdown_id	/**/ = get_id("AccomDownButton");//
+	accom_id		/**/ = get_id("AccomSlider");
+	accomval_id		/**/ = get_id("AccomValue");
+	houseperc_id	/**/ = get_id("HousePercSlider");
+	housepercval_id	/**/ = get_id("HousePercValue");
+	gallery_id		/**/ = get_id("GalleryButton");
+	jobtypehead_id	/**/ = get_id("JobTypeHeader");
+	jobtypelist_id	/**/ = get_id("JobTypeList");
+	jobhead_id		/**/ = get_id("JobHeader");
+	joblist_id		/**/ = get_id("JobList");
+	day_id			/**/ = get_id("DayButton");
+	night_id		/**/ = get_id("NightButton");
+	traithead_id	/**/ = get_id("TraitHeader");
+	traitlist_id	/**/ = get_id("TraitList");
+	traitdesc_id	/**/ = get_id("TraitDescription");
 }
 
 void cScreenGirlDetails::Free()
 {
-	//free up everything else
-	cInterfaceWindow::Free();
+	cInterfaceWindow::Free();	//free up everything else
 }
 
 void cScreenGirlDetails::init()
 {
 	if (selected_girl == 0)
 	{
-		g_WinManager.Pop();
 		g_InitWin = true;
 		g_LogFile.write("ERROR - girl details screen, selected_girl is null");
 		/*
@@ -146,21 +151,20 @@ void cScreenGirlDetails::init()
 		*		Now as to why it was null in the first place ...
 		*		-- doc
 		*/
+		g_WinManager.Pop();
 		return;
 	}
 
 	g_CurrentScreen = SCREEN_GIRLDETAILS;
 	if (!g_InitWin) return;
-
 	Focused();
 	g_InitWin = false;
 
-	////////////////////
-	if (selected_girl->health() <= 0)
+	if (selected_girl->is_dead())
 	{
 		// `J` instead of removing dead girls from the list which breaks the game, just skip past her in the list.
 		NextGirl();								// `J` currently this prevents scrolling backwards past her - need to fix that.
-//		selected_girl = remove_selected_girl();
+		//		selected_girl = remove_selected_girl();
 		if (selected_girl == 0)
 		{
 			g_WinManager.Pop();
@@ -169,7 +173,7 @@ void cScreenGirlDetails::init()
 		}
 	}
 
-	u_int job = (Day0Night1 ? selected_girl->m_NightJob : selected_girl->m_DayJob);
+	int job = (Day0Night1 ? selected_girl->m_NightJob : selected_girl->m_DayJob);
 	SetJob = true;
 
 	EditTextItem(selected_girl->m_Realname, girlname_id);
@@ -184,35 +188,24 @@ void cScreenGirlDetails::init()
 	{
 		if (lastsexact != -1)
 		{
-			SetImage(girlimage_id, g_Girls.GetImageSurface(selected_girl, lastsexact, true, ImageNum));
-			// `J` added check in case the girl has no images and the game is using defaults (no .ani defaults)
-			if (selected_girl->m_GirlImages->m_Images[lastsexact].m_NumImages > 0)
-			{
-				if (g_Girls.IsAnimatedSurface(selected_girl, lastsexact, ImageNum))
-					SetImage(girlimage_id, g_Girls.GetAnimatedSurface(selected_girl, lastsexact, ImageNum));
-			}
+			PrepareImage(girlimage_id, selected_girl, lastsexact, true, ImageNum);
 			lastsexact = -1;
 		}
 		else
 		{
 			if (selected_girl->m_newRandomFixed >= 0)
-				SetImage(girlimage_id, g_Girls.GetImageSurface(selected_girl, IMGTYPE_PROFILE, false, selected_girl->m_newRandomFixed));
+			{
+				PrepareImage(girlimage_id, selected_girl, IMGTYPE_PROFILE, false, selected_girl->m_newRandomFixed);
+			}
 			else
 			{
-				SetImage(girlimage_id, g_Girls.GetImageSurface(selected_girl, IMGTYPE_PROFILE, true, ImageNum));
-				// `J` added check in case the girl has no images and the game is using defaults (no .ani defaults)
-				if (selected_girl->m_GirlImages->m_Images[IMGTYPE_PROFILE].m_NumImages > 0)
-				{
-					if (g_Girls.IsAnimatedSurface(selected_girl, IMGTYPE_PROFILE, ImageNum))
-						SetImage(girlimage_id, g_Girls.GetAnimatedSurface(selected_girl, IMGTYPE_PROFILE, ImageNum));
-				}
+				PrepareImage(girlimage_id, selected_girl, IMGTYPE_PROFILE, true, ImageNum);
 			}
 		}
 	}
 
-	SliderRange(houseperc_id, 0, 100, g_Girls.GetStat(selected_girl, STAT_HOUSE), 10);
-	ss.str("");
-	ss << gettext("House Percentage: ") << SliderValue(houseperc_id) << gettext("%");
+	SliderRange(houseperc_id, 0, 100, selected_girl->house(), 10);
+	ss.str("");	ss << "House Percentage: " << SliderValue(houseperc_id) << "%";
 	EditTextItem(ss.str(), housepercval_id);
 
 	ClearListBox(jobtypelist_id);
@@ -227,17 +220,26 @@ void cScreenGirlDetails::init()
 	}
 	if (accomval_id != -1)
 	{
-		stringstream acc;
-		acc << "Accommodation: " << g_Girls.Accommodation(SliderValue(accom_id));
+		ss.str(""); ss << "Accommodation: " << g_Girls.Accommodation(SliderValue(accom_id));
 		if (cfg.debug.log_extradetails())
 		{
 			int val = SliderValue(accom_id) - g_Girls.PreferredAccom(selected_girl);
-			if (val != 0) acc << "  ( " << (val > 0 ? "+" : "") << val << " )";
+			if (val != 0) ss << "  ( " << (val > 0 ? "+" : "") << val << " )";
 		}
-		EditTextItem(acc.str(), accomval_id);
+		EditTextItem(ss.str(), accomval_id);
 	}
 	DisableButton(interact_id, (g_TalkCount <= 0));
+	if (interactc_id >= 0)
+	{
+		ss.str(""); ss << "Interactions Left: ";
+		if (g_Cheats) ss << "Infinate Cheat";
+		else if (g_TalkCount <= 0) ss << "0 (buy in House screen)";
+		else ss << g_TalkCount;
+		EditTextItem(ss.str(), interactc_id);
+	}
 	DisableButton(takegold_id, (selected_girl->m_Money <= 0));
+	DisableButton(accomup_id, (selected_girl->m_AccLevel >= 9));
+	DisableButton(accomdown_id, (selected_girl->m_AccLevel <= 0));
 	SetCheckBox(antipreg_id, (selected_girl->m_UseAntiPreg));
 
 	bool InMovieStudio = (selected_girl->m_InStudio);
@@ -251,14 +253,16 @@ void cScreenGirlDetails::init()
 	DisableButton(senddungeon_id, InDungeon);
 
 	// Disable dungeon if selected girl is in a non-brothel building
-//	if (InMovieStudio || InArena || InCentre || InClinic || InFarm || InHouse) 
-//	{
-//		DisableButton(senddungeon_id, true);
-//	}
+	//	if (InMovieStudio || InArena || InCentre || InClinic || InFarm || InHouse) 
+	//	{
+	//		DisableButton(senddungeon_id, true);
+	//	}
+
+	ClearListBox(joblist_id);
+	bool HideDNButtons = false;
 
 	if (InArena)
 	{
-		ClearListBox(joblist_id);
 		AddToListBox(jobtypelist_id, JOBFILTER_ARENASTAFF, g_Arena.m_JobManager.JobFilterName[JOBFILTER_ARENASTAFF]);
 		AddToListBox(jobtypelist_id, JOBFILTER_ARENA, g_Arena.m_JobManager.JobFilterName[JOBFILTER_ARENA]);
 		RefreshJobList();
@@ -266,67 +270,55 @@ void cScreenGirlDetails::init()
 			SetSelectedItemInList(jobtypelist_id, JOBFILTER_ARENA);
 		else // if (job >= g_Arena.m_JobManager.JobFilterIndex[JOBFILTER_ARENASTAFF] && job < g_Arena.m_JobManager.JobFilterIndex[JOBFILTER_ARENASTAFF + 1])
 			SetSelectedItemInList(jobtypelist_id, JOBFILTER_ARENASTAFF);
-		HideButton(day_id, false);
-		HideButton(night_id, false);
-		DisableButton(day_id, (Day0Night1 == SHIFT_DAY));
-		DisableButton(night_id, (Day0Night1 == SHIFT_NIGHT));
 	}
 	else if (InClinic)
 	{
-		ClearListBox(joblist_id);
 		AddToListBox(jobtypelist_id, JOBFILTER_CLINIC, g_Clinic.m_JobManager.JobFilterName[JOBFILTER_CLINIC]);
 		AddToListBox(jobtypelist_id, JOBFILTER_CLINICSTAFF, g_Clinic.m_JobManager.JobFilterName[JOBFILTER_CLINICSTAFF]);
 		RefreshJobList();
 		if (job >= g_Clinic.m_JobManager.JobFilterIndex[JOBFILTER_CLINIC] && job < g_Clinic.m_JobManager.JobFilterIndex[JOBFILTER_CLINIC + 1])
 			SetSelectedItemInList(jobtypelist_id, JOBFILTER_CLINIC);
 		else SetSelectedItemInList(jobtypelist_id, JOBFILTER_CLINICSTAFF);
-		HideButton(day_id, false);
-		HideButton(night_id, false);
-		DisableButton(day_id, (Day0Night1 == SHIFT_DAY));
-		DisableButton(night_id, (Day0Night1 == SHIFT_NIGHT));
 	}
 	else if (InCentre)
 	{
-		ClearListBox(joblist_id);
 		AddToListBox(jobtypelist_id, JOBFILTER_COMMUNITYCENTRE, g_Centre.m_JobManager.JobFilterName[JOBFILTER_COMMUNITYCENTRE]);
 		AddToListBox(jobtypelist_id, JOBFILTER_COUNSELINGCENTRE, g_Centre.m_JobManager.JobFilterName[JOBFILTER_COUNSELINGCENTRE]);
 		RefreshJobList();
 		if (job >= g_Centre.m_JobManager.JobFilterIndex[JOBFILTER_COUNSELINGCENTRE] && job < g_Centre.m_JobManager.JobFilterIndex[JOBFILTER_COUNSELINGCENTRE + 1])
 			SetSelectedItemInList(jobtypelist_id, JOBFILTER_COUNSELINGCENTRE);
 		else SetSelectedItemInList(jobtypelist_id, JOBFILTER_COMMUNITYCENTRE);
-		HideButton(day_id, false);
-		HideButton(night_id, false);
-		DisableButton(day_id, (Day0Night1 == SHIFT_DAY));
-		DisableButton(night_id, (Day0Night1 == SHIFT_NIGHT));
 	}
 	else if (InHouse)
 	{
-		ClearListBox(joblist_id);
 		AddToListBox(jobtypelist_id, JOBFILTER_HOUSE, g_House.m_JobManager.JobFilterName[JOBFILTER_HOUSE]);
-		SetSelectedItemInList(jobtypelist_id, JOBFILTER_HOUSE);
+		AddToListBox(jobtypelist_id, JOBFILTER_HOUSETTRAINING, g_House.m_JobManager.JobFilterName[JOBFILTER_HOUSETTRAINING]);
 		RefreshJobList();
-		HideButton(day_id, false);
-		HideButton(night_id, false);
-		DisableButton(day_id, (Day0Night1 == SHIFT_DAY));
-		DisableButton(night_id, (Day0Night1 == SHIFT_NIGHT));
+		if (job >= g_House.m_JobManager.JobFilterIndex[JOBFILTER_HOUSETTRAINING] && job < g_House.m_JobManager.JobFilterIndex[JOBFILTER_HOUSETTRAINING + 1])
+			SetSelectedItemInList(jobtypelist_id, JOBFILTER_HOUSETTRAINING);
+		else SetSelectedItemInList(jobtypelist_id, JOBFILTER_HOUSE);
 	}
 	else if (InMovieStudio)
 	{
 		Day0Night1 = SHIFT_NIGHT;
-		ClearListBox(joblist_id);
+		HideDNButtons = true;
+		// `J` When adding new Studio Scenes, search for "J-Add-New-Scenes"  :  found in >> cScreenGirlDetails.cpp
 		AddToListBox(jobtypelist_id, JOBFILTER_STUDIOCREW, g_Studios.m_JobManager.JobFilterName[JOBFILTER_STUDIOCREW]);
-		AddToListBox(jobtypelist_id, JOBFILTER_MOVIESTUDIO, g_Studios.m_JobManager.JobFilterName[JOBFILTER_MOVIESTUDIO]);
+		AddToListBox(jobtypelist_id, JOBFILTER_STUDIONONSEX, g_Studios.m_JobManager.JobFilterName[JOBFILTER_STUDIONONSEX]);
+		AddToListBox(jobtypelist_id, JOBFILTER_STUDIOSOFTCORE, g_Studios.m_JobManager.JobFilterName[JOBFILTER_STUDIOSOFTCORE]);
+		AddToListBox(jobtypelist_id, JOBFILTER_STUDIOPORN, g_Studios.m_JobManager.JobFilterName[JOBFILTER_STUDIOPORN]);
+		AddToListBox(jobtypelist_id, JOBFILTER_STUDIOHARDCORE, g_Studios.m_JobManager.JobFilterName[JOBFILTER_STUDIOHARDCORE]);
+		AddToListBox(jobtypelist_id, JOBFILTER_RANDSTUDIO, g_Studios.m_JobManager.JobFilterName[JOBFILTER_RANDSTUDIO]);
 		RefreshJobList();
-		if (job >= g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_MOVIESTUDIO] && job < g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_MOVIESTUDIO + 1])
-			SetSelectedItemInList(jobtypelist_id, JOBFILTER_MOVIESTUDIO);
+		/* */if (job >= g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_STUDIONONSEX] && job < g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_STUDIONONSEX + 1])		SetSelectedItemInList(jobtypelist_id, JOBFILTER_STUDIONONSEX);
+		else if (job >= g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_STUDIOSOFTCORE] && job < g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_STUDIOSOFTCORE + 1])	SetSelectedItemInList(jobtypelist_id, JOBFILTER_STUDIOSOFTCORE);
+		else if (job >= g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_STUDIOPORN] && job < g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_STUDIOPORN + 1])		SetSelectedItemInList(jobtypelist_id, JOBFILTER_STUDIOPORN);
+		else if (job >= g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_STUDIOHARDCORE] && job < g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_STUDIOHARDCORE + 1])	SetSelectedItemInList(jobtypelist_id, JOBFILTER_STUDIOHARDCORE);
+		else if (job >= g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_RANDSTUDIO] && job < g_Studios.m_JobManager.JobFilterIndex[JOBFILTER_RANDSTUDIO + 1])		SetSelectedItemInList(jobtypelist_id, JOBFILTER_RANDSTUDIO);
 		else SetSelectedItemInList(jobtypelist_id, JOBFILTER_STUDIOCREW);
-		HideButton(day_id, true);
-		HideButton(night_id, true);
-
 	}
 	else if (InFarm)
 	{
-		ClearListBox(joblist_id);
 		AddToListBox(jobtypelist_id, JOBFILTER_FARMSTAFF, g_Farm.m_JobManager.JobFilterName[JOBFILTER_FARMSTAFF]);
 		AddToListBox(jobtypelist_id, JOBFILTER_LABORERS, g_Farm.m_JobManager.JobFilterName[JOBFILTER_LABORERS]);
 		AddToListBox(jobtypelist_id, JOBFILTER_PRODUCERS, g_Farm.m_JobManager.JobFilterName[JOBFILTER_PRODUCERS]);
@@ -336,11 +328,6 @@ void cScreenGirlDetails::init()
 		else if (job >= g_Farm.m_JobManager.JobFilterIndex[JOBFILTER_PRODUCERS] && job < g_Farm.m_JobManager.JobFilterIndex[JOBFILTER_PRODUCERS + 1])
 			SetSelectedItemInList(jobtypelist_id, JOBFILTER_PRODUCERS);
 		else SetSelectedItemInList(jobtypelist_id, JOBFILTER_FARMSTAFF);
-		HideButton(day_id, false);
-		HideButton(night_id, false);
-		DisableButton(day_id, (Day0Night1 == SHIFT_DAY));
-		DisableButton(night_id, (Day0Night1 == SHIFT_NIGHT));
-
 	}
 	else if (!InDungeon)
 	{  // if not in dungeon, set up job lists
@@ -363,18 +350,21 @@ void cScreenGirlDetails::init()
 		}
 		SetSelectedItemInList(jobtypelist_id, jobtype);
 		RefreshJobList();
-
-		HideButton(day_id, false);
-		HideButton(night_id, false);
-		DisableButton(day_id, (Day0Night1 == SHIFT_DAY));
-		DisableButton(night_id, (Day0Night1 == SHIFT_NIGHT));
 	}
 	else
 	{  // if in dungeon, effectively disable job lists
+		HideDNButtons = true;
 		ClearListBox(joblist_id);
-		AddToListBox(jobtypelist_id, -1, gettext("Languish in dungeon"));
-		HideButton(day_id, true);
-		HideButton(night_id, true);
+		AddToListBox(jobtypelist_id, 0, "Languishing in dungeon");
+		SetSelectedItemInList(jobtypelist_id, 0, false);
+	}
+
+	HideButton(day_id, HideDNButtons);
+	HideButton(night_id, HideDNButtons);
+	if (!HideDNButtons)
+	{
+		DisableButton(day_id, (Day0Night1 == SHIFT_DAY));
+		DisableButton(night_id, (Day0Night1 == SHIFT_NIGHT));
 	}
 
 	ClearListBox(traitlist_id);
@@ -382,10 +372,9 @@ void cScreenGirlDetails::init()
 	{
 		if (selected_girl->m_Traits[i])
 		{
-			stringstream st;
-			st << selected_girl->m_Traits[i]->m_Name;
-			if (selected_girl->m_TempTrait[i] > 0) st << "   (" << selected_girl->m_TempTrait[i] << ")";
-			AddToListBox(traitlist_id, i, g_Traits.GetTranslateName(st.str()));
+			ss.str(""); ss << selected_girl->m_Traits[i]->display_name();
+			if (selected_girl->m_TempTrait[i] > 0) ss << "   (" << selected_girl->m_TempTrait[i] << ")";
+			AddToListBox(traitlist_id, i, ss.str());
 		}
 	}
 	EditTextItem("", traitdesc_id);
@@ -401,41 +390,21 @@ void cScreenGirlDetails::process()
 
 bool cScreenGirlDetails::check_keys()
 {
-	if (g_LeftArrow)
+	if (g_LeftArrow || g_RightArrow || (g_AltKeys && (g_A_Key || g_D_Key)))
 	{
-		g_LeftArrow = false;
-		PrevGirl();
+		if (g_LeftArrow || g_A_Key) PrevGirl(); else NextGirl();
+		g_LeftArrow = g_RightArrow = g_A_Key = g_D_Key = false;
 		return true;
 	}
-	if (g_RightArrow)
-	{
-		g_RightArrow = false;
-		NextGirl();
-		return true;
-	}
-
 	if (g_AltKeys)
 	{
-		if (g_A_Key)
-		{
-			g_A_Key = false;
-			PrevGirl();
-			return true;
-		}
-		if (g_D_Key)
-		{
-			g_D_Key = false;
-			NextGirl();
-			return true;
-		}
 		if (g_H_Key || g_J_Key)
 		{
-			int mod = 1; if (g_H_Key) mod = -1;
-			g_Girls.UpdateStat(selected_girl, STAT_HOUSE, mod);
+			int mod = (g_H_Key ? -1 : 1);
+			selected_girl->house(mod);
 			g_H_Key = g_J_Key = false;
-			SliderValue(houseperc_id, g_Girls.GetStat(selected_girl, STAT_HOUSE));
-			ss.str("");
-			ss << gettext("House Percentage: ") << g_Girls.GetStat(selected_girl, STAT_HOUSE) << gettext("%");
+			SliderValue(houseperc_id, selected_girl->house());
+			ss.str(""); ss << "House Percentage: " << selected_girl->house() << "%";
 			EditTextItem(ss.str(), housepercval_id);
 			// Rebelliousness might have changed, so update details
 			if (DetailLevel == 0)
@@ -443,7 +412,6 @@ bool cScreenGirlDetails::check_keys()
 				string detail = g_Girls.GetDetailsString(selected_girl);
 				EditTextItem(detail, girldesc_id);
 			}
-
 			return true;
 		}
 		if (g_S_Key)
@@ -464,7 +432,7 @@ bool cScreenGirlDetails::check_keys()
 		if (g_SpaceKey)
 		{
 			g_SpaceKey = false;
-			g_WinManager.Push(Gallery, &g_Gallery);
+			g_WinManager.push("Gallery");
 			g_InitWin = true;
 			return true;
 		}
@@ -474,11 +442,8 @@ bool cScreenGirlDetails::check_keys()
 
 void cScreenGirlDetails::check_events()
 {
-	// no events means we can go home
-	if (g_InterfaceEvents.GetNumEvents() == 0) return;
-
-	// if it's the back button, pop the window off the stack and we're done
-	if (g_InterfaceEvents.CheckButton(back_id))
+	if (g_InterfaceEvents.GetNumEvents() == 0) return;		// no events means we can go home
+	if (g_InterfaceEvents.CheckButton(back_id))				// if it's the back button, pop the window off the stack and we're done
 	{
 		g_InitWin = true;
 		g_WinManager.Pop();
@@ -487,11 +452,9 @@ void cScreenGirlDetails::check_events()
 	if (g_InterfaceEvents.CheckSlider(houseperc_id))
 	{
 		g_Girls.SetStat(selected_girl, STAT_HOUSE, SliderValue(houseperc_id));
-		ss.str("");
-		ss << gettext("House Percentage: ") << SliderValue(houseperc_id) << gettext("%");
+		ss.str(""); ss << "House Percentage: " << SliderValue(houseperc_id) << "%";
 		EditTextItem(ss.str(), housepercval_id);
-		// Rebelliousness might have changed, so update details
-		if (DetailLevel == 0)
+		if (DetailLevel == 0)								// Rebelliousness might have changed, so update details
 		{
 			string detail = g_Girls.GetDetailsString(selected_girl);
 			EditTextItem(detail, girldesc_id);
@@ -506,17 +469,17 @@ void cScreenGirlDetails::check_events()
 	}
 	if (g_InterfaceEvents.CheckButton(day_id))
 	{
+		Day0Night1 = SHIFT_DAY;
 		DisableButton(day_id, true);
 		DisableButton(night_id, false);
 		g_InitWin = true;
-		Day0Night1 = SHIFT_DAY;
 	}
 	if (g_InterfaceEvents.CheckButton(night_id))
 	{
+		Day0Night1 = SHIFT_NIGHT;
 		DisableButton(day_id, false);
 		DisableButton(night_id, true);
 		g_InitWin = true;
-		Day0Night1 = SHIFT_NIGHT;
 	}
 	if (g_InterfaceEvents.CheckCheckbox(antipreg_id))
 	{
@@ -525,10 +488,7 @@ void cScreenGirlDetails::check_events()
 	if (g_InterfaceEvents.CheckListbox(traitlist_id))
 	{
 		int selection = GetLastSelectedItemFromList(traitlist_id);
-		if (selection != -1)
-			EditTextItem(selected_girl->m_Traits[selection]->m_Desc, traitdesc_id);
-		else
-			EditTextItem("", traitdesc_id);
+		EditTextItem((selection != -1 ? selected_girl->m_Traits[selection]->desc() : ""), traitdesc_id);
 	}
 	if (g_InterfaceEvents.CheckListbox(jobtypelist_id))
 	{
@@ -538,10 +498,10 @@ void cScreenGirlDetails::check_events()
 	if (g_InterfaceEvents.CheckListbox(joblist_id))
 	{
 		bool fulltime = g_CTRLDown;
-
 		int selection = GetSelectedItemFromList(joblist_id);
 		if (selection != -1)
 		{
+			// `J` When modifying Jobs, search for "J-Change-Jobs"  :  found in >> 
 			int old_job = (Day0Night1 ? selected_girl->m_NightJob : selected_girl->m_DayJob);
 			// handle special job requirements and assign - if HandleSpecialJobs returns true, the job assignment was modified or cancelled
 			if (g_Brothels.m_JobManager.HandleSpecialJobs(g_CurrBrothel, selected_girl, selection, old_job, Day0Night1, fulltime))
@@ -562,7 +522,7 @@ void cScreenGirlDetails::check_events()
 	{
 		if (selected_girl)
 		{
-			if (GirlDead(selected_girl)) return;
+			if (selected_girl->is_dead()) return;
 			g_InitWin = true;
 			g_AllTogle = true;
 			g_WinManager.push("Item Management");
@@ -571,48 +531,38 @@ void cScreenGirlDetails::check_events()
 	}
 	if (g_InterfaceEvents.CheckButton(gallery_id))
 	{
-		g_WinManager.Push(Gallery, &g_Gallery);
+		g_WinManager.push("Gallery");
 		g_InitWin = true;
 		return;
 	}
-
-
 	if (g_InterfaceEvents.CheckSlider(accom_id))
 	{
 		selected_girl->m_AccLevel = SliderValue(accom_id);
 		SliderRange(accom_id, 0, 9, selected_girl->m_AccLevel, 1);
 		if (accomval_id != -1)
 		{
-			stringstream acc;
-			acc << "Accommodation: " << g_Girls.Accommodation(SliderValue(accom_id));
+			ss.str(""); ss << "Accommodation: " << g_Girls.Accommodation(SliderValue(accom_id));
 			if (cfg.debug.log_extradetails())
 			{
 				int val = SliderValue(accom_id) - g_Girls.PreferredAccom(selected_girl);
-				if (val != 0) acc << "  ( " << (val > 0 ? "+" : "") << val << " )";
+				if (val != 0) ss << "  ( " << (val > 0 ? "+" : "") << val << " )";
 			}
-			EditTextItem(acc.str(), accomval_id);
+			EditTextItem(ss.str(), accomval_id);
 		}
 		g_InitWin = true;
 		return;
 	}
-	if (g_InterfaceEvents.CheckButton(accomup_id))
+	int accadj = 0;
+	if (g_InterfaceEvents.CheckButton(accomup_id)) accadj = 1;
+	if (g_InterfaceEvents.CheckButton(accomdown_id)) accadj = -1;
+	if (accadj != 0)
 	{
-		if (selected_girl->m_AccLevel + 1 > 9)
-			selected_girl->m_AccLevel = 9;
-		else
-			selected_girl->m_AccLevel++;
+		selected_girl->m_AccLevel += accadj;
+		if (selected_girl->m_AccLevel > 9)	selected_girl->m_AccLevel = 9;
+		else if (selected_girl->m_AccLevel < 0)	selected_girl->m_AccLevel = 0;
 		if (accomval_id != -1) EditTextItem("Accommodation: " + g_Girls.Accommodation(selected_girl->m_AccLevel), accomval_id);
-
 		g_InitWin = true;
-		return;
-	}
-	if (g_InterfaceEvents.CheckButton(accomdown_id))
-	{
-		if (selected_girl->m_AccLevel - 1 < 0)	selected_girl->m_AccLevel = 0;
-		else									selected_girl->m_AccLevel--;
-		if (accomval_id != -1) EditTextItem("Accommodation: " + g_Girls.Accommodation(selected_girl->m_AccLevel), accomval_id);
-
-		g_InitWin = true;
+		accadj = 0;
 		return;
 	}
 	if (g_InterfaceEvents.CheckButton(takegold_id))
@@ -621,10 +571,11 @@ void cScreenGirlDetails::check_events()
 	}
 	if (g_InterfaceEvents.CheckButton(reldungeon_id))
 	{
+		if (!selected_girl) return;
 		g_Brothels.GetDungeon()->GetDungeonPos(selected_girl);
 		if ((g_Brothels.GetBrothel(g_CurrBrothel)->m_NumRooms - g_Brothels.GetBrothel(g_CurrBrothel)->m_NumGirls) == 0)
 		{
-			g_MessageQue.AddToQue(gettext("The current brothel has no more room.\nBuy a new one, get rid of some girls, or change the brothel you are currently managing."), 0);
+			g_MessageQue.AddToQue("The current brothel has no more room.\nBuy a new one, get rid of some girls, or change the brothel you are currently managing.", 0);
 		}
 		else
 		{
@@ -637,14 +588,14 @@ void cScreenGirlDetails::check_events()
 				selected_girl = 0;
 				g_WinManager.Pop();
 			}
-			else
-				selected_girl = nextGirl;
+			else selected_girl = nextGirl;
 		}
 		g_InitWin = true;
 		return;
 	}
 	if (g_InterfaceEvents.CheckButton(senddungeon_id))
 	{
+		if (!selected_girl) return;
 		ss.str("");
 		g_Brothels.GetGirlPos(g_CurrBrothel, selected_girl);
 
@@ -664,15 +615,15 @@ void cScreenGirlDetails::check_events()
 			// Calculate combat between goons and girl if she decides to fight back
 			if (win)
 			{
-				ss << gettext("She puts up a fight");
-				if (gang && gang->m_Num == 0) ss << gettext(", and the gang is completely wiped out");
+				ss << "She puts up a fight";
+				if (gang && gang->m_Num == 0) ss << ", and the gang is completely wiped out";
 				ss << ". ";
 
 				if (g_Brothels.PlayerCombat(selected_girl))				// fight with the player
 				{
 					// If girl wins she escapes and leaves the brothel
-					ss << gettext("After defeating you as well, she escapes to the outside.\n");
-					ss << gettext("She will escape for good in 6 weeks if you don't send someone after her.");
+					ss << "After defeating you as well, she escapes to the outside.\n";
+					ss << "She will escape for good in 6 weeks if you don't send someone after her.";
 
 					sGirl* nextGirl = remove_selected_girl();
 					sGirl* temp = selected_girl;
@@ -690,7 +641,7 @@ void cScreenGirlDetails::check_events()
 					g_Brothels.AddGirlToRunaways(temp);
 
 					stringstream smess;
-					smess << temp->m_Realname << gettext(" has run away");
+					smess << temp->m_Realname << " has run away";
 					g_MessageQue.AddToQue(smess.str(), 1);
 
 					selected_girl = nextGirl;
@@ -711,7 +662,7 @@ void cScreenGirlDetails::check_events()
 					else g_Brothels.RemoveGirl(selected_girl->where_is_she, selected_girl, false);
 
 					g_Brothels.GetDungeon()->AddGirl(selected_girl, reason);
-					ss << gettext("However, you manage to defeat her yourself and place her unconscious body in the dungeon.");
+					ss << "However, you manage to defeat her yourself and place her unconscious body in the dungeon.";
 
 					bool pop = false;
 					/* */if (selected_girl->m_InHouse)	if (g_House.GetNumGirls(0) == 0)	pop = true;
@@ -728,10 +679,10 @@ void cScreenGirlDetails::check_events()
 			}
 			else	// otherwise put her in the dungeon
 			{
-				ss << gettext("She puts up a fight ");
-				if (gang && gang->m_Num == 0)	ss << gettext("and the gang is wiped out, ");
+				ss << "She puts up a fight ";
+				if (gang && gang->m_Num == 0)	ss << "and the gang is wiped out, ";
 
-				ss << gettext("but your goons manage to drag her unconscious to the dungeon.");
+				ss << "but your goons manage to drag her unconscious to the dungeon.";
 				int reason = (selected_girl->m_Spotted ? DUNGEON_GIRLSTEAL : DUNGEON_GIRLWHIM);
 				sGirl* nextGirl = remove_selected_girl();
 
@@ -771,7 +722,7 @@ void cScreenGirlDetails::check_events()
 			else g_Brothels.RemoveGirl(selected_girl->where_is_she, selected_girl, false);
 
 			g_Brothels.GetDungeon()->AddGirl(selected_girl, reason);
-			ss << gettext("She goes quietly with a sullen look on her face.");
+			ss << "She goes quietly with a sullen look on her face.";
 
 			bool pop = false;
 			/* */if (selected_girl->m_InHouse)	if (g_House.GetNumGirls(0) == 0)	pop = true;
@@ -791,6 +742,7 @@ void cScreenGirlDetails::check_events()
 	}
 	if (g_InterfaceEvents.CheckButton(interact_id))
 	{
+		if (!selected_girl) return;
 		if (g_TalkCount > 0)
 		{
 			DirPath dp;
@@ -807,10 +759,7 @@ void cScreenGirlDetails::check_events()
 				else
 				{
 					// yes, so use that instead
-					if (cfg.folders.configXMLch())
-						dp = DirPath() << cfg.folders.characters() << selected_girl->m_Name << trig->m_Script;
-					else
-						dp = DirPath() << "Resources" << "Characters" << selected_girl->m_Name << trig->m_Script;
+					dp = DirPath(cfg.folders.characters().c_str()) << selected_girl->m_Name << trig->m_Script;
 				}
 			}
 			else
@@ -824,10 +773,7 @@ void cScreenGirlDetails::check_events()
 				}
 				else
 				{
-					if (cfg.folders.configXMLch())
-						dp = DirPath() << cfg.folders.characters() << selected_girl->m_Name << trig->m_Script;
-					else
-						dp = DirPath() << "Resources" << "Characters" << selected_girl->m_Name << trig->m_Script;
+					dp = DirPath(cfg.folders.characters().c_str()) << selected_girl->m_Name << trig->m_Script;
 				}
 			}
 			cScriptManager script_manager;
@@ -848,17 +794,6 @@ void cScreenGirlDetails::check_events()
 	}
 }
 
-bool cScreenGirlDetails::GirlDead(sGirl *dgirl, bool sendmessage)
-{
-	if (g_Girls.GetStat(dgirl, STAT_HEALTH) == 0)
-	{
-		if (sendmessage) g_MessageQue.AddToQue(gettext("This girl is dead. She isn't going to work anymore and her body will be removed by the end of the week."), 1);
-		return true;
-	}
-	else
-		return false;
-}
-
 void cScreenGirlDetails::RefreshJobList()
 {
 	ClearListBox(joblist_id);
@@ -867,12 +802,10 @@ void cScreenGirlDetails::RefreshJobList()
 
 	string text = "";
 	// populate Jobs listbox with jobs in the selected category
-	for (unsigned int i = g_Brothels.m_JobManager.JobFilterIndex[job_filter]; i<g_Brothels.m_JobManager.JobFilterIndex[job_filter + 1]; i++)
+	for (int i = g_Brothels.m_JobManager.JobFilterIndex[job_filter]; i<g_Brothels.m_JobManager.JobFilterIndex[job_filter + 1]; i++)
 	{
-		if (g_Brothels.m_JobManager.JobName[i] == "")
-			continue;
+		if (g_Brothels.m_JobManager.JobName[i] == "") continue;
 		text = g_Brothels.m_JobManager.JobDescriptionCount(i, g_CurrBrothel, Day0Night1, selected_girl->m_InClinic, selected_girl->m_InStudio, selected_girl->m_InArena, selected_girl->m_InCentre, selected_girl->m_InHouse, selected_girl->m_InFarm);
-
 		AddToListBox(joblist_id, i, text);
 	}
 	if (selected_girl)
@@ -894,13 +827,9 @@ void cScreenGirlDetails::NextGirl()
 	g_InitWin = true;
 }
 
-/*
-* return previous girl in the sorted list
-*/
-sGirl *cScreenGirlDetails::get_prev_girl()
+sGirl *cScreenGirlDetails::get_prev_girl()		// return previous girl in the sorted list
 {
 	sGirl *prev_girl = 0;
-
 	g_LogFile.write("Where is the girl??");
 
 	if (g_Clinic.GetGirlsCurrentBrothel(selected_girl) != -1)
@@ -946,17 +875,12 @@ sGirl *cScreenGirlDetails::get_prev_girl()
 			prev_girl = g_Brothels.GetGirl(g_CurrBrothel, g_Brothels.GetGirlPos(g_CurrBrothel, selected_girl) - 1);
 		}
 	}
-
 	return prev_girl;
 }
 
-/*
-* return next girl in the sorted list
-*/
-sGirl *cScreenGirlDetails::get_next_girl()
+sGirl *cScreenGirlDetails::get_next_girl()		// return next girl in the sorted list
 {
 	sGirl *next_girl = 0;
-
 	g_LogFile.write("Where is the girl??");
 
 	if (g_Clinic.GetGirlsCurrentBrothel(selected_girl) != -1)
@@ -1006,27 +930,16 @@ sGirl *cScreenGirlDetails::get_next_girl()
 	return next_girl;
 }
 
-/*
-* the selected girl is to be removed from the current list; returns next selected girl
-*/
-sGirl *cScreenGirlDetails::remove_selected_girl()
+sGirl *cScreenGirlDetails::remove_selected_girl()		// the selected girl is to be removed from the current list; returns next selected girl
 {
 	sGirl *next_girl = 0;
-
-	if (cycle_girls.size() == 0) {
-		return 0;
-	}
-
-	int cur_id = cycle_girls[cycle_pos];
-
+	if (cycle_girls.size() == 0) return 0;
+	int cur_id			= cycle_girls[cycle_pos];
 	cycle_girls.erase(cycle_girls.begin() + cycle_pos);  // remove her
-
 	if (cycle_pos >= (int)cycle_girls.size())
-	{  // if this girl was the last in the list, move list position -1 if possible
-		if (cycle_pos > 0)
-			cycle_pos--;
-		else  // or, maybe we have no more girls in the list
-			return next_girl;
+	{												
+		if (cycle_pos > 0) cycle_pos--;					// if this girl was the last in the list, move list position -1 if possible
+		else return next_girl;							// or, maybe we have no more girls in the list
 	}
 
 	if (selected_girl->m_DayJob == JOB_INDUNGEON) next_girl = g_Brothels.GetDungeon()->GetGirl(cycle_girls[cycle_pos])->m_Girl;
@@ -1039,18 +952,13 @@ sGirl *cScreenGirlDetails::remove_selected_girl()
 	else next_girl = g_Brothels.GetGirl(g_CurrBrothel, cycle_girls[cycle_pos]);
 
 	for (int i = cycle_girls.size(); i--> 0;)
-	{  // all girls with ID higher than removed girl need their ID reduced
-		if (cycle_girls[i] > cur_id)
-			cycle_girls[i]--;
+	{
+		if (cycle_girls[i] > cur_id) cycle_girls[i]--;	// all girls with ID higher than removed girl need their ID reduced
 	}
-
 	return next_girl;
 }
 
-/*
-* returns TRUE if the girl won
-*/
-bool cScreenGirlDetails::do_take_gold(sGirl *girl, string &message)
+bool cScreenGirlDetails::do_take_gold(sGirl *girl, string &message)	// returns TRUE if the girl won
 {
 	const int GIRL_LOSES = false;
 	const int GIRL_WINS = true;
@@ -1062,7 +970,7 @@ bool cScreenGirlDetails::do_take_gold(sGirl *girl, string &message)
 	*/
 	if (!g_Brothels.FightsBack(girl))
 	{
-		message += gettext("She quietly allows you to take her gold.");
+		message += "She quietly allows you to take her gold.";
 		return GIRL_LOSES;	// no fight -> girl lose
 	}
 	/*
@@ -1107,32 +1015,32 @@ bool cScreenGirlDetails::do_take_gold(sGirl *girl, string &message)
 	*/
 	if (girl_win_flag == GIRL_LOSES)
 	{		// put her in the dungeon
-		message += gettext("She puts up a fight ");
+		message += "She puts up a fight ";
 		if (gang && gang->m_Num == 0)
 		{
-			message += gettext("and the gang is wiped out, ");
+			message += "and the gang is wiped out, ";
 		}
-		message += gettext(" but you take her gold anyway.");
+		message += " but you take her gold anyway.";
 		return girl_win_flag;
 	}
 	/*
 	*	from here on down, the girl won against the goons
 	*/
-	message += gettext("She puts up a fight ");
-	if (gang && gang->m_Num == 0)	message += gettext(" and the gang is wiped out ");
+	message += "She puts up a fight ";
+	if (gang && gang->m_Num == 0)	message += " and the gang is wiped out ";
 	/*
 	*	can the player tame this particular shrew?
 	*/
 	if (!g_Brothels.PlayerCombat(girl))	// fight with the player
 	{
-		message += gettext("but you defeat her yourself and take her gold.");
+		message += "but you defeat her yourself and take her gold.";
 		return false;	// girl did not win, after all
 	}
 	/*
 	*	Looks like she won: put her out of the brothel
 	*	and post her as a runaway
 	*/
-	message += gettext("after defeating you as well she escapes to the outside.\n");
+	message += "after defeating you as well she escapes to the outside.\n";
 
 	sGirl* nextGirl = remove_selected_girl();
 	sGirl* temp = girl;
@@ -1155,7 +1063,7 @@ bool cScreenGirlDetails::do_take_gold(sGirl *girl, string &message)
 	g_Brothels.AddGirlToRunaways(temp);
 
 	stringstream smess;
-	smess << temp->m_Realname << gettext(" has run away");
+	smess << temp->m_Realname << " has run away";
 	g_MessageQue.AddToQue(smess.str(), 1);
 
 	selected_girl = nextGirl;
@@ -1191,23 +1099,23 @@ void cScreenGirlDetails::take_gold(sGirl *girl)
 	*/
 	if (girl->m_States&(1 << STATUS_SLAVE))
 	{
-		g_Girls.UpdateStat(girl, STAT_CONFIDENCE, -1);
-		g_Girls.UpdateStat(girl, STAT_OBEDIENCE, 5);
-		g_Girls.UpdateStat(girl, STAT_SPIRIT, -2);
-		g_Girls.UpdateStat(girl, STAT_PCHATE, 5);
-		g_Girls.UpdateStat(girl, STAT_PCLOVE, -5);
-		g_Girls.UpdateStat(girl, STAT_PCFEAR, 5);
-		g_Girls.UpdateStat(girl, STAT_HAPPINESS, -20);
+		girl->confidence(-1);
+		girl->obedience(5);
+		girl->spirit(-2);
+		girl->pchate(5);
+		girl->pclove(-5);
+		girl->pcfear(5);
+		girl->happiness(-20);
 	}
 	else
 	{
-		g_Girls.UpdateStat(girl, STAT_CONFIDENCE, -5);
-		g_Girls.UpdateStat(girl, STAT_OBEDIENCE, 5);
-		g_Girls.UpdateStat(girl, STAT_SPIRIT, -10);
-		g_Girls.UpdateStat(girl, STAT_PCHATE, 30);
-		g_Girls.UpdateStat(girl, STAT_PCLOVE, -30);
-		g_Girls.UpdateStat(girl, STAT_PCFEAR, 10);
-		g_Girls.UpdateStat(girl, STAT_HAPPINESS, -50);
+		girl->confidence(-5);
+		girl->obedience(5);
+		girl->spirit(-10);
+		girl->pchate(30);
+		girl->pclove(-30);
+		girl->pcfear(10);
+		girl->happiness(-50);
 	}
 	/*
 	*	and queue the message again

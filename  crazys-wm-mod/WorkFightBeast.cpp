@@ -57,35 +57,81 @@ bool cJobManager::WorkFightBeast(sGirl* girl, sBrothel* brothel, bool Day0Night1
 		return false;	// not refusing
 	}
 	int roll = g_Dice.d100();
-	if (roll <= 10 && g_Girls.DisobeyCheck(girl, actiontype, brothel))
+	if (roll <= 10 && girl->disobey_check(actiontype, brothel))
 	{
 		ss << " refused to fight beasts today.\n";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
 		return true;
 	}
 
-	
-	g_Girls.EquipCombat(girl);	// ready armor and weapons!
-	Uint8 fight_outcome = 0;
-	int wages = 175, enjoy = 0;
-	double jobperformance = JP_FightBeast(girl, false);
+	int found = 0;
+	int Armor = -1, Weap1 = -1, Weap2 = -1;
+	for (int i = 0; i < MAXNUM_GIRL_INVENTORY && found<girl->m_NumInventory; i++)
+		if (girl->m_Inventory[i] != 0)
+		{
+			found++;
+			if (girl->m_Inventory[i]->m_Type == INVWEAPON)
+			{
+				g_InvManager.Unequip(girl, i);
+				if (Weap1 == -1) Weap1 = i;
+				else if (Weap2 == -1) Weap2 = i;
+				else if (girl->m_Inventory[i]->m_Cost > girl->m_Inventory[Weap1]->m_Cost)
+				{
+					Weap2 = Weap1;
+					Weap1 = i;
+				}
+				else if (girl->m_Inventory[i]->m_Cost > girl->m_Inventory[Weap2]->m_Cost)
+					Weap2 = i;
+			}
+			if (girl->m_Inventory[i]->m_Type == INVARMOR)
+			{
+				g_InvManager.Unequip(girl, i);
+				if (Armor == -1) Armor = i;
+				else if (girl->m_Inventory[i]->m_Cost > girl->m_Inventory[Armor]->m_Cost) Armor = i;
+			}
+		}
 
-	if (roll <= 15)
+	if (Armor > -1)		g_InvManager.Equip(girl, Armor, false);
+	if (Weap1 > -1)		g_InvManager.Equip(girl, Weap1, false);
+	if (Weap2 > -1)		g_InvManager.Equip(girl, Weap2, false);
+
+	if (Armor == -1)
 	{
-		ss << " didn't like fighting beasts today.";
-		enjoy -= 3;
-	}
-	else if (roll >= 90)
-	{
-		ss << " loved fighting beasts today.";
-		enjoy += 3;
+		ss << "The crowd can't belive you sent " << girlName << " out to fight without armor";
+		if (Weap1 == -1 && Weap2 == -1)
+		{
+			ss << " or a weapon.";
+		}
+		else if (Weap1 > -1 || Weap2 > -1)
+		{
+			ss << ". But atleast she had a weapon.";
+		}
+		else
+		{
+			ss << ".";
+		}
+
 	}
 	else
 	{
-		ss << " had a pleasant time fighting beasts today.";
-		enjoy += 1;
+		ss << girlName << " came out in armor";
+		if (Weap1 == -1 && Weap2 == -1)
+		{
+			ss << " but didn't have a weapon.";
+		}
+		else
+		{
+			ss << " and with a weapon in hand. The crowd felt she was ready for battle.";
+		}
 	}
-	ss << "\n\n";
+	ss << "\n \n";
+
+
+	g_Girls.EquipCombat(girl);	// ready armor and weapons!
+	Uint8 fight_outcome = 0;
+	int wages = 175, tips = 0, enjoy = 0;
+	double jobperformance = JP_FightBeast(girl, false);
+
 
 	// TODO need better dialog
 
@@ -102,33 +148,34 @@ bool cJobManager::WorkFightBeast(sGirl* girl, sBrothel* brothel, bool Day0Night1
 	}
 	if (fight_outcome == 7)
 	{
-		ss << "The beasts were not cooperating and refused to fight.\n\n";
+		ss << "The beasts were not cooperating and refused to fight.\n \n";
 		ss << "(Error: You need a Non-Human Random Girl to allow WorkFightBeast randomness)";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, Day0Night1);
 	}
 	else if (fight_outcome == 1)	// she won
 	{
-		ss << "She had fun fighting beasts today.";
+		ss << "She won the fight againts beasts today.";//was confusing
 		enjoy += 3;
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_COMBAT, Day0Night1);
 		int roll_max = girl->fame() + girl->charisma();
 		roll_max /= 4;
 		wages += 10 + g_Dice%roll_max;
-		girl->m_Pay = wages;
-		g_Girls.UpdateStat(girl, STAT_FAME, 2);
+		girl->m_Tips = max(0, tips);
+		girl->m_Pay = max(0, wages);
+		girl->fame(2);
 	}
 	else  // she lost or it was a draw
 	{
 		ss << "She was unable to win the fight.";
 		enjoy -= 1;
 		//Crazy i feel there needs be more of a bad outcome for losses added this... Maybe could use some more
-		if (m_JobManager.is_sex_type_allowed(SKILL_BEASTIALITY, brothel) && !g_Girls.HasTrait(girl, "Virgin"))
+		if (m_JobManager.is_sex_type_allowed(SKILL_BEASTIALITY, brothel) && !girl->check_virginity())
 		{
 			ss << " So as punishment you allow the beast to have its way with her."; enjoy -= 1;
-			g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, -50);
-			g_Girls.UpdateSkill(girl, SKILL_BEASTIALITY, 2);
+			girl->upd_temp_stat(STAT_LIBIDO, -50, true);
+			girl->beastiality(2);
 			girl->m_Events.AddMessage(ss.str(), IMGTYPE_BEAST, Day0Night1);
-			if (!girl->calc_insemination(The_Player, false, 1.0))
+			if (!girl->calc_insemination(*g_Girls.GetBeast(), false, 1.0))
 			{
 				g_MessageQue.AddToQue(girl->m_Realname + " has gotten inseminated", 0);
 			}
@@ -137,7 +184,7 @@ bool cJobManager::WorkFightBeast(sGirl* girl, sBrothel* brothel, bool Day0Night1
 		{
 			ss << " So you send your men in to cage the beast before it can harm her.";
 			girl->m_Events.AddMessage(ss.str(), IMGTYPE_COMBAT, Day0Night1);
-			g_Girls.UpdateStat(girl, STAT_FAME, -1);
+			girl->fame(-1);
 		}
 	}
 
@@ -145,7 +192,39 @@ bool cJobManager::WorkFightBeast(sGirl* girl, sBrothel* brothel, bool Day0Night1
 	if (g_Brothels.GetNumBeasts() < kills)	// or however many there are
 		kills = g_Brothels.GetNumBeasts();
 	if (kills < 0) kills = 0;				// can't gain any
-	g_Brothels.add_to_beasts(kills);
+	g_Brothels.add_to_beasts(-kills);
+
+	if (girl->is_pregnant())
+	{
+		if (girl->strength() >= 60)
+		{
+			ss << "\n \nAll that fighting proved to be quite exhausting for a pregnant girl, even for one as strong as " << girlName << " .\n";
+		}
+		else
+		{
+			ss << "\n \nAll that fighting proved to be quite exhausting for a pregnant girl like " << girlName << " .\n";
+		}
+		girl->tiredness(10 - girl->strength() / 20 );
+	}
+
+
+
+	if (roll <= 15)
+	{
+		ss << " didn't like fighting beasts today.";
+		enjoy -= 3;
+	}
+	else if (roll >= 90)
+	{
+		ss << " loved fighting beasts today.";
+		enjoy += 3;
+	}
+	else
+	{
+		ss << " had a pleasant time fighting beasts today.";
+		enjoy += 1;
+	}
+	ss << "\n \n";
 
 	// Cleanup
 	if (tempgirl) delete tempgirl; tempgirl = 0;
@@ -166,26 +245,30 @@ bool cJobManager::WorkFightBeast(sGirl* girl, sBrothel* brothel, bool Day0Night1
 	ss << girlName << " drew in " << jobperformance << " people to watch her and you earned " << earned << " from it.";
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, Day0Night1);
 
-	g_Girls.UpdateEnjoyment(girl, actiontype, enjoy);
+	girl->upd_Enjoyment(actiontype, enjoy);
 	// Improve girl
 	int fightxp = (fight_outcome == 1 ? 3 : 1);
 	int xp = 3 * fightxp, libido = 2, skill = 1;
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 3; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 3; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
+	if (girl->has_trait( "Quick Learner"))		{ skill += 1; xp += 3; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; xp -= 3; }
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
 
-	g_Girls.UpdateStat(girl, STAT_EXP, xp);
-	g_Girls.UpdateSkill(girl, SKILL_COMBAT, g_Dice%fightxp + skill);
-	g_Girls.UpdateSkill(girl, SKILL_MAGIC, g_Dice%fightxp + skill);
-	g_Girls.UpdateStat(girl, STAT_AGILITY, g_Dice%fightxp + skill);
-	g_Girls.UpdateStat(girl, STAT_CONSTITUTION, g_Dice%fightxp + skill);
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
-	g_Girls.UpdateSkill(girl, SKILL_BEASTIALITY, g_Dice%fightxp * 2 + skill);
+	girl->exp(xp);
+	girl->combat(g_Dice%fightxp + skill);
+	girl->magic(g_Dice%fightxp + skill);
+	girl->agility(g_Dice%fightxp + skill);
+	girl->constitution(g_Dice%fightxp + skill);
+	girl->upd_temp_stat(STAT_LIBIDO, libido);
+	girl->beastiality(g_Dice%fightxp * 2 + skill);
 
 	g_Girls.PossiblyGainNewTrait(girl, "Tough", 20, actiontype, "She has become pretty Tough from all of the fights she's been in.", Day0Night1);
 	g_Girls.PossiblyGainNewTrait(girl, "Aggressive", 60, actiontype, "She is getting rather Aggressive from her enjoyment of combat.", Day0Night1);
 	g_Girls.PossiblyGainNewTrait(girl, "Fleet of Foot", 30, actiontype, "She is getting rather fast from all the fighting.", Day0Night1);
+	if (g_Dice.percent(25) && girl->strength() >= 60 && girl->combat() > girl->magic())
+	{
+		g_Girls.PossiblyGainNewTrait(girl, "Strong", 60, ACTION_COMBAT, girlName + " has become pretty Strong from all of the fights she's been in.", Day0Night1);
+	}
 
 	//lose traits
 	g_Girls.PossiblyLoseExistingTrait(girl, "Fragile", 75, actiontype, girl->m_Realname + " has had to heal from so many injuries you can't say she is fragile anymore.", Day0Night1);
@@ -208,7 +291,13 @@ double cJobManager::JP_FightBeast(sGirl* girl, bool estimate)// not used
 	}
 	else// for the actual check
 	{
-		jobperformance += (g_Girls.GetStat(girl, STAT_FAME) + g_Girls.GetStat(girl, STAT_CHARISMA)) / 2;
+		jobperformance += (girl->fame() + girl->charisma()) / 2;
+		if (!estimate)
+		{
+			int t = girl->tiredness() - 80;
+			if (t > 0)
+				jobperformance -= (t + 2) * (t / 2);
+		}
 
 	}
 	return jobperformance;

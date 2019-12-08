@@ -49,6 +49,7 @@ static const char *stats[] = {
 	"charisma", "happiness", "libido", "constitution", "intelligence", "confidence", "mana", "agility", "fame",
 	"level", "askprice", "house", "exp", "age", "obedience", "spirit", "beauty", "tiredness",
 	"health", "pc_fear", "pc_love", "pc_hate", "morality", "refinement", "dignity", "lactation", "strength", "npc_love",
+	"sanity",
 	0
 };
 // `J` When modifying Stats or Skills, search for "J-Change-Stats-Skills"  :  found in >> cLuaScript.cpp
@@ -398,11 +399,11 @@ static void add_trait_table(lua_State *L, sGirl *girl, int table)
  *	now loop over the trait list
  */
 	for(unsigned int i = 0; i < girl->m_NumTraits; i++) {
-		sTrait *trait = girl->m_Traits[i];
+		TraitSpec *trait = girl->m_Traits[i];
 /*
  *		store the description keyed under the trait name
  */
-		add_to_table(L, trait_table, trait->m_Name, trait->m_Desc);
+		add_to_table(L, trait_table, trait->name().c_str(), trait->desc().c_str());
 	}
 /*
  *	and now add the trait table to the girl table
@@ -479,7 +480,7 @@ static int create_random_girl(lua_State *L)
 {
 	CLog log;
 
-	int age			= 17;		// if age is less than 18, virgin is set to true and age gets reset to 18
+	int age			= 17;		// if age is less than 18, virgin is set to true and age gets reset to 18	// `J` Legal Note: 18 is the Legal Age of Majority for the USA where I live 
 	bool global		= false;	// set to true to add her to the pool
 	bool slave		= false;	// set to true to create her as a slave
 	bool undead		= false;	// unused by CreateRandomGirl

@@ -1,18 +1,18 @@
 /*
  * Copyright 2009, 2010, The Pink Petal Development Team.
- * The Pink Petal Devloment Team are defined as the game's coders 
+ * The Pink Petal Devloment Team are defined as the game's coders
  * who meet on http://pinkpetal.org     // old site: http://pinkpetal .co.cc
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -54,290 +54,298 @@ static cTariff tariff;
 static stringstream ss;
 
 bool cScreenPropertyManagement::ids_set = false;
+cScreenPropertyManagement::cScreenPropertyManagement()
+{
+
+	DirPath dp = DirPath() << "Resources" << "Interface" << cfg.resolution.resolution() << "property_management.xml";
+	m_filename = dp.c_str();
+}
+cScreenPropertyManagement::~cScreenPropertyManagement() {}
 
 void cScreenPropertyManagement::set_ids()
 {
-	ids_set = true;
-	back_id         = get_id("BackButton");
+	ids_set			/**/ = true;
+	g_LogFile.write("set_ids in cScreenPropertyManagement");
+
+	back_id = get_id("BackButton", "Back");
 	barstaff_id     = get_id("BarStaffCost");  // not used anymore?
 	barhire_id      = get_id("BarHireButton");  // not used anymore?
 	barfire_id      = get_id("BarFireButton");  // not used anymore?
 	casinostaff_id  = get_id("CasinoStaffCost");  // not used anymore?
 	casinohire_id   = get_id("CasinoHireButton");  // not used anymore?
 	casinofire_id   = get_id("CasinoFireButton");  // not used anymore?
-	roomcost_id = get_id("RoomAddCost");
-	restrict_id = get_id("SexRestrictions");
-	
-	curbrothel_id = get_id("CurrentBrothel");
-	p_b0_id = get_id("P_B0_Name");
-	p_b1_id = get_id("P_B1_Name");
-	p_b2_id = get_id("P_B2_Name");
-	p_b3_id = get_id("P_B3_Name");
-	p_b4_id = get_id("P_B4_Name");
-	p_b5_id = get_id("P_B5_Name");
-	p_b6_id = get_id("P_B6_Name");
-	p_st_id = get_id("P_St_Name");
-	p_ar_id = get_id("P_Ar_Name");
-	p_ce_id = get_id("P_Ce_Name");
-	p_cl_id = get_id("P_Cl_Name");
-	p_ho_id = get_id("P_Ho_Name");
-	p_fa_id = get_id("P_Fa_Name");
+	roomcost_id		= get_id("RoomAddCost");
+	restrict_id		= get_id("SexRestrictions");
 
-	buyrooms_id = get_id("BuildRoomsButton");
-	p_b0_addroom = get_id("P_B0_AddRoom");
-	p_b1_addroom = get_id("P_B1_AddRoom");
-	p_b2_addroom = get_id("P_B2_AddRoom");
-	p_b3_addroom = get_id("P_B3_AddRoom");
-	p_b4_addroom = get_id("P_B4_AddRoom");
-	p_b5_addroom = get_id("P_B5_AddRoom");
-	p_b6_addroom = get_id("P_B6_AddRoom");
-	p_st_addroom = get_id("P_St_AddRoom");
-	p_ar_addroom = get_id("P_Ar_AddRoom");
-	p_ce_addroom = get_id("P_Ce_AddRoom");
-	p_cl_addroom = get_id("P_Cl_AddRoom");
-	p_ho_addroom = get_id("P_Ho_AddRoom");
-	p_fa_addroom = get_id("P_Fa_AddRoom");
-	
-	potioncost_id = get_id("PotionCost");
-	p_b0_pot_c = get_id("P_B0_Pot_C");
-	p_b1_pot_c = get_id("P_B1_Pot_C");
-	p_b2_pot_c = get_id("P_B2_Pot_C");
-	p_b3_pot_c = get_id("P_B3_Pot_C");
-	p_b4_pot_c = get_id("P_B4_Pot_C");
-	p_b5_pot_c = get_id("P_B5_Pot_C");
-	p_b6_pot_c = get_id("P_B6_Pot_C");
-	p_st_pot_c = get_id("P_St_Pot_C");
-	p_ar_pot_c = get_id("P_Ar_Pot_C");
-	p_ce_pot_c = get_id("P_Ce_Pot_C");
-	p_cl_pot_c = get_id("P_Cl_Pot_C");
-	p_ho_pot_c = get_id("P_Ho_Pot_C");
-	p_fa_pot_c = get_id("P_Fa_Pot_C");
+	curbrothel_id	= get_id("CurrentBrothel");
+	p_b0_id			= get_id("P_B0_Name");
+	p_b1_id			= get_id("P_B1_Name");
+	p_b2_id			= get_id("P_B2_Name");
+	p_b3_id			= get_id("P_B3_Name");
+	p_b4_id			= get_id("P_B4_Name");
+	p_b5_id			= get_id("P_B5_Name");
+	p_b6_id			= get_id("P_B6_Name");
+	p_st_id			= get_id("P_St_Name");
+	p_ar_id			= get_id("P_Ar_Name");
+	p_ce_id			= get_id("P_Ce_Name");
+	p_cl_id			= get_id("P_Cl_Name");
+	p_ho_id			= get_id("P_Ho_Name");
+	p_fa_id			= get_id("P_Fa_Name");
 
-	potionavail_id = get_id("AvailablePotions");
-	p_b0_pot_a = get_id("P_B0_Pot_A");
-	p_b1_pot_a = get_id("P_B1_Pot_A");
-	p_b2_pot_a = get_id("P_B2_Pot_A");
-	p_b3_pot_a = get_id("P_B3_Pot_A");
-	p_b4_pot_a = get_id("P_B4_Pot_A");
-	p_b5_pot_a = get_id("P_B5_Pot_A");
-	p_b6_pot_a = get_id("P_B6_Pot_A");
-	p_st_pot_a = get_id("P_St_Pot_A");
-	p_ar_pot_a = get_id("P_Ar_Pot_A");
-	p_ce_pot_a = get_id("P_Ce_Pot_A");
-	p_cl_pot_a = get_id("P_Cl_Pot_A");
-	p_ho_pot_a = get_id("P_Ho_Pot_A");
-	p_fa_pot_a = get_id("P_Fa_Pot_A");
+	buyrooms_id		= get_id("BuildRoomsButton");
+	p_b0_addroom	= get_id("P_B0_AddRoom");
+	p_b1_addroom	= get_id("P_B1_AddRoom");
+	p_b2_addroom	= get_id("P_B2_AddRoom");
+	p_b3_addroom	= get_id("P_B3_AddRoom");
+	p_b4_addroom	= get_id("P_B4_AddRoom");
+	p_b5_addroom	= get_id("P_B5_AddRoom");
+	p_b6_addroom	= get_id("P_B6_AddRoom");
+	p_st_addroom	= get_id("P_St_AddRoom");
+	p_ar_addroom	= get_id("P_Ar_AddRoom");
+	p_ce_addroom	= get_id("P_Ce_AddRoom");
+	p_cl_addroom	= get_id("P_Cl_AddRoom");
+	p_ho_addroom	= get_id("P_Ho_AddRoom");
+	p_fa_addroom	= get_id("P_Fa_AddRoom");
 
-	potions10_id = get_id("10PotionsButton");
-	p_b0_pot10 = get_id("P_B0_Pot10");
-	p_b1_pot10 = get_id("P_B1_Pot10");
-	p_b2_pot10 = get_id("P_B2_Pot10");
-	p_b3_pot10 = get_id("P_B3_Pot10");
-	p_b4_pot10 = get_id("P_B4_Pot10");
-	p_b5_pot10 = get_id("P_B5_Pot10");
-	p_b6_pot10 = get_id("P_B6_Pot10");
-	p_st_pot10 = get_id("P_St_Pot10");
-	p_ar_pot10 = get_id("P_Ar_Pot10");
-	p_ce_pot10 = get_id("P_Ce_Pot10");
-	p_cl_pot10 = get_id("P_Cl_Pot10");
-	p_ho_pot10 = get_id("P_Ho_Pot10");
-	p_fa_pot10 = get_id("P_Fa_Pot10");
+	potioncost_id	= get_id("PotionCost");
+	p_b0_pot_c		= get_id("P_B0_Pot_C");
+	p_b1_pot_c		= get_id("P_B1_Pot_C");
+	p_b2_pot_c		= get_id("P_B2_Pot_C");
+	p_b3_pot_c		= get_id("P_B3_Pot_C");
+	p_b4_pot_c		= get_id("P_B4_Pot_C");
+	p_b5_pot_c		= get_id("P_B5_Pot_C");
+	p_b6_pot_c		= get_id("P_B6_Pot_C");
+	p_st_pot_c		= get_id("P_St_Pot_C");
+	p_ar_pot_c		= get_id("P_Ar_Pot_C");
+	p_ce_pot_c		= get_id("P_Ce_Pot_C");
+	p_cl_pot_c		= get_id("P_Cl_Pot_C");
+	p_ho_pot_c		= get_id("P_Ho_Pot_C");
+	p_fa_pot_c		= get_id("P_Fa_Pot_C");
 
-	potions20_id = get_id("20PotionsButton");
-	p_b0_pot20 = get_id("P_B0_Pot20");
-	p_b1_pot20 = get_id("P_B1_Pot20");
-	p_b2_pot20 = get_id("P_B2_Pot20");
-	p_b3_pot20 = get_id("P_B3_Pot20");
-	p_b4_pot20 = get_id("P_B4_Pot20");
-	p_b5_pot20 = get_id("P_B5_Pot20");
-	p_b6_pot20 = get_id("P_B6_Pot20");
-	p_st_pot20 = get_id("P_St_Pot20");
-	p_ar_pot20 = get_id("P_Ar_Pot20");
-	p_ce_pot20 = get_id("P_Ce_Pot20");
-	p_cl_pot20 = get_id("P_Cl_Pot20");
-	p_ho_pot20 = get_id("P_Ho_Pot20");
-	p_fa_pot20 = get_id("P_Fa_Pot20");
+	potionavail_id	= get_id("AvailablePotions");
+	p_b0_pot_a		= get_id("P_B0_Pot_A");
+	p_b1_pot_a		= get_id("P_B1_Pot_A");
+	p_b2_pot_a		= get_id("P_B2_Pot_A");
+	p_b3_pot_a		= get_id("P_B3_Pot_A");
+	p_b4_pot_a		= get_id("P_B4_Pot_A");
+	p_b5_pot_a		= get_id("P_B5_Pot_A");
+	p_b6_pot_a		= get_id("P_B6_Pot_A");
+	p_st_pot_a		= get_id("P_St_Pot_A");
+	p_ar_pot_a		= get_id("P_Ar_Pot_A");
+	p_ce_pot_a		= get_id("P_Ce_Pot_A");
+	p_cl_pot_a		= get_id("P_Cl_Pot_A");
+	p_ho_pot_a		= get_id("P_Ho_Pot_A");
+	p_fa_pot_a		= get_id("P_Fa_Pot_A");
 
-	autopotions_id = get_id("AutoBuyPotionToggle");
-	p_b0_pot_b = get_id("P_B0_Pot_B");
-	p_b1_pot_b = get_id("P_B1_Pot_B");
-	p_b2_pot_b = get_id("P_B2_Pot_B");
-	p_b3_pot_b = get_id("P_B3_Pot_B");
-	p_b4_pot_b = get_id("P_B4_Pot_B");
-	p_b5_pot_b = get_id("P_B5_Pot_B");
-	p_b6_pot_b = get_id("P_B6_Pot_B");
-	p_st_pot_b = get_id("P_St_Pot_B");
-	p_ar_pot_b = get_id("P_Ar_Pot_B");
-	p_ce_pot_b = get_id("P_Ce_Pot_B");
-	p_cl_pot_b = get_id("P_Cl_Pot_B");
-	p_ho_pot_b = get_id("P_Ho_Pot_B");
-	p_fa_pot_b = get_id("P_Fa_Pot_B");
+	potions10_id	= get_id("10PotionsButton");
+	p_b0_pot10		= get_id("P_B0_Pot10");
+	p_b1_pot10		= get_id("P_B1_Pot10");
+	p_b2_pot10		= get_id("P_B2_Pot10");
+	p_b3_pot10		= get_id("P_B3_Pot10");
+	p_b4_pot10		= get_id("P_B4_Pot10");
+	p_b5_pot10		= get_id("P_B5_Pot10");
+	p_b6_pot10		= get_id("P_B6_Pot10");
+	p_st_pot10		= get_id("P_St_Pot10");
+	p_ar_pot10		= get_id("P_Ar_Pot10");
+	p_ce_pot10		= get_id("P_Ce_Pot10");
+	p_cl_pot10		= get_id("P_Cl_Pot10");
+	p_ho_pot10		= get_id("P_Ho_Pot10");
+	p_fa_pot10		= get_id("P_Fa_Pot10");
 
-	noanal_id = get_id("ProhibitAnalToggleRes");
-	p_b0_noanal = get_id("P_B0_NoAnal");
-	p_b1_noanal = get_id("P_B1_NoAnal");
-	p_b2_noanal = get_id("P_B2_NoAnal");
-	p_b3_noanal = get_id("P_B3_NoAnal");
-	p_b4_noanal = get_id("P_B4_NoAnal");
-	p_b5_noanal = get_id("P_B5_NoAnal");
-	p_b6_noanal = get_id("P_B6_NoAnal");
-	p_st_noanal = get_id("P_St_NoAnal");
-	p_ar_noanal = get_id("P_Ar_NoAnal");
-	p_ce_noanal = get_id("P_Ce_NoAnal");
-	p_cl_noanal = get_id("P_Cl_NoAnal");
-	p_ho_noanal = get_id("P_Ho_NoAnal");
-	p_fa_noanal = get_id("P_Fa_NoAnal");
+	potions20_id	= get_id("20PotionsButton");
+	p_b0_pot20		= get_id("P_B0_Pot20");
+	p_b1_pot20		= get_id("P_B1_Pot20");
+	p_b2_pot20		= get_id("P_B2_Pot20");
+	p_b3_pot20		= get_id("P_B3_Pot20");
+	p_b4_pot20		= get_id("P_B4_Pot20");
+	p_b5_pot20		= get_id("P_B5_Pot20");
+	p_b6_pot20		= get_id("P_B6_Pot20");
+	p_st_pot20		= get_id("P_St_Pot20");
+	p_ar_pot20		= get_id("P_Ar_Pot20");
+	p_ce_pot20		= get_id("P_Ce_Pot20");
+	p_cl_pot20		= get_id("P_Cl_Pot20");
+	p_ho_pot20		= get_id("P_Ho_Pot20");
+	p_fa_pot20		= get_id("P_Fa_Pot20");
 
-	nobdsm_id = get_id("ProhibitBDSMToggleRes");
-	p_b0_nobdsm = get_id("P_B0_NoBDSM");
-	p_b1_nobdsm = get_id("P_B1_NoBDSM");
-	p_b2_nobdsm = get_id("P_B2_NoBDSM");
-	p_b3_nobdsm = get_id("P_B3_NoBDSM");
-	p_b4_nobdsm = get_id("P_B4_NoBDSM");
-	p_b5_nobdsm = get_id("P_B5_NoBDSM");
-	p_b6_nobdsm = get_id("P_B6_NoBDSM");
-	p_st_nobdsm = get_id("P_St_NoBDSM");
-	p_ar_nobdsm = get_id("P_Ar_NoBDSM");
-	p_ce_nobdsm = get_id("P_Ce_NoBDSM");
-	p_cl_nobdsm = get_id("P_Cl_NoBDSM");
-	p_ho_nobdsm = get_id("P_Ho_NoBDSM");
-	p_fa_nobdsm = get_id("P_Fa_NoBDSM");
+	autopotions_id	= get_id("AutoBuyPotionToggle");
+	p_b0_pot_b		= get_id("P_B0_Pot_B");
+	p_b1_pot_b		= get_id("P_B1_Pot_B");
+	p_b2_pot_b		= get_id("P_B2_Pot_B");
+	p_b3_pot_b		= get_id("P_B3_Pot_B");
+	p_b4_pot_b		= get_id("P_B4_Pot_B");
+	p_b5_pot_b		= get_id("P_B5_Pot_B");
+	p_b6_pot_b		= get_id("P_B6_Pot_B");
+	p_st_pot_b		= get_id("P_St_Pot_B");
+	p_ar_pot_b		= get_id("P_Ar_Pot_B");
+	p_ce_pot_b		= get_id("P_Ce_Pot_B");
+	p_cl_pot_b		= get_id("P_Cl_Pot_B");
+	p_ho_pot_b		= get_id("P_Ho_Pot_B");
+	p_fa_pot_b		= get_id("P_Fa_Pot_B");
 
-	nonormal_id = get_id("ProhibitNormalToggleRes");
-	p_b0_nonorm = get_id("P_B0_NoNorm");
-	p_b1_nonorm = get_id("P_B1_NoNorm");
-	p_b2_nonorm = get_id("P_B2_NoNorm");
-	p_b3_nonorm = get_id("P_B3_NoNorm");
-	p_b4_nonorm = get_id("P_B4_NoNorm");
-	p_b5_nonorm = get_id("P_B5_NoNorm");
-	p_b6_nonorm = get_id("P_B6_NoNorm");
-	p_st_nonorm = get_id("P_St_NoNorm");
-	p_ar_nonorm = get_id("P_Ar_NoNorm");
-	p_ce_nonorm = get_id("P_Ce_NoNorm");
-	p_cl_nonorm = get_id("P_Cl_NoNorm");
-	p_ho_nonorm = get_id("P_Ho_NoNorm");
-	p_fa_nonorm = get_id("P_Fa_NoNorm");
+	noanal_id		= get_id("ProhibitAnalToggleRes");
+	p_b0_noanal		= get_id("P_B0_NoAnal");
+	p_b1_noanal		= get_id("P_B1_NoAnal");
+	p_b2_noanal		= get_id("P_B2_NoAnal");
+	p_b3_noanal		= get_id("P_B3_NoAnal");
+	p_b4_noanal		= get_id("P_B4_NoAnal");
+	p_b5_noanal		= get_id("P_B5_NoAnal");
+	p_b6_noanal		= get_id("P_B6_NoAnal");
+	p_st_noanal		= get_id("P_St_NoAnal");
+	p_ar_noanal		= get_id("P_Ar_NoAnal");
+	p_ce_noanal		= get_id("P_Ce_NoAnal");
+	p_cl_noanal		= get_id("P_Cl_NoAnal");
+	p_ho_noanal		= get_id("P_Ho_NoAnal");
+	p_fa_noanal		= get_id("P_Fa_NoAnal");
 
-	nobeast_id = get_id("ProhibitBeastToggleRes");
-	p_b0_nobeast = get_id("P_B0_NoBeast");
-	p_b1_nobeast = get_id("P_B1_NoBeast");
-	p_b2_nobeast = get_id("P_B2_NoBeast");
-	p_b3_nobeast = get_id("P_B3_NoBeast");
-	p_b4_nobeast = get_id("P_B4_NoBeast");
-	p_b5_nobeast = get_id("P_B5_NoBeast");
-	p_b6_nobeast = get_id("P_B6_NoBeast");
-	p_st_nobeast = get_id("P_St_NoBeast");
-	p_ar_nobeast = get_id("P_Ar_NoBeast");
-	p_ce_nobeast = get_id("P_Ce_NoBeast");
-	p_cl_nobeast = get_id("P_Cl_NoBeast");
-	p_ho_nobeast = get_id("P_Ho_NoBeast");
-	p_fa_nobeast = get_id("P_Fa_NoBeast");
+	nobdsm_id		= get_id("ProhibitBDSMToggleRes");
+	p_b0_nobdsm		= get_id("P_B0_NoBDSM");
+	p_b1_nobdsm		= get_id("P_B1_NoBDSM");
+	p_b2_nobdsm		= get_id("P_B2_NoBDSM");
+	p_b3_nobdsm		= get_id("P_B3_NoBDSM");
+	p_b4_nobdsm		= get_id("P_B4_NoBDSM");
+	p_b5_nobdsm		= get_id("P_B5_NoBDSM");
+	p_b6_nobdsm		= get_id("P_B6_NoBDSM");
+	p_st_nobdsm		= get_id("P_St_NoBDSM");
+	p_ar_nobdsm		= get_id("P_Ar_NoBDSM");
+	p_ce_nobdsm		= get_id("P_Ce_NoBDSM");
+	p_cl_nobdsm		= get_id("P_Cl_NoBDSM");
+	p_ho_nobdsm		= get_id("P_Ho_NoBDSM");
+	p_fa_nobdsm		= get_id("P_Fa_NoBDSM");
 
-	nogroup_id = get_id("ProhibitGroupToggleRes");
-	p_b0_nogroup = get_id("P_B0_NoGroup");
-	p_b1_nogroup = get_id("P_B1_NoGroup");
-	p_b2_nogroup = get_id("P_B2_NoGroup");
-	p_b3_nogroup = get_id("P_B3_NoGroup");
-	p_b4_nogroup = get_id("P_B4_NoGroup");
-	p_b5_nogroup = get_id("P_B5_NoGroup");
-	p_b6_nogroup = get_id("P_B6_NoGroup");
-	p_st_nogroup = get_id("P_St_NoGroup");
-	p_ar_nogroup = get_id("P_Ar_NoGroup");
-	p_ce_nogroup = get_id("P_Ce_NoGroup");
-	p_cl_nogroup = get_id("P_Cl_NoGroup");
-	p_ho_nogroup = get_id("P_Ho_NoGroup");
-	p_fa_nogroup = get_id("P_Fa_NoGroup");
+	nonormal_id		= get_id("ProhibitNormalToggleRes");
+	p_b0_nonorm		= get_id("P_B0_NoNorm");
+	p_b1_nonorm		= get_id("P_B1_NoNorm");
+	p_b2_nonorm		= get_id("P_B2_NoNorm");
+	p_b3_nonorm		= get_id("P_B3_NoNorm");
+	p_b4_nonorm		= get_id("P_B4_NoNorm");
+	p_b5_nonorm		= get_id("P_B5_NoNorm");
+	p_b6_nonorm		= get_id("P_B6_NoNorm");
+	p_st_nonorm		= get_id("P_St_NoNorm");
+	p_ar_nonorm		= get_id("P_Ar_NoNorm");
+	p_ce_nonorm		= get_id("P_Ce_NoNorm");
+	p_cl_nonorm		= get_id("P_Cl_NoNorm");
+	p_ho_nonorm		= get_id("P_Ho_NoNorm");
+	p_fa_nonorm		= get_id("P_Fa_NoNorm");
 
-	nolesbian_id = get_id("ProhibitLesbianToggleRes");
-	p_b0_noles = get_id("P_B0_NoLes");
-	p_b1_noles = get_id("P_B1_NoLes");
-	p_b2_noles = get_id("P_B2_NoLes");
-	p_b3_noles = get_id("P_B3_NoLes");
-	p_b4_noles = get_id("P_B4_NoLes");
-	p_b5_noles = get_id("P_B5_NoLes");
-	p_b6_noles = get_id("P_B6_NoLes");
-	p_st_noles = get_id("P_St_NoLes");
-	p_ar_noles = get_id("P_Ar_NoLes");
-	p_ce_noles = get_id("P_Ce_NoLes");
-	p_cl_noles = get_id("P_Cl_NoLes");
-	p_ho_noles = get_id("P_Ho_NoLes");
-	p_fa_noles = get_id("P_Fa_NoLes");
+	nobeast_id		= get_id("ProhibitBeastToggleRes");
+	p_b0_nobeast	= get_id("P_B0_NoBeast");
+	p_b1_nobeast	= get_id("P_B1_NoBeast");
+	p_b2_nobeast	= get_id("P_B2_NoBeast");
+	p_b3_nobeast	= get_id("P_B3_NoBeast");
+	p_b4_nobeast	= get_id("P_B4_NoBeast");
+	p_b5_nobeast	= get_id("P_B5_NoBeast");
+	p_b6_nobeast	= get_id("P_B6_NoBeast");
+	p_st_nobeast	= get_id("P_St_NoBeast");
+	p_ar_nobeast	= get_id("P_Ar_NoBeast");
+	p_ce_nobeast	= get_id("P_Ce_NoBeast");
+	p_cl_nobeast	= get_id("P_Cl_NoBeast");
+	p_ho_nobeast	= get_id("P_Ho_NoBeast");
+	p_fa_nobeast	= get_id("P_Fa_NoBeast");
 
-	nooral_id = get_id("ProhibitOralToggleRes");
-	p_b0_nooral = get_id("P_B0_NoOral");
-	p_b1_nooral = get_id("P_B1_NoOral");
-	p_b2_nooral = get_id("P_B2_NoOral");
-	p_b3_nooral = get_id("P_B3_NoOral");
-	p_b4_nooral = get_id("P_B4_NoOral");
-	p_b5_nooral = get_id("P_B5_NoOral");
-	p_b6_nooral = get_id("P_B6_NoOral");
-	p_st_nooral = get_id("P_St_NoOral");
-	p_ar_nooral = get_id("P_Ar_NoOral");
-	p_ce_nooral = get_id("P_Ce_NoOral");
-	p_cl_nooral = get_id("P_Cl_NoOral");
-	p_ho_nooral = get_id("P_Ho_NoOral");
-	p_fa_nooral = get_id("P_Fa_NoOral");
+	nogroup_id		= get_id("ProhibitGroupToggleRes");
+	p_b0_nogroup	= get_id("P_B0_NoGroup");
+	p_b1_nogroup	= get_id("P_B1_NoGroup");
+	p_b2_nogroup	= get_id("P_B2_NoGroup");
+	p_b3_nogroup	= get_id("P_B3_NoGroup");
+	p_b4_nogroup	= get_id("P_B4_NoGroup");
+	p_b5_nogroup	= get_id("P_B5_NoGroup");
+	p_b6_nogroup	= get_id("P_B6_NoGroup");
+	p_st_nogroup	= get_id("P_St_NoGroup");
+	p_ar_nogroup	= get_id("P_Ar_NoGroup");
+	p_ce_nogroup	= get_id("P_Ce_NoGroup");
+	p_cl_nogroup	= get_id("P_Cl_NoGroup");
+	p_ho_nogroup	= get_id("P_Ho_NoGroup");
+	p_fa_nogroup	= get_id("P_Fa_NoGroup");
 
-	notitty_id = get_id("ProhibitTittyToggleRes");
-	p_b0_notitty = get_id("P_B0_NoTitty");
-	p_b1_notitty = get_id("P_B1_NoTitty");
-	p_b2_notitty = get_id("P_B2_NoTitty");
-	p_b3_notitty = get_id("P_B3_NoTitty");
-	p_b4_notitty = get_id("P_B4_NoTitty");
-	p_b5_notitty = get_id("P_B5_NoTitty");
-	p_b6_notitty = get_id("P_B6_NoTitty");
-	p_st_notitty = get_id("P_St_NoTitty");
-	p_ar_notitty = get_id("P_Ar_NoTitty");
-	p_ce_notitty = get_id("P_Ce_NoTitty");
-	p_cl_notitty = get_id("P_Cl_NoTitty");
-	p_ho_notitty = get_id("P_Ho_NoTitty");
-	p_fa_notitty = get_id("P_Fa_NoTitty");
+	nolesbian_id	= get_id("ProhibitLesbianToggleRes");
+	p_b0_noles		= get_id("P_B0_NoLes");
+	p_b1_noles		= get_id("P_B1_NoLes");
+	p_b2_noles		= get_id("P_B2_NoLes");
+	p_b3_noles		= get_id("P_B3_NoLes");
+	p_b4_noles		= get_id("P_B4_NoLes");
+	p_b5_noles		= get_id("P_B5_NoLes");
+	p_b6_noles		= get_id("P_B6_NoLes");
+	p_st_noles		= get_id("P_St_NoLes");
+	p_ar_noles		= get_id("P_Ar_NoLes");
+	p_ce_noles		= get_id("P_Ce_NoLes");
+	p_cl_noles		= get_id("P_Cl_NoLes");
+	p_ho_noles		= get_id("P_Ho_NoLes");
+	p_fa_noles		= get_id("P_Fa_NoLes");
 
-	nohand_id = get_id("ProhibitHandToggleRes");
-	p_b0_nohand = get_id("P_B0_NoHand");
-	p_b1_nohand = get_id("P_B1_NoHand");
-	p_b2_nohand = get_id("P_B2_NoHand");
-	p_b3_nohand = get_id("P_B3_NoHand");
-	p_b4_nohand = get_id("P_B4_NoHand");
-	p_b5_nohand = get_id("P_B5_NoHand");
-	p_b6_nohand = get_id("P_B6_NoHand");
-	p_st_nohand = get_id("P_St_NoHand");
-	p_ar_nohand = get_id("P_Ar_NoHand");
-	p_ce_nohand = get_id("P_Ce_NoHand");
-	p_cl_nohand = get_id("P_Cl_NoHand");
-	p_ho_nohand = get_id("P_Ho_NoHand");
-	p_fa_nohand = get_id("P_Fa_NoHand");
+	nooral_id		= get_id("ProhibitOralToggleRes");
+	p_b0_nooral		= get_id("P_B0_NoOral");
+	p_b1_nooral		= get_id("P_B1_NoOral");
+	p_b2_nooral		= get_id("P_B2_NoOral");
+	p_b3_nooral		= get_id("P_B3_NoOral");
+	p_b4_nooral		= get_id("P_B4_NoOral");
+	p_b5_nooral		= get_id("P_B5_NoOral");
+	p_b6_nooral		= get_id("P_B6_NoOral");
+	p_st_nooral		= get_id("P_St_NoOral");
+	p_ar_nooral		= get_id("P_Ar_NoOral");
+	p_ce_nooral		= get_id("P_Ce_NoOral");
+	p_cl_nooral		= get_id("P_Cl_NoOral");
+	p_ho_nooral		= get_id("P_Ho_NoOral");
+	p_fa_nooral		= get_id("P_Fa_NoOral");
 
-	advertsli_id = get_id("AdvertisingSlider");
-	p_b0_advslid = get_id("P_B0_AdvSlid");
-	p_b1_advslid = get_id("P_B1_AdvSlid");
-	p_b2_advslid = get_id("P_B2_AdvSlid");
-	p_b3_advslid = get_id("P_B3_AdvSlid");
-	p_b4_advslid = get_id("P_B4_AdvSlid");
-	p_b5_advslid = get_id("P_B5_AdvSlid");
-	p_b6_advslid = get_id("P_B6_AdvSlid");
-	p_st_advslid = get_id("P_St_AdvSlid");
-	p_ar_advslid = get_id("P_Ar_AdvSlid");
-	p_ce_advslid = get_id("P_Ce_AdvSlid");
-	p_cl_advslid = get_id("P_Cl_AdvSlid");
-	p_ho_advslid = get_id("P_Ho_AdvSlid");
-	p_fa_advslid = get_id("P_Fa_AdvSlid");
+	notitty_id		= get_id("ProhibitTittyToggleRes");
+	p_b0_notitty	= get_id("P_B0_NoTitty");
+	p_b1_notitty	= get_id("P_B1_NoTitty");
+	p_b2_notitty	= get_id("P_B2_NoTitty");
+	p_b3_notitty	= get_id("P_B3_NoTitty");
+	p_b4_notitty	= get_id("P_B4_NoTitty");
+	p_b5_notitty	= get_id("P_B5_NoTitty");
+	p_b6_notitty	= get_id("P_B6_NoTitty");
+	p_st_notitty	= get_id("P_St_NoTitty");
+	p_ar_notitty	= get_id("P_Ar_NoTitty");
+	p_ce_notitty	= get_id("P_Ce_NoTitty");
+	p_cl_notitty	= get_id("P_Cl_NoTitty");
+	p_ho_notitty	= get_id("P_Ho_NoTitty");
+	p_fa_notitty	= get_id("P_Fa_NoTitty");
 
-	advertamt_id = get_id("AdvertisingValue");
-	p_b0_advamnt = get_id("P_B0_AdvAmnt");
-	p_b1_advamnt = get_id("P_B1_AdvAmnt");
-	p_b2_advamnt = get_id("P_B2_AdvAmnt");
-	p_b3_advamnt = get_id("P_B3_AdvAmnt");
-	p_b4_advamnt = get_id("P_B4_AdvAmnt");
-	p_b5_advamnt = get_id("P_B5_AdvAmnt");
-	p_b6_advamnt = get_id("P_B6_AdvAmnt");
-	p_st_advamnt = get_id("P_St_AdvAmnt");
-	p_ar_advamnt = get_id("P_Ar_AdvAmnt");
-	p_ce_advamnt = get_id("P_Ce_AdvAmnt");
-	p_cl_advamnt = get_id("P_Cl_AdvAmnt");
-	p_ho_advamnt = get_id("P_Ho_AdvAmnt");
-	p_fa_advamnt = get_id("P_Fa_AdvAmnt");
+	nohand_id		= get_id("ProhibitHandToggleRes");
+	p_b0_nohand		= get_id("P_B0_NoHand");
+	p_b1_nohand		= get_id("P_B1_NoHand");
+	p_b2_nohand		= get_id("P_B2_NoHand");
+	p_b3_nohand		= get_id("P_B3_NoHand");
+	p_b4_nohand		= get_id("P_B4_NoHand");
+	p_b5_nohand		= get_id("P_B5_NoHand");
+	p_b6_nohand		= get_id("P_B6_NoHand");
+	p_st_nohand		= get_id("P_St_NoHand");
+	p_ar_nohand		= get_id("P_Ar_NoHand");
+	p_ce_nohand		= get_id("P_Ce_NoHand");
+	p_cl_nohand		= get_id("P_Cl_NoHand");
+	p_ho_nohand		= get_id("P_Ho_NoHand");
+	p_fa_nohand		= get_id("P_Fa_NoHand");
 
+	advertsli_id	= get_id("AdvertisingSlider");
+	p_b0_advslid	= get_id("P_B0_AdvSlid");
+	p_b1_advslid	= get_id("P_B1_AdvSlid");
+	p_b2_advslid	= get_id("P_B2_AdvSlid");
+	p_b3_advslid	= get_id("P_B3_AdvSlid");
+	p_b4_advslid	= get_id("P_B4_AdvSlid");
+	p_b5_advslid	= get_id("P_B5_AdvSlid");
+	p_b6_advslid	= get_id("P_B6_AdvSlid");
+	p_st_advslid	= get_id("P_St_AdvSlid");
+	p_ar_advslid	= get_id("P_Ar_AdvSlid");
+	p_ce_advslid	= get_id("P_Ce_AdvSlid");
+	p_cl_advslid	= get_id("P_Cl_AdvSlid");
+	p_ho_advslid	= get_id("P_Ho_AdvSlid");
+	p_fa_advslid	= get_id("P_Fa_AdvSlid");
+
+	advertamt_id	= get_id("AdvertisingValue");
+	p_b0_advamnt	= get_id("P_B0_AdvAmnt");
+	p_b1_advamnt	= get_id("P_B1_AdvAmnt");
+	p_b2_advamnt	= get_id("P_B2_AdvAmnt");
+	p_b3_advamnt	= get_id("P_B3_AdvAmnt");
+	p_b4_advamnt	= get_id("P_B4_AdvAmnt");
+	p_b5_advamnt	= get_id("P_B5_AdvAmnt");
+	p_b6_advamnt	= get_id("P_B6_AdvAmnt");
+	p_st_advamnt	= get_id("P_St_AdvAmnt");
+	p_ar_advamnt	= get_id("P_Ar_AdvAmnt");
+	p_ce_advamnt	= get_id("P_Ce_AdvAmnt");
+	p_cl_advamnt	= get_id("P_Cl_AdvAmnt");
+	p_ho_advamnt	= get_id("P_Ho_AdvAmnt");
+	p_fa_advamnt	= get_id("P_Fa_AdvAmnt");
 
 }
 
@@ -349,10 +357,10 @@ void cScreenPropertyManagement::init()
 	Focused();
 	g_InitWin = false;
 
-	ss.str(""); ss << gettext("Add Rooms: ") << tariff.add_room_cost(5) << gettext(" gold");
+	ss.str(""); ss << "Add Rooms: " << tariff.add_room_cost(5) << " gold";
 	EditTextItem(ss.str(), roomcost_id);
 
-	ss.str(""); ss << gettext("Anti-Preg Potions: ") << tariff.anti_preg_price(1) << gettext(" gold each");
+	ss.str(""); ss << "Anti-Preg Potions: " << tariff.anti_preg_price(1) << " gold each";
 	EditTextItem(ss.str(), potioncost_id);
 
 	string brothel = "";
@@ -362,7 +370,7 @@ void cScreenPropertyManagement::init()
 
 	if (true) // Always include the house
 	{
-		EditTextItem(gettext("Your House"), p_ho_id);
+		EditTextItem("Your House", p_ho_id);
 
 		SetCheckBox(p_ho_noanal, g_House.GetBrothel(0)->m_RestrictAnal);
 		SetCheckBox(p_ho_nobdsm, g_House.GetBrothel(0)->m_RestrictBDSM);
@@ -376,12 +384,12 @@ void cScreenPropertyManagement::init()
 
 		advert = g_House.GetBrothel(0)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_ho_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Promotion Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << "Promotion Budget: " << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_ho_advamnt);
 
 		SetCheckBox(p_ho_pot_b, g_House.GetBrothel(0)->m_KeepPotionsStocked);
 		ss.str(""); number = g_House.GetBrothel(0)->m_AntiPregPotions;
-		ss << gettext("You have: ") << number;
+		ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_ho_pot_a);
 		DisableCheckBox(p_ho_pot_b, number < 1);
 	}
@@ -403,18 +411,18 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Brothels.GetBrothel(0)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_b0_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Advertising Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Advertising Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_b0_advamnt);
 
 		SetCheckBox(p_b0_pot_b, g_Brothels.GetBrothel(0)->m_KeepPotionsStocked);
 		ss.str(""); number = g_Brothels.GetBrothel(0)->m_AntiPregPotions;
-		ss << gettext("You have: ") << number;
+		ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_b0_pot_a);
 		DisableCheckBox(p_b0_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own this brothel yet.)"), p_b0_id);
+		EditTextItem("(You do not own this brothel yet.)", p_b0_id);
 	}
 
 	if (g_Brothels.GetNumBrothels() > 1)
@@ -433,19 +441,19 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Brothels.GetBrothel(1)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_b1_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Advertising Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Advertising Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_b1_advamnt);
 
 		SetCheckBox(p_b1_pot_b, g_Brothels.GetBrothel(1)->m_KeepPotionsStocked);
 		number = g_Brothels.GetBrothel(1)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_b1_pot_a);
 		DisableCheckBox(p_b1_pot_b, number < 1);
 
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own this brothel yet.)"), p_b1_id);
+		EditTextItem(("(You do not own this brothel yet.)"), p_b1_id);
 	}
 
 	if (g_Brothels.GetNumBrothels() > 2)
@@ -464,18 +472,18 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Brothels.GetBrothel(2)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_b2_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Advertising Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Advertising Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_b2_advamnt);
 
 		SetCheckBox(p_b2_pot_b, g_Brothels.GetBrothel(2)->m_KeepPotionsStocked);
 		number = g_Brothels.GetBrothel(2)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_b2_pot_a);
 		DisableCheckBox(p_b2_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own this brothel yet.)"), p_b2_id);
+		EditTextItem(("(You do not own this brothel yet.)"), p_b2_id);
 	}
 
 	if (g_Brothels.GetNumBrothels() > 3)
@@ -494,18 +502,18 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Brothels.GetBrothel(3)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_b3_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Advertising Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Advertising Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_b3_advamnt);
 
 		SetCheckBox(p_b3_pot_b, g_Brothels.GetBrothel(3)->m_KeepPotionsStocked);
 		number = g_Brothels.GetBrothel(3)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_b3_pot_a);
 		DisableCheckBox(p_b3_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own this brothel yet.)"), p_b3_id);
+		EditTextItem(("(You do not own this brothel yet.)"), p_b3_id);
 	}
 
 	if (g_Brothels.GetNumBrothels() > 4)
@@ -524,18 +532,18 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Brothels.GetBrothel(4)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_b4_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Advertising Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Advertising Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_b4_advamnt);
 
 		SetCheckBox(p_b4_pot_b, g_Brothels.GetBrothel(4)->m_KeepPotionsStocked);
 		number = g_Brothels.GetBrothel(4)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_b4_pot_a);
 		DisableCheckBox(p_b4_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own this brothel yet.)"), p_b4_id);
+		EditTextItem(("(You do not own this brothel yet.)"), p_b4_id);
 	}
 
 	if (g_Brothels.GetNumBrothels() > 5)
@@ -554,17 +562,17 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Brothels.GetBrothel(5)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_b5_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Advertising Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Advertising Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_b5_advamnt);
 		SetCheckBox(p_b5_pot_b, g_Brothels.GetBrothel(5)->m_KeepPotionsStocked);
 		number = g_Brothels.GetBrothel(5)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_b5_pot_a);
 		DisableCheckBox(p_b5_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own this brothel yet.)"), p_b5_id);
+		EditTextItem(("(You do not own this brothel yet.)"), p_b5_id);
 	}
 
 	if (g_Brothels.GetNumBrothels() > 6)
@@ -583,23 +591,23 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Brothels.GetBrothel(6)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_b6_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Advertising Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Advertising Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_b6_advamnt);
 
 		SetCheckBox(p_b6_pot_b, g_Brothels.GetBrothel(6)->m_KeepPotionsStocked);
 		number = g_Brothels.GetBrothel(6)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_b6_pot_a);
 		DisableCheckBox(p_b6_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own this brothel yet.)"), p_b6_id);
+		EditTextItem(("(You do not own this brothel yet.)"), p_b6_id);
 	}
 
 	if (g_Studios.GetNumBrothels() > 0)
 	{
-		EditTextItem(gettext("The Movie Studio"), p_st_id);
+		EditTextItem(("The Movie Studio"), p_st_id);
 
 		SetCheckBox(p_st_noanal, g_Studios.GetBrothel(0)->m_RestrictAnal);
 		SetCheckBox(p_st_nobdsm, g_Studios.GetBrothel(0)->m_RestrictBDSM);
@@ -613,23 +621,23 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Studios.GetBrothel(0)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_st_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Promotion Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Promotion Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_st_advamnt);
 
 		SetCheckBox(p_st_pot_b, g_Studios.GetBrothel(0)->m_KeepPotionsStocked);
 		number = g_Studios.GetBrothel(0)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_st_pot_a);
 		DisableCheckBox(p_st_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own the Studio yet.)"), p_st_id);
+		EditTextItem(("(You do not own the Studio yet.)"), p_st_id);
 	}
 
 	if (g_Arena.GetNumBrothels() > 0)
 	{
-		EditTextItem(gettext("The Arena"), p_ar_id);
+		EditTextItem(("The Arena"), p_ar_id);
 
 		SetCheckBox(p_ar_noanal, g_Arena.GetBrothel(0)->m_RestrictAnal);
 		SetCheckBox(p_ar_nobdsm, g_Arena.GetBrothel(0)->m_RestrictBDSM);
@@ -643,23 +651,23 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Arena.GetBrothel(0)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_ar_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Promotion Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Promotion Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_ar_advamnt);
 
 		SetCheckBox(p_ar_pot_b, g_Arena.GetBrothel(0)->m_KeepPotionsStocked);
 		number = g_Arena.GetBrothel(0)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_ar_pot_a);
 		DisableCheckBox(p_ar_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own the Arena yet.)"), p_ar_id);
+		EditTextItem(("(You do not own the Arena yet.)"), p_ar_id);
 	}
 
 	if (g_Centre.GetNumBrothels() > 0)
 	{
-		EditTextItem(gettext("The Centre"), p_ce_id);
+		EditTextItem(("The Centre"), p_ce_id);
 
 		SetCheckBox(p_ce_noanal, g_Centre.GetBrothel(0)->m_RestrictAnal);
 		SetCheckBox(p_ce_nobdsm, g_Centre.GetBrothel(0)->m_RestrictBDSM);
@@ -673,23 +681,23 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Centre.GetBrothel(0)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_ce_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Promotion Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Promotion Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_ce_advamnt);
 
 		SetCheckBox(p_ce_pot_b, g_Centre.GetBrothel(0)->m_KeepPotionsStocked);
 		number = g_Centre.GetBrothel(0)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_ce_pot_a);
 		DisableCheckBox(p_ce_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own the Centre yet.)"), p_ce_id);
+		EditTextItem(("(You do not own the Centre yet.)"), p_ce_id);
 	}
 
 	if (g_Clinic.GetNumBrothels() > 0)
 	{
-		EditTextItem(gettext("The Clinic"), p_cl_id);
+		EditTextItem(("The Clinic"), p_cl_id);
 
 		SetCheckBox(p_cl_noanal, g_Clinic.GetBrothel(0)->m_RestrictAnal);
 		SetCheckBox(p_cl_nobdsm, g_Clinic.GetBrothel(0)->m_RestrictBDSM);
@@ -703,23 +711,23 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Clinic.GetBrothel(0)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_cl_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Promotion Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Promotion Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_cl_advamnt);
 
 		SetCheckBox(p_cl_pot_b, g_Clinic.GetBrothel(0)->m_KeepPotionsStocked);
 		number = g_Clinic.GetBrothel(0)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_cl_pot_a);
 		DisableCheckBox(p_cl_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own the Clinic yet.)"), p_cl_id);
+		EditTextItem(("(You do not own the Clinic yet.)"), p_cl_id);
 	}
 
 	if (g_Farm.GetNumBrothels() > 0)
 	{
-		EditTextItem(gettext("The Clinic"), p_cl_id);
+		EditTextItem(("The Clinic"), p_cl_id);
 
 		SetCheckBox(p_fa_noanal, g_Farm.GetBrothel(0)->m_RestrictAnal);
 		SetCheckBox(p_fa_nobdsm, g_Farm.GetBrothel(0)->m_RestrictBDSM);
@@ -733,18 +741,18 @@ void cScreenPropertyManagement::init()
 
 		advert = g_Farm.GetBrothel(0)->m_AdvertisingBudget / 50;
 		advert = SliderRange(p_fa_advslid, 0, (2000 / 50), advert, 4);  // set slider min/max range
-		ss.str(""); ss << gettext("Promotion Budget: ") << (advert * 50) << gettext(" gold / week");
+		ss.str(""); ss << ("Promotion Budget: ") << (advert * 50) << (" gold / week");
 		EditTextItem(ss.str(), p_fa_advamnt);
 
 		SetCheckBox(p_fa_pot_b, g_Farm.GetBrothel(0)->m_KeepPotionsStocked);
 		number = g_Farm.GetBrothel(0)->m_AntiPregPotions;
-		ss.str(""); ss << gettext("You have: ") << number;
+		ss.str(""); ss << ("You have: ") << number;
 		EditTextItem(ss.str(), p_fa_pot_a);
 		DisableCheckBox(p_fa_pot_b, number < 1);
 	}
 	else
 	{
-		EditTextItem(gettext("(You do not own the Farm yet.)"), p_fa_id);
+		EditTextItem(("(You do not own the Farm yet.)"), p_fa_id);
 	}
 
 }
@@ -789,7 +797,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_ho_advslid))
 		{
 			g_House.GetBrothel(0)->m_AdvertisingBudget = SliderValue(p_ho_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_ho_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_ho_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_ho_advamnt);
 		}
 	}
@@ -811,7 +819,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_b0_advslid))
 		{
 			g_Brothels.GetBrothel(0)->m_AdvertisingBudget = SliderValue(p_b0_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_b0_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_b0_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_b0_advamnt);
 		}
 	}
@@ -833,7 +841,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_b1_advslid))
 		{
 			g_Brothels.GetBrothel(1)->m_AdvertisingBudget = SliderValue(p_b1_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_b1_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_b1_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_b1_advamnt);
 		}
 	}
@@ -854,7 +862,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_b2_advslid))
 		{
 			g_Brothels.GetBrothel(2)->m_AdvertisingBudget = SliderValue(p_b2_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_b2_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_b2_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_b2_advamnt);
 		}
 	}
@@ -876,7 +884,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_b3_advslid))
 		{
 			g_Brothels.GetBrothel(3)->m_AdvertisingBudget = SliderValue(p_b3_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_b3_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_b3_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_b3_advamnt);
 		}
 	}
@@ -898,7 +906,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_b4_advslid))
 		{
 			g_Brothels.GetBrothel(4)->m_AdvertisingBudget = SliderValue(p_b4_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_b4_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_b4_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_b4_advamnt);
 		}
 	}
@@ -920,7 +928,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_b5_advslid))
 		{
 			g_Brothels.GetBrothel(5)->m_AdvertisingBudget = SliderValue(p_b5_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_b5_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_b5_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_b5_advamnt);
 		}
 	}
@@ -942,7 +950,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_b6_advslid))
 		{
 			g_Brothels.GetBrothel(6)->m_AdvertisingBudget = SliderValue(p_b6_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_b6_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_b6_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_b6_advamnt);
 		}
 	}
@@ -964,7 +972,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_st_advslid))
 		{
 			g_Studios.GetBrothel(0)->m_AdvertisingBudget = SliderValue(p_st_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_st_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_st_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_st_advamnt);
 		}
 	}
@@ -986,7 +994,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_ar_advslid))
 		{
 			g_Arena.GetBrothel(0)->m_AdvertisingBudget = SliderValue(p_ar_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_ar_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_ar_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_ar_advamnt);
 		}
 	}
@@ -1008,7 +1016,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_ce_advslid))
 		{
 			g_Centre.GetBrothel(0)->m_AdvertisingBudget = SliderValue(p_ce_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_ce_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_ce_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_ce_advamnt);
 		}
 	}
@@ -1030,7 +1038,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_cl_advslid))
 		{
 			g_Clinic.GetBrothel(0)->m_AdvertisingBudget = SliderValue(p_cl_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_cl_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_cl_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_cl_advamnt);
 		}
 	}
@@ -1052,7 +1060,7 @@ void cScreenPropertyManagement::check_events()
 		if (g_InterfaceEvents.CheckSlider(p_fa_advslid))
 		{
 			g_Farm.GetBrothel(0)->m_AdvertisingBudget = SliderValue(p_fa_advslid) * 50;
-			ss.str(""); ss << gettext("Advertising Budget: ") << (SliderValue(p_fa_advslid) * 50) << gettext(" gold / week");
+			ss.str(""); ss << ("Advertising Budget: ") << (SliderValue(p_fa_advslid) * 50) << (" gold / week");
 			EditTextItem(ss.str(), p_fa_advamnt);
 		}
 	}

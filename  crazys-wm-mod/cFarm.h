@@ -52,7 +52,7 @@ public:
 	cFarmManager();					// constructor
 	~cFarmManager();					// destructor
 
-	void AddGirl(int brothelID, sGirl* girl);
+	void AddGirl(int brothelID, sGirl* girl, bool keepjob = false);
 	void RemoveGirl(int brothelID, sGirl* girl, bool deleteGirl = false);	// Removes a girl from the list (only used with editor where all girls are available)
 	void UpdateFarm();
 	void UpdateGirls(sBrothel* brothel, bool Day0Night1);
@@ -62,18 +62,6 @@ public:
 	void Free();
 	int m_NumFarms;
 	cJobManager m_JobManager;
-	
-	/*
-	int FoodAnimal[6] = { 0, 0, 0, 0, 0, 0 };
-	string FoodAnimalName[6] = { "Egg", "Chicken", "Goat", "Sheep", "Ostrich", "Cow" };
-	int FoodAnimalFoodValue[6] = { 1, 2, 3, 3, 6, 10 };
-	
-	int FoodPlant[6] = { 0, 0, 0, 0, 0, 0 };
-	string FoodPlantName[6] = { "Wheat", "Corn", "Potato", "Tomato", "Lettuce", "Hops" };
-
-	int GardenPlant[10] = { 10, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	string GardenPlantName[10] = { "Weeds", "Easy", "Simple", "Common", "Uncommon", "Special", "Very Special", "Rare", "Very Rare", "Unique" };
-	*/
 
 };
 

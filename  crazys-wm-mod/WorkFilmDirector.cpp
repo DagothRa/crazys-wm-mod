@@ -52,12 +52,12 @@ bool cJobManager::WorkFilmDirector(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 	stringstream ss; string girlName = girl->m_Realname;
 	g_Studios.m_DirectorName = girl->m_Realname;
 
-	ss << girlName << " worked as a film director.\n\n";
+	ss << girlName << " worked as a Film Director.\n \n";
 
-	
 	g_Girls.UnequipCombat(girl);	// not for studio crew
 
 	int wages = 50;
+	int tips = 0;
 	int enjoy = 0;
 	int numgirls = brothel->m_NumGirls;
 
@@ -65,18 +65,18 @@ bool cJobManager::WorkFilmDirector(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 	if (roll <= 10)
 	{
 		enjoy -= g_Dice % 3 + 1;
-		ss << "She did not like working in the studio today.\n\n";
+		ss << "She did not like working in the Studio today.\n \n";
 	}
 	else if (roll >= 90)
 	{
 		enjoy += g_Dice % 3 + 1;
-		ss << "She had a great time working today.\n\n";
+		ss << "She had a great time working today.\n \n";
 	}
 	else
 	{
 		enjoy += g_Dice % 2;
-		ss << "Otherwise, the shift passed uneventfully.\n\n";
 	}
+
 	double jobperformance = JP_FilmDirector(girl, false);
 	jobperformance += enjoy * 2;
 
@@ -84,23 +84,25 @@ bool cJobManager::WorkFilmDirector(sGirl* girl, sBrothel* brothel, bool Day0Nigh
 	else if (jobperformance < 0)	ss << "She did a bad job today, she reduced the scene quality " << (int)jobperformance << "% with her poor performance. \n";
 	else /*                   */	ss << "She did not really help the scene quality.\n";
 
-	girl->m_Pay = int(float(100.0 + (((girl->get_skill(SKILL_SERVICE) + girl->get_stat(STAT_CHARISMA) + girl->get_stat(STAT_INTELLIGENCE) + girl->get_stat(STAT_CONFIDENCE) + girl->get_skill(SKILL_MEDICINE) + 50) / 50)*numgirls) * cfg.out_fact.matron_wages()));
+	wages += int(float(100.0 + (((girl->get_skill(SKILL_SERVICE) + girl->get_stat(STAT_CHARISMA) + girl->get_stat(STAT_INTELLIGENCE) + girl->get_stat(STAT_CONFIDENCE) + girl->get_skill(SKILL_MEDICINE) + 50) / 50)*numgirls) * cfg.out_fact.matron_wages()));
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 	g_Studios.m_DirectorQuality += (int)jobperformance;
 	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, SHIFT_NIGHT);
 
 	// Improve girl
 	int xp = numgirls / 10, libido = 1, skill = 3, fame = (int)(jobperformance / 50);
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 5; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 5; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			libido += 2;
-	if (g_Girls.HasTrait(girl, "Lesbian"))				libido += numgirls / 20;
+	if (girl->has_trait( "Quick Learner"))		{ skill += 1; xp += 5; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; xp -= 5; }
+	if (girl->has_trait( "Nymphomaniac"))			libido += 2;
+	if (girl->has_trait( "Lesbian"))				libido += numgirls / 20;
 
-	g_Girls.UpdateStat(girl, STAT_EXP, g_Dice%xp + 5);
-	g_Girls.UpdateStat(girl, STAT_FAME, g_Dice%fame);
-	g_Girls.UpdateStat(girl, STAT_CHARISMA, g_Dice%skill);
-	g_Girls.UpdateSkill(girl, SKILL_SERVICE, g_Dice%skill + 2);
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, g_Dice%libido);
+	girl->exp(g_Dice%xp + 5);
+	girl->fame(g_Dice%fame);
+	girl->charisma(g_Dice%skill);
+	girl->service(g_Dice%skill + 2);
+	girl->upd_temp_stat(STAT_LIBIDO, g_Dice%libido);
 
 	g_Girls.PossiblyGainNewTrait(girl, "Charismatic", 30, actiontype, "She has worked as a matron long enough that she has learned to be more Charismatic.", Day0Night1);
 	g_Girls.PossiblyGainNewTrait(girl, "Psychic", 90, actiontype, "She has learned to handle the girls so well that you'd almost think she was Psychic.", Day0Night1);
@@ -123,12 +125,16 @@ double cJobManager::JP_FilmDirector(sGirl* girl, bool estimate)// not used
 	}
 	else// for the actual check
 	{
+		int t = girl->tiredness() - 80;
+		if (t > 0)
+			jobperformance -= t / 4;
+
 		jobperformance += (girl->spirit() - 50) / 10;
 		jobperformance += (girl->intelligence() - 50) / 10;
-		jobperformance += g_Girls.GetSkill(girl, SKILL_SERVICE) / 10;
+		jobperformance += girl->service() / 10;
 		jobperformance /= 3;
-		jobperformance += g_Girls.GetStat(girl, STAT_LEVEL);
-		jobperformance += g_Girls.GetStat(girl, STAT_FAME) / 10;
+		jobperformance += girl->level();
+		jobperformance += girl->fame() / 10;
 		jobperformance += g_Dice % 4 - 1;	// should add a -1 to +3 random element --PP
 
 	}

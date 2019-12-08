@@ -16,30 +16,30 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "cBrothel.h"
 #include "cWindowManager.h"
-#include "cMessageBox.h"
-#include "InterfaceProcesses.h"
-#include "InterfaceGlobals.h"
-#include "cScreenBrothelManagement.h"
+#include "cScriptManager.h"
 #include "cScreenGetInput.h"
-#include "libintl.h"
+#include "InterfaceProcesses.h"
+#include "cBrothel.h"
+#include "cScreenBrothelManagement.h"
+#include "FileList.h"
 
-extern CSurface *g_BrothelImages[];
-
-extern cBrothelManager g_Brothels;
+extern cInterfaceEventManager g_InterfaceEvents;
 extern cWindowManager g_WinManager;
-extern cMessageQue g_MessageQue;
+extern cBrothelManager g_Brothels;
+extern CSurface*		g_BrothelImages[];
+extern cMessageQue		g_MessageQue;
 
-extern int g_CurrentScreen;
+extern int g_Building;
 extern int g_CurrBrothel;
-extern unsigned long g_Day, g_Month, g_Year;
+extern int g_CurrentScreen;
+extern string ReadTextFile(DirPath path, string file);
+extern bool g_TryCentre;
+extern bool eventrunning;
 extern bool g_InitWin;
-
-extern cScreenGetInput g_GetInput;
-
-extern void Turnsummary();
-extern void SaveGameXML();
+extern bool g_Cheats;
+extern unsigned long	g_Day, g_Month, g_Year;
+extern cScreenGetInput	g_GetInput;
 
 extern bool g_CTRLDown;
 
@@ -47,145 +47,98 @@ bool cScreenBrothelManagement::id_set = false;
 
 void cScreenBrothelManagement::set_ids()
 {
-	id_set = true;
+	id_set				/**/ = true;
+	g_LogFile.write("set_ids in cScreenBrothelManagement");
 
-	id_header = get_id("Header");
-	id_details = get_id("Details");
-	id_image = get_id("Image");
-	id_girls = get_id("Girl Management");
-	id_staff = get_id("Staff Management");
-	id_setup = get_id("Setup");
-	id_dungeon = get_id("Dungeon");
-	id_town = get_id("Visit Town");
-	id_week = get_id("Next Week");
-	id_save = get_id("Save");
-	id_turn = get_id("Turn Summary");
-	id_quit = get_id("Quit");
-	id_prev = get_id("Prev");
-	id_next = get_id("Next");
+	buildinglabel_id	/**/ = get_id("BuildingLabel", "Header");
+	background_id		/**/ = get_id("Background");
+	walk_id				/**/ = get_id("WalkButton", "*Unused*");
+
+	weeks_id			/**/ = get_id("Next Week", "Weeks");
+	buildingdetails_id	/**/ = get_id("BuildingDetails", "Details");
+	girls_id			/**/ = get_id("Girl Management", "Girls");
+	staff_id			/**/ = get_id("Staff Management");
+	setup_id			/**/ = get_id("Setup", "SetUp");
+	dungeon_id			/**/ = get_id("Dungeon");
+	turns_id			/**/ = get_id("Turn Summary", "Turn");
+
+	town_id				/**/ = get_id("Visit Town");
+	save_id				/**/ = get_id("Save");
+	quit_id				/**/ = get_id("Quit");
+	prevbrothel_id		/**/ = get_id("PrevButton", "Prev");
+	nextbrothel_id		/**/ = get_id("NextButton", "Next");
+
+
 }
-
 cScreenBrothelManagement::cScreenBrothelManagement()
 {
-	
 	DirPath dp = DirPath() << "Resources" << "Interface" << cfg.resolution.resolution() << "brothel_management.xml";
 	m_filename = dp.c_str();
-}
 
-cScreenBrothelManagement::~cScreenBrothelManagement()
-{
+
 }
+cScreenBrothelManagement::~cScreenBrothelManagement() { g_LogFile.write("Brothel Shutdown"); }
 
 void cScreenBrothelManagement::init()
 {
+	g_CurrentScreen = SCREEN_BROTHEL;
+	g_Building = BUILDING_BROTHEL;
 	if (g_InitWin)
 	{
 		Focused();
-
 		stringstream ss;
-		ss << gettext("Day: ") << g_Day << gettext(" Month: ") << g_Month << gettext(" Year: ") << g_Year << gettext(" -- Brothel: ") << g_Brothels.GetName(g_CurrBrothel);
-		EditTextItem(ss.str(), id_header);
-		EditTextItem(g_Brothels.GetBrothelString(g_CurrBrothel), id_details);
+		ss << "Day: " << g_Day << " Month: " << g_Month << " Year: " << g_Year << " -- Brothel: " << g_Brothels.GetName(g_CurrBrothel);
+		EditTextItem(ss.str(), buildinglabel_id);
+		EditTextItem(g_Brothels.GetBrothelString(g_CurrBrothel), buildingdetails_id);
+		SetImage(background_id, g_BrothelImages[g_CurrBrothel]);
 		g_InitWin = false;
-		// selected_girl = 0;
-
-		SetImage(id_image, g_BrothelImages[g_CurrBrothel]);
 	}
 }
 
 void cScreenBrothelManagement::process()
 {
-	g_CurrentScreen = SCREEN_BROTHEL;
-
-	if (!id_set)
-		set_ids();
-
-	if (check_keys())
-		return;
-
+	if (!id_set)		set_ids();
+	if (check_keys())	return;
 	init();
-
-	check_events();
+	if (g_InterfaceEvents.GetNumEvents() != 0)	check_events();
 }
 
 void cScreenBrothelManagement::check_events()
 {
-	if (g_InterfaceEvents.GetNumEvents() != 0)
+	g_InitWin = true;
+	if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, girls_id))		{ g_WinManager.push("Girl Management"); }
+	else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, staff_id))	{ g_WinManager.push("Gangs"); }
+	else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, setup_id))	{ g_WinManager.push("Building Setup"); }
+	else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, dungeon_id))	{ g_WinManager.push("Dungeon"); }
+	else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, town_id))	{ g_WinManager.push("Town"); }
+	else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, turns_id))	{ g_WinManager.push("Turn Summary"); }
+	else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, weeks_id))
 	{
-		if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_girls))
-		{
-			g_InitWin = true;
-			g_WinManager.push("Girl Management");
-			return;
-		}
-		else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_staff))
-		{
-			g_InitWin = true;
-			g_WinManager.push("Gangs");
-			return;
-		}
-		else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_setup))
-		{
-			g_InitWin = true;
-			g_WinManager.push("Building Setup");
-			return;
-		}
-		else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_dungeon))
-		{
-			g_InitWin = true;
-			g_WinManager.push("Dungeon");
-			return;
-		}
-		else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_town))
-		{
-			g_InitWin = true;
-			g_WinManager.push("Town");
-			return;
-		}
-		else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_save))
-		{
-			SaveGame(g_CTRLDown);
-			g_MessageQue.AddToQue("Game Saved", COLOR_GREEN);
-			return;
-		}
-		else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_week))
-		{
-			g_InitWin = true;
-			AutoSaveGame();
-			NextWeek();
-			g_WinManager.Push(Turnsummary, &g_Turnsummary);
-			return;
-		}
-		else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_turn))
-		{
-			g_InitWin = true;
-			g_CurrentScreen = SCREEN_TURNSUMMARY;
-			g_WinManager.Push(Turnsummary, &g_Turnsummary);
-			return;
-		}
-		else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_quit))
-		{
-			g_InitWin = true;
-			g_GetInput.ModeConfirmExit();
-			g_WinManager.push("GetInput");
-			return;
-		}
-		else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_next))
-		{
-			g_CurrBrothel++;
-			if (g_CurrBrothel >= g_Brothels.GetNumBrothels())
-				g_CurrBrothel = 0;
-			g_InitWin = true;
-			return;
-		}
-		else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, id_prev))
-		{
-			g_CurrBrothel--;
-			if (g_CurrBrothel < 0)
-				g_CurrBrothel = g_Brothels.GetNumBrothels() - 1;
-			g_InitWin = true;
-			return;
-		}
+		if (!g_CTRLDown) { g_CTRLDown = false; AutoSaveGame(); }
+		NextWeek();
+		g_WinManager.push("Turn Summary");
+	}
+	else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, save_id))
+	{
+		SaveGame(g_CTRLDown);
+		g_MessageQue.AddToQue("Game Saved", COLOR_GREEN);
+	}
+	else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, quit_id))
+	{
+		g_GetInput.ModeConfirmExit();
+		g_WinManager.push("GetInput");
+	}
+	else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, nextbrothel_id))
+	{
+		g_CurrBrothel++;
+		if (g_CurrBrothel >= g_Brothels.GetNumBrothels())
+			g_CurrBrothel = 0;
+	}
+	else if (g_InterfaceEvents.CheckEvent(EVENT_BUTTONCLICKED, prevbrothel_id))
+	{
+		g_CurrBrothel--;
+		if (g_CurrBrothel < 0)
+			g_CurrBrothel = g_Brothels.GetNumBrothels() - 1;
 	}
 }
 

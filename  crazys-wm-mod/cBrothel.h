@@ -49,13 +49,20 @@ typedef struct sObjective
 	int m_Limit;		// the number of weeks must be done by
 	int m_Difficulty;	// a number representing how hard it is
 	string m_Text;		// save the text for pass objective report.
+	string m_FailText;	// save the text for fail objective report.
+	string m_PassText;	// save the text for fail objective report.
+
 }sObjective;
 
-bool UseAntiPreg(bool use, bool isClinic, bool isStudio, bool isArena, bool isCentre, bool isHouse, bool isFarm, int BrothelID);
+bool UseAntiPreg(sGirl *girl);
 
 // holds data for movies
 typedef struct sMovie
 {
+	string m_Name;
+	string m_Director;
+	string m_Cast;
+	string m_Crew;
 	long m_Init_Quality;
 	long m_Promo_Quality;
 	long m_Quality;
@@ -91,8 +98,6 @@ struct sBrothel
 	int				m_AntiPregPotions;			// `J` added so all buildings save their own number of potions
 	int				m_AntiPregUsed;				// `J` number of potions used last turn
 	bool			m_KeepPotionsStocked;		// `J` and if they get restocked
-//	bool UseAntiPreg(bool use, int brothelID);
-//	bool UseAntiPreg(bool use);
 	void AddAntiPreg(int amount);
 	int  GetNumPotions()					{ return m_AntiPregPotions; }
 	void KeepPotionsStocked(bool stocked)	{ m_KeepPotionsStocked = stocked; }
@@ -197,6 +202,8 @@ public:
 	void UpdateBrothels();
 	void UpdateGirls(sBrothel* brothel, bool Day0Night1);
 
+	void UpdateCustomers(sBrothel* brothel, bool Day0Night1);
+
 	// MYR: Start of my automation functions
 	void UsePlayersItems(sGirl* cur);
 	bool AutomaticItemUse(sGirl * girl, int InvNum, string message);
@@ -213,17 +220,9 @@ public:
 
 	int GetGirlsCurrentBrothel(sGirl* girl); // Used by new security guard code
 	vector<sGirl*> GirlsOnJob(int BrothelID, int JobID, bool Day0Night1);	// Also used by new security code
+	sGirl* GetRandomGirl(int BrothelID);									// `J` - added
 	sGirl* GetRandomGirlOnJob(int BrothelID, int JobID, bool Day0Night1);	// `J` - added
 	sGirl* GetFirstGirlOnJob(int BrothelID, int JobID, bool Day0Night1);	// `J` - added
-
-/*	// `J` AntiPreg Potions rewriten and moved to individual buildings
-	bool UseAntiPreg(bool use, int brothelID);
-	bool UseAntiPreg(bool use);
-	void AddAntiPreg(int amount);
-	int  GetNumPotions()					{ return m_AntiPregPotions; }
-	void KeepPotionsStocked(bool stocked)	{ m_KeepPotionsStocked = stocked; }
-	bool GetPotionRestock()					{ return m_KeepPotionsStocked; }
-/* */
 
 	int GetTotalNumGirls(bool monster = false);
 	int GetFreeRooms(sBrothel* brothel);
@@ -232,7 +231,7 @@ public:
 	void UpgradeSupplySheds()				{ m_SupplyShedLevel++; }
 	int  GetSupplyShedLevel()				{ return m_SupplyShedLevel; }
 
-	void	AddGirl(int brothelID, sGirl* girl);
+	void	AddGirl(int brothelID, sGirl* girl, bool keepjob = false);
 	void	RemoveGirl(int brothelID, sGirl* girl, bool deleteGirl = true);
 	sGirl*	GetFirstRunaway();
 	void	sort(sBrothel* brothel);		// sorts the list of girls
@@ -260,6 +259,7 @@ public:
 	int			GetNumBrothelsWithVacancies();
 	int			GetFirstBrothelWithVacancies();
 	int			GetRandomBrothelWithVacancies();
+	sBrothel*	GetRandomBrothel();
 
 	void CalculatePay(sBrothel* brothel, sGirl* girl, u_int Job);
 
@@ -322,8 +322,6 @@ public:
 	void check_druggy_girl(stringstream& ss);
 	void check_raid();
 	void do_tax();
-	void check_rivals();
-	string new_rival_text();
 	void do_daily_items(sBrothel* brothel, sGirl* girl);
 	void do_food_and_digs(sBrothel* brothel, sGirl* girl);	
 	string disposition_text();
@@ -331,7 +329,6 @@ public:
 	string suss_text();
 	string happiness_text(sBrothel* brothel);
 	double calc_pilfering(sGirl *girl);
-	void peace_breaks_out();
 
 	bool runaway_check(sBrothel *brothel, sGirl *girl);
 
@@ -347,6 +344,8 @@ public:
 
 	// WD:	Update code of girls stats
 	void updateGirlTurnBrothelStats(sGirl* girl);
+
+
 
 	//private:
 	int TotalFame(sBrothel *);
@@ -400,6 +399,22 @@ public:
 	int  m_Processing_Shift;		// WD:	Store Day0Night1 value when processing girls
 
 	void AddBrothel(sBrothel* newBroth);
+
+/*
+int FoodAnimal[6] = { 0, 0, 0, 0, 0, 0 };
+string FoodAnimalName[6] = { "Egg", "Chicken", "Goat", "Sheep", "Ostrich", "Cow" };
+int FoodAnimalFoodValue[6] = { 1, 2, 3, 3, 6, 10 };
+
+int FoodPlant[6] = { 0, 0, 0, 0, 0, 0 };
+string FoodPlantName[6] = { "Wheat", "Corn", "Potato", "Tomato", "Lettuce", "Hops" };
+
+int GardenPlant[10] = { 10, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+string GardenPlantName[10] = { "Weeds", "Easy", "Simple", "Common", "Uncommon", "Special", "Very Special", "Rare", "Very Rare", "Unique" };
+*/
+
+void
+EndOfDay(sBrothel * brothel, const string& matron_title, bool Day0Night1, u_int restjob, u_int matronjob,
+         bool has_matron);
 };
 
 

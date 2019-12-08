@@ -28,6 +28,9 @@ struct sInterfaceIDs
   int BUTTON_LOADGAME ; 
   int BUTTON_EXITGAME ; 
 
+// Settings Screen
+  int BUTTON_CONTINUE;
+
 // Get string dialog
   int BUTTON_OK  ;
   int BUTTON_CANCEL  ;
@@ -263,7 +266,8 @@ struct sInterfaceIDs
   int LIST_GGLIST  ;
 
 // Load Game Screen
-  int LIST_LOADGSAVES;  
+  int IMAGE_BGIMAGE;
+  int LIST_LOADGSAVES;
   int BUTTON_LOADGLOAD;  
   int BUTTON_LOADGBACK ; 
 

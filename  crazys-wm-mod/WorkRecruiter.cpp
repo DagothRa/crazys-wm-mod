@@ -16,6 +16,7 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma region //	Includes and Externs			//
 #include "cJobManager.h"
 #include "cBrothel.h"
 #include "cCustomers.h"
@@ -39,33 +40,43 @@ extern cInventory g_InvManager;
 extern cBrothelManager g_Brothels;
 extern cGangManager g_Gangs;
 extern cMessageQue g_MessageQue;
+extern cTariff tariff;
 
 static cDungeon* m_Dungeon = g_Brothels.GetDungeon();
 
 extern cPlayer* The_Player;
 
+#pragma endregion
+
 // `J` Job House - General
 bool cJobManager::WorkRecruiter(sGirl* girl, sBrothel* brothel, bool Day0Night1, string& summary)
 {
-	int actiontype = ACTION_WORKRECRUIT;
 	if (Day0Night1) return false;
-
+#pragma region //	Job setup				//
+	int actiontype = ACTION_WORKRECRUIT;
 	stringstream ss; string girlName = girl->m_Realname; ss << girlName;
-	if (g_Girls.DisobeyCheck(girl, actiontype, brothel))			// they refuse to work 
+	int roll_a = g_Dice.d100(), roll_b = g_Dice.d100(), roll_c = g_Dice.d100();
+	if (girl->disobey_check(actiontype, brothel))			// they refuse to work
 	{
 		ss << " refused to work during the " << (Day0Night1 ? "night" : "day") << " shift.";
 		girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, EVENT_NOWORK);
 		return true;
 	}
-	ss << " worked trying to recruit girls for you.\n\n";
+	ss << " worked trying to recruit girls for you.\n \n";
 
-	cTariff tariff;
+	int wages = 100, tips = 0;
+	int enjoy = 0, fame = 0;
+
+	int imagetype = IMGTYPE_PROFILE;
+	int msgtype = Day0Night1;
+
+#pragma endregion
+#pragma region //	Job Performance			//
+
 
 	g_Girls.UnequipCombat(girl);	// put that shit away, are you are trying to recruit for the military?
 
-	int HateLove = g_Girls.GetStat(girl, STAT_PCLOVE) - g_Girls.GetStat(girl, STAT_PCHATE);
-	int wages = 100, work = 0;
-	int roll = g_Dice.d100();
+	int HateLove = girl->pclove() - girl->pchate();
 	int findchance = 0;
 
 	/* */if (HateLove < -80)	ss << "She hates you more then anything so she doesn't try that hard.";
@@ -78,7 +89,7 @@ bool cJobManager::WorkRecruiter(sGirl* girl, sBrothel* brothel, bool Day0Night1,
 	else if (HateLove <  60)	ss << "She finds you to be a good person.";
 	else if (HateLove <  80)	ss << "She has really strong feelings for you so she trys really hard for you.";
 	else						ss << "She loves you more then anything so she gives it her all.";
-	ss << "\n\n";
+	ss << "\n \n";
 
 	double jobperformance = JP_Recruiter(girl, false);
 	if (jobperformance >= 245)
@@ -111,7 +122,7 @@ bool cJobManager::WorkRecruiter(sGirl* girl, sBrothel* brothel, bool Day0Night1,
 		ss << "She was nervous and constantly making mistakes. She really isn't very good at this job.";
 		findchance = 4;
 	}
-	ss << "\n\n";
+	ss << "\n \n";
 
 	// `J` add in player's disposition so if the girl has heard of you
 	int dispmod = 0;
@@ -187,14 +198,14 @@ bool cJobManager::WorkRecruiter(sGirl* girl, sBrothel* brothel, bool Day0Night1,
 			}
 			else	// `J` ... She was not recruited.
 			{
-				ss << gettext(" but was unable to convince her that she should work for you.");
+				ss << " but was unable to convince her that she should work for you.";
 			}
 			if (add)
 			{
 				newgirl->m_Stats[STAT_HOUSE] = 60;
 				stringstream NGmsg;
-				NGmsg << newgirl->m_Realname << " was recruited by " << girl->m_Realname << " to work for you.";
-				newgirl->m_Events.AddMessage(NGmsg.str(), IMGTYPE_PROFILE, EVENT_GANG);
+				NGmsg << newgirl->m_Realname << " was recruited by " << girlName << " to work for you.";
+				newgirl->m_Events.AddMessage(NGmsg.str(), imagetype, EVENT_GANG);
 
 				m_Dungeon->AddGirl(newgirl, DUNGEON_RECRUITED);
 			}
@@ -209,102 +220,128 @@ bool cJobManager::WorkRecruiter(sGirl* girl, sBrothel* brothel, bool Day0Night1,
 		ss << "But was unable to find anyone to join.";
 	}
 
-	ss << "\n\n";
+	ss << "\n \n";
+
+#pragma endregion
+#pragma region	//	Enjoyment and Tiredness		//
 
 	//enjoyed the work or not
-	if (roll <= 5)
+	if (roll_a <= 5)
 	{
 		ss << "Some of the people abused her during the shift.";
-		work -= 1;
+		enjoy -= 1;
 	}
-	else if (roll <= 25)
+	else if (roll_a <= 25)
 	{
 		ss << "She had a pleasant time working.";
-		work += 3;
+		enjoy += 3;
 	}
 	else
 	{
 		ss << "Otherwise, the shift passed uneventfully.";
-		work += 1;
+		enjoy += 1;
 	}
 
-	g_Girls.UpdateEnjoyment(girl, actiontype, work);
-	girl->m_Events.AddMessage(ss.str(), IMGTYPE_PROFILE, Day0Night1);
-	int roll_max = (g_Girls.GetStat(girl, STAT_CHARISMA) + g_Girls.GetSkill(girl, SKILL_SERVICE));
+#pragma endregion
+#pragma region	//	Money					//
+
+
+#pragma endregion
+#pragma region	//	Finish the shift			//
+
+
+	girl->upd_Enjoyment(actiontype, enjoy);
+	girl->m_Events.AddMessage(ss.str(), imagetype, Day0Night1);
+	int roll_max = (girl->charisma() + girl->service());
 	roll_max /= 4;
 	wages += 10 + g_Dice%roll_max;
-	girl->m_Pay = wages;
+	// Money
+	girl->m_Tips = max(0, tips);
+	girl->m_Pay = max(0, wages);
 
 
 	// Improve stats
 	int xp = 10, libido = 1, skill = 3;
 
-	if (g_Girls.HasTrait(girl, "Quick Learner"))		{ skill += 1; xp += 3; }
-	else if (g_Girls.HasTrait(girl, "Slow Learner"))	{ skill -= 1; xp -= 3; }
-	if (g_Girls.HasTrait(girl, "Nymphomaniac"))			{ libido += 2; }
+	if (girl->has_trait( "Quick Learner"))		{ skill += 1; xp += 3; }
+	else if (girl->has_trait( "Slow Learner"))	{ skill -= 1; xp -= 3; }
+	if (girl->has_trait( "Nymphomaniac"))			{ libido += 2; }
+	if (girl->fame() < 10 && jobperformance >= 70)		{ fame += 1; }
+	if (girl->fame() < 20 && jobperformance >= 100)		{ fame += 1; }
+	if (girl->fame() < 40 && jobperformance >= 145)		{ fame += 1; }
+	if (girl->fame() < 50 && jobperformance >= 185)		{ fame += 1; }
 
-	g_Girls.UpdateStat(girl, STAT_FAME, 1);
-	g_Girls.UpdateStat(girl, STAT_EXP, xp);
-	if (g_Dice % 2)	g_Girls.UpdateSkill(girl, SKILL_LESBIAN, 1);
-	else			g_Girls.UpdateStat(girl, STAT_INTELLIGENCE, 1);
-	if (g_Dice % 2)	g_Girls.UpdateStat(girl, STAT_CHARISMA, skill);
-	else			g_Girls.UpdateSkill(girl, SKILL_SERVICE, skill);
-	g_Girls.UpdateStatTemp(girl, STAT_LIBIDO, libido);
+	girl->fame(fame);
+	girl->exp(xp);
+	if (g_Dice % 2)	girl->lesbian(1);
+	else			girl->intelligence(1);
+	if (g_Dice % 2)	girl->charisma(skill);
+	else			girl->service(skill);
+	girl->upd_temp_stat(STAT_LIBIDO, libido);
 
 	//gain traits
-	g_Girls.PossiblyGainNewTrait(girl, "Charismatic", 60, actiontype, "Dealing with people all day has made " + girl->m_Realname + " more Charismatic.", Day0Night1);
-	g_Girls.PossiblyGainNewTrait(girl, "Psychic", 80, actiontype, girl->m_Realname + " has been doing this for so long it's as if she can read minds now.", Day0Night1);
+	g_Girls.PossiblyGainNewTrait(girl, "Charismatic", 60, actiontype, "Dealing with people all day has made " + girlName + " more Charismatic.", Day0Night1);
+	g_Girls.PossiblyGainNewTrait(girl, "Psychic", 80, actiontype, girlName + " has been doing this for so long it's as if she can read minds now.", Day0Night1);
 
 	//lose traits
-	g_Girls.PossiblyLoseExistingTrait(girl, "Nervous", 20, actiontype, girl->m_Realname + " seems to finally be getting over her shyness. She's not always so Nervous anymore.", Day0Night1);
+	g_Girls.PossiblyLoseExistingTrait(girl, "Nervous", 20, actiontype, girlName + " seems to finally be getting over her shyness. She's not always so Nervous anymore.", Day0Night1);
+
+#pragma endregion
 	return false;
 }
 
 double cJobManager::JP_Recruiter(sGirl* girl, bool estimate)// not used
 {
-	int HateLove = g_Girls.GetStat(girl, STAT_PCLOVE) - g_Girls.GetStat(girl, STAT_PCHATE);
-	double jobperformance =
-		(HateLove + g_Girls.GetStat(girl, STAT_CHARISMA));
+	if (girl->is_slave()) return -1000;
 
-	if (girl->is_slave()) jobperformance -= 1000;
+	int HateLove = girl->pclove() - girl->pchate();
+	double jobperformance =
+		(HateLove + girl->charisma());
+	if (!estimate)
+	{
+		int t = girl->tiredness() - 80;
+		if (t > 0)
+			jobperformance -= (t + 2) * (t / 3);
+	}
+
 
 	//good traits
-	if (g_Girls.HasTrait(girl, "Charismatic"))  jobperformance += 20;
-	if (g_Girls.HasTrait(girl, "Psychic"))		jobperformance += 20; //knows what people want to hear
-	if (g_Girls.HasTrait(girl, "Cool Person"))  jobperformance += 10; //people love to be around her
-	if (g_Girls.HasTrait(girl, "Charming"))		jobperformance += 10; //people like charming people	
-	if (g_Girls.HasTrait(girl, "Great Figure"))	jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Great Arse"))	jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Quick Learner"))jobperformance += 5;
-	if (g_Girls.HasTrait(girl, "Natural Pheromones"))jobperformance += 10;
+	if (girl->has_trait( "Charismatic"))  jobperformance += 20;
+	if (girl->has_trait( "Psychic"))		jobperformance += 20; //knows what people want to hear
+	if (girl->has_trait( "Cool Person"))  jobperformance += 10; //people love to be around her
+	if (girl->has_trait( "Charming"))		jobperformance += 10; //people like charming people
+	if (girl->has_trait( "Great Figure"))	jobperformance += 5;
+	if (girl->has_trait( "Great Arse"))	jobperformance += 5;
+	if (girl->has_trait( "Quick Learner"))jobperformance += 5;
+	if (girl->has_trait( "Natural Pheromones"))jobperformance += 10;
 
 	//bad traits
-	if (g_Girls.HasTrait(girl, "Dependant"))	jobperformance -= 50; //needs others to do the job
-	if (g_Girls.HasTrait(girl, "Broken Will"))	jobperformance -= 50;
-	if (g_Girls.HasTrait(girl, "Nervous"))		jobperformance -= 30; //don't like to be around people
-	if (g_Girls.HasTrait(girl, "Aggressive"))	jobperformance -= 20; //gets mad easy and may attack people
-	if (g_Girls.HasTrait(girl, "Meek"))			jobperformance -= 20;
-	if (g_Girls.HasTrait(girl, "Clumsy"))		jobperformance -= 5;
-	if (g_Girls.HasTrait(girl, "Slow Learner"))	jobperformance -= 10;
-	if (g_Girls.HasTrait(girl, "Shy"))			jobperformance -= 10;
-	
-	if (g_Girls.HasTrait(girl, "One Arm"))		jobperformance -= 30;
-	if (g_Girls.HasTrait(girl, "One Foot"))		jobperformance -= 20;
-	if (g_Girls.HasTrait(girl, "One Hand"))		jobperformance -= 15; 
-	if (g_Girls.HasTrait(girl, "One Leg"))		jobperformance -= 40;
-	if (g_Girls.HasTrait(girl, "No Arms"))		jobperformance -= 100;
-	if (g_Girls.HasTrait(girl, "No Feet"))		jobperformance -= 40;
-	if (g_Girls.HasTrait(girl, "No Hands"))		jobperformance -= 25;
-	if (g_Girls.HasTrait(girl, "No Legs"))		jobperformance -= 100;
-	if (g_Girls.HasTrait(girl, "Blind"))		jobperformance -= 60;
-	if (g_Girls.HasTrait(girl, "Deaf"))			jobperformance -= 40;
-	if (g_Girls.HasTrait(girl, "Retarded"))		jobperformance -= 60;
-	if (g_Girls.HasTrait(girl, "Smoker"))		jobperformance -= 10;	//would need smoke breaks
+	if (girl->has_trait( "Dependant"))	jobperformance -= 50; // needs others to do the job
+	if (girl->has_trait( "Broken Will"))	jobperformance -= 50;
+	if (girl->has_trait( "Nervous"))		jobperformance -= 30; //don't like to be around people
+	if (girl->has_trait( "Aggressive"))	jobperformance -= 20; //gets mad easy and may attack people
+	if (girl->has_trait( "Meek"))			jobperformance -= 20;
+	if (girl->has_trait( "Clumsy"))		jobperformance -= 5;
+	if (girl->has_trait( "Slow Learner"))	jobperformance -= 10;
+	if (girl->has_trait( "Shy"))			jobperformance -= 10;
 
-	if (g_Girls.HasTrait(girl, "Alcoholic"))			jobperformance -= 25;
-	if (g_Girls.HasTrait(girl, "Fairy Dust Addict"))	jobperformance -= 25;
-	if (g_Girls.HasTrait(girl, "Shroud Addict"))		jobperformance -= 25;
-	if (g_Girls.HasTrait(girl, "Viras Blood Addict"))	jobperformance -= 25;
+	if (girl->has_trait( "One Arm"))		jobperformance -= 30;
+	if (girl->has_trait( "One Foot"))		jobperformance -= 20;
+	if (girl->has_trait( "One Hand"))		jobperformance -= 15;
+	if (girl->has_trait( "One Leg"))		jobperformance -= 40;
+	if (girl->has_trait( "No Arms"))		jobperformance -= 100;
+	if (girl->has_trait( "No Feet"))		jobperformance -= 40;
+	if (girl->has_trait( "No Hands"))		jobperformance -= 25;
+	if (girl->has_trait( "No Legs"))		jobperformance -= 100;
+	if (girl->has_trait( "Blind"))		jobperformance -= 60;
+	if (girl->has_trait( "Deaf"))			jobperformance -= 40;
+	if (girl->has_trait( "Retarded"))		jobperformance -= 60;
+	if (girl->has_trait( "Smoker"))		jobperformance -= 10;	//would need smoke breaks
+
+	if (girl->has_trait( "Alcoholic"))			jobperformance -= 25;
+	if (girl->has_trait( "Fairy Dust Addict"))	jobperformance -= 25;
+	if (girl->has_trait( "Shroud Addict"))		jobperformance -= 25;
+	if (girl->has_trait( "Viras Blood Addict"))	jobperformance -= 25;
 
 	return jobperformance;
 }
